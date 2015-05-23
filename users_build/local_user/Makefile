@@ -4,15 +4,15 @@
 APP?=0
 SPI_SPEED?=40
 SPI_MODE?=QIO
-SPI_SIZE?=512
+SPI_SIZE_MAP?=6
 
 GROVES ?=  #it's a list of grove driver directions, passed in by caller
 #GROVES ?= grove_example #it's a list of grove driver directions, passed in by caller
-USER_PROGRAM_DIRS ?= #it's a list of sub-dirs of the user written programe
 
 BASE_DIR = ../..
 SDK_DIR = $(BASE_DIR)/esp8266_sdk
 LD_DIR = $(SDK_DIR)/ld
+ARDUINO_DIR = $(BASE_DIR)/esp8266_arduino
 SULI_DIR = $(BASE_DIR)/suli
 GROVES_DIR = $(BASE_DIR)/grove_drivers
 RPC_SERVER_DIR = $(BASE_DIR)/rpc_server
@@ -65,80 +65,145 @@ else
     endif
 endif
 
-# flash larger than 1024KB only use 1024KB to storage user1.bin and user2.bin
-ifeq ($(SPI_SIZE), 256)
-    size = 1
-    flash = 256
-else
-    ifeq ($(SPI_SIZE), 1024)
-        size = 2
-        flash = 1024
-    else
-        ifeq ($(SPI_SIZE), 2048)
-            size = 3
-            flash = 1024
-        else
-            ifeq ($(SPI_SIZE), 4096)
-                size = 4
-                flash = 1024
-            else
-                size = 0
-                flash = 512
-            endif
-        endif
-    endif
-endif
+addr = 0x01000
 
-ifeq ($(flash), 512)
-  ifeq ($(app), 1)
-    addr = 0x01000
-  else
-    ifeq ($(app), 2)
-      addr = 0x41000
-    endif
-  endif
+ifeq ($(SPI_SIZE_MAP), 1)
+  size_map = 1
+  flash = 256
 else
-  ifeq ($(flash), 1024)
-    ifeq ($(app), 1)
-      addr = 0x01000
-    else
+  ifeq ($(SPI_SIZE_MAP), 2)
+    size_map = 2
+    flash = 1024
+    ifeq ($(app), 2)
+      addr = 0x81000
+    endif
+  else
+    ifeq ($(SPI_SIZE_MAP), 3)
+      size_map = 3
+      flash = 2048
       ifeq ($(app), 2)
         addr = 0x81000
+      endif
+    else
+      ifeq ($(SPI_SIZE_MAP), 4)
+        size_map = 4
+        flash = 4096
+        ifeq ($(app), 2)
+          addr = 0x81000
+        endif
+      else
+        ifeq ($(SPI_SIZE_MAP), 5)
+          size_map = 5
+          flash = 2048
+          ifeq ($(app), 2)
+            addr = 0x101000
+          endif
+        else
+          ifeq ($(SPI_SIZE_MAP), 6)
+            size_map = 6
+            flash = 4096
+            ifeq ($(app), 2)
+              addr = 0x101000
+            endif
+          else
+            size_map = 0
+            flash = 512
+            ifeq ($(app), 2)
+              addr = 0x41000
+            endif
+          endif
+        endif
       endif
     endif
   endif
 endif
 
-LD_FILE = $(LD_DIR)/eagle.app.v6.$(boot).$(flash).app$(app).ld
+LD_FILE = $(LD_DIR)/eagle.app.v6.ld
+
+ifneq ($(boot), none)
+ifneq ($(app),0)
+    ifeq ($(size_map), 6)
+      LD_FILE = $(LD_DIR)/eagle.app.v6.$(boot).2048.ld
+    else
+      ifeq ($(size_map), 5)
+        LD_FILE = $(LD_DIR)/eagle.app.v6.$(boot).2048.ld
+      else
+        ifeq ($(size_map), 4)
+          LD_FILE = $(LD_DIR)/eagle.app.v6.$(boot).1024.app$(app).ld
+        else
+          ifeq ($(size_map), 3)
+            LD_FILE = $(LD_DIR)/eagle.app.v6.$(boot).1024.app$(app).ld
+          else
+            ifeq ($(size_map), 2)
+              LD_FILE = $(LD_DIR)/eagle.app.v6.$(boot).1024.app$(app).ld
+            else
+              ifeq ($(size_map), 0)
+                LD_FILE = $(LD_DIR)/eagle.app.v6.$(boot).512.app$(app).ld
+              endif
+            endif
+	      endif
+	    endif
+	  endif
+	endif
+	BIN_NAME = user$(app).$(flash).$(boot).$(size_map)
+endif
+else
+    app = 0
+endif
+
+#LD_FILE = $(LD_DIR)/eagle.app.v6.$(boot).$(flash).app$(app).ld
+#LD_FILE = $(LD_DIR)/eagle.flash.4m.ld
 BIN_NAME = user$(app)#.$(flash).$(boot)
 OUTPUT_BIN = $(BIN_NAME)
 OUTPUT = $(BUILD_DIR)/$(OUTPUT_BIN)
 
+### Now scan all the source files recursively
 
 rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 #ALL_HTMLS := $(call rwildcard,foo/,*.html)
 
-C_SRC = $(notdir $(call rwildcard,./,*.c))
-CPP_SRC = $(notdir $(call rwildcard,./,*.cpp))
-s_SRC = $(notdir $(call rwildcard,./,*.s))
+C_SRC = $(notdir $(call rwildcard,$(ARDUINO_DIR),*.c))
+C_SRC += $(notdir $(call rwildcard,./,*.c))
+
+CPP_SRC = $(notdir $(call rwildcard,$(ARDUINO_DIR),*.cpp))
+CPP_SRC += $(notdir $(call rwildcard,./,*.cpp))
+
+s_SRC = $(notdir $(call rwildcard,$(ARDUINO_DIR),*.s))
+s_SRC += $(notdir $(call rwildcard,./,*.s))
+
 #S_SRC = $(notdir $(call rwildcard,./,*.S))
 
-OBJECTS = user_main.o
-#OBJECTS = user_main.o suli2.o rpc_server.o rpc_stream.o rpc_server_registration.o
-OBJECTS += $(C_SRC:%.c=%.o) $(CPP_SRC:%.cpp=%.o) $(s_SRC:%.s=%.o) $(S_SRC:%.S=%.o) 
+#OBJECTS_NONCPP = user_main.o suli2.o rpc_server.o rpc_stream.o rpc_server_registration.o
+OBJECTS_NONCPP = 
+OBJECTS_NONCPP += $(C_SRC:%.c=%.o) $(s_SRC:%.s=%.o) $(S_SRC:%.S=%.o) 
 
-INCLUDE_PATHS = -I. -I$(BASE_DIR) -I$(SDK_DIR)/include -I$(SULI_DIR) -I$(RPC_SERVER_DIR) 
-
-
+OBJECTS_CPP = user_main.cpp.o suli2.cpp.o
+OBJECTS_CPP += $(CPP_SRC:%.cpp=%.cpp.o) 
 ## for each grove driver to be compiled
-OBJECTS += $(foreach g,$(GROVES),$(g).o $(g)_class.o $(g)_gen.o)
+OBJECTS_CPP += $(foreach g,$(GROVES),$(g).cpp.o $(g)_class.cpp.o $(g)_gen.cpp.o)
 
-INCLUDE_PATHS += $(foreach g,$(GROVES),-I$(GROVES_DIR)/$(g))
+OBJECTS = $(OBJECTS_NONCPP) $(OBJECTS_CPP)
+
+### paths
+ALL_USER_SRC = $(dir $(call rwildcard,./,*.h))
+ALL_USER_SRC += $(dir $(call rwildcard,./,*.c))
+ALL_USER_SRC += $(dir $(call rwildcard,./,*.cpp))
+ALL_USER_SRC_DIR = $(sort $(ALL_USER_SRC))
+
+$(info "all user's src dirs:")
+$(info $(ALL_USER_SRC_DIR))
+
+INCLUDE_PATHS = -I. -I$(BASE_DIR) -I$(SDK_DIR)/include -I$(SULI_DIR) -I$(RPC_SERVER_DIR) -I$(ARDUINO_DIR) -I$(ARDUINO_DIR)/spiffs
+
 GROVES_DIR_LIST = $(foreach g,$(GROVES),$(GROVES_DIR)/$(g))
+INCLUDE_PATHS += $(addprefix -I,$(GROVES_DIR_LIST))
+INCLUDE_PATHS += $(addprefix -I,$(ALL_USER_SRC_DIR))
+
+$(info "include paths:")
+$(info $(INCLUDE_PATHS))
 
 LIBRARY_PATHS = -L$(SDK_DIR)/lib -L$(SDK_DIR)/ld
-LIBRARIES = -lm -lc -lgcc \
-		-lat \
+LIBRARIES = -lm -lgcc \
 		-lhal \
 		-lphy	\
 		-lpp	\
@@ -146,15 +211,12 @@ LIBRARIES = -lm -lc -lgcc \
 		-llwip	\
 		-lwpa	\
 		-lmain	\
-		-ljson	\
-		-lssl	\
-		-lssc   \
 		-lupgrade \
 		-lsmartconfig 
 
-GCC_PATH ?=
+GCC_PATH ?= /Users/Jack/Library/Arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9/bin/
 
-AS      = $(GCC_PATH)xtensa-lx106-elf-as
+AR      = $(GCC_PATH)xtensa-lx106-elf-ar
 CC      = $(GCC_PATH)xtensa-lx106-elf-gcc
 CPP     = $(GCC_PATH)xtensa-lx106-elf-g++
 LD      = $(GCC_PATH)xtensa-lx106-elf-gcc
@@ -162,26 +224,31 @@ OBJCOPY = $(GCC_PATH)xtensa-lx106-elf-objcopy
 OBJDUMP = $(GCC_PATH)xtensa-lx106-elf-objdump
 SIZE 	= $(GCC_PATH)xtensa-lx106-elf-size
 
-CC_FLAGS = -c -Os -Wpointer-arith -Wno-implicit-function-declaration -Wl,-EL -fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals -falign-functions=4 -MMD -std=c99 
-CPP_FLAGS = -c -Os -mlongcalls -mtext-section-literals -fno-exceptions -fno-rtti -falign-functions=4 -std=c++11 -MMD
+CC_FLAGS = -c -Os -O2 -Wpointer-arith -Wno-implicit-function-declaration -Wl,-EL -fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals -falign-functions=4 -MMD -std=c99 
+CPP_FLAGS = -c -Os -O2 -mlongcalls -mtext-section-literals -fno-exceptions -fno-rtti -falign-functions=4 -fpermissive -std=c++11 -MMD 
 S_FLAGS = -c -g -x assembler-with-cpp -MMD
 
 LD_FLAGS = -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static
 
-DEFINES = -DICACHE_FLASH -DESP8266 -DF_CPU=80000000 -D__ets__
+DEFINES = -DICACHE_FLASH -DF_CPU=80000000 -D__ets__ -U__STRICT_ANSI__ -DARDUINO=10604 -DARDUINO_ESP8266_ESP12 -DARDUINO_ARCH_ESP8266 -DESP8266
 
 GET_FILESIZE ?= stat -f%z
 
+$(info "all objects:")
+$(info $(OBJECTS))
+$(info "")
+
+
 #########################
 
-VPATH = $(BASE_DIR):$(SULI_DIR):$(RPC_SERVER_DIR):$(BUILD_DIR):$(GROVES_DIR_LIST):$(USER_PROGRAM_DIRS)
+VPATH = $(BASE_DIR):$(SULI_DIR):$(ARDUINO_DIR):$(ARDUINO_DIR)/spiffs:$(RPC_SERVER_DIR):$(BUILD_DIR):$(GROVES_DIR_LIST):$(ALL_USER_SRC_DIR)
 
 .PHONY: all clean
 
 all: $(OUTPUT).bin $(OUTPUT).hex 
 
 clean:
-	rm -f *.elf *.hex $(OBJECTS)  $(DEPS)
+	rm -f *.elf *.hex $(OBJECTS) $(DEPS) *.a
 
 %.o: %.s
 	$(CC) $(CC_FLAGS) -o $@ $<
@@ -192,12 +259,13 @@ clean:
 %.o: %.c
 	$(CC)  $(CC_FLAGS) $(DEFINES) $(INCLUDE_PATHS) -o $@ $<
 
-%.o: %.cpp
+%.cpp.o: %.cpp
 	$(CPP) $(CPP_FLAGS) $(DEFINES) $(INCLUDE_PATHS) -o $@ $<
 
 
 $(OUTPUT).elf: $(OBJECTS)
-	$(LD) $(LD_FLAGS) $(LIBRARY_PATHS) -T$(LD_FILE) -Wl,--start-group $(LIBRARIES) $^ -Wl,--end-group -o $@ 
+	$(AR) cru arduino_pack.a $(OBJECTS)
+	$(LD) $(LD_FLAGS) $(LIBRARY_PATHS) -T$(LD_FILE) -Wl,--start-group arduino_pack.a $(LIBRARIES) -Wl,--end-group -o $@ 
 	@echo ""
 	@echo "**********************"
 	@echo "     Link Done"
@@ -223,10 +291,19 @@ $(OUTPUT).bin: $(OUTPUT).elf
 	@echo " Gen Sections' Binary"
 	@echo "**********************"
 ifeq ($(boot), new)
-	@python $(SDK_DIR)/tools/gen_appbin.py $< 2 $(mode) $(freqdiv) $(size)
+	@python $(SDK_DIR)/tools/gen_appbin.py $< 2 $(mode) $(freqdiv) $(size_map)
+
+    ifeq ($(size_map), 6)
+	@echo "Support boot_v1.4 and +"
+    else
+        ifeq ($(size_map), 5)
+	@echo "Support boot_v1.4 and +"
+        else
 	@echo "Support boot_v1.2 and +"
+        endif
+    endif
 else
-	@python $(SDK_DIR)/tools/gen_appbin.py $< 1 $(mode) $(freqdiv) $(size)
+	@python $(SDK_DIR)/tools/gen_appbin.py $< 1 $(mode) $(freqdiv) $(size_map)
 	@echo "Support boot_v1.1 and +"
 endif
 

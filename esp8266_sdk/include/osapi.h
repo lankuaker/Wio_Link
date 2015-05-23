@@ -45,12 +45,13 @@
 #define os_update_cpu_frequency ets_update_cpu_frequency
 
 #ifdef USE_OPTIMIZE_PRINTF
-#define os_printf(fmt, ...) do {	\
-	static const char flash_str[] ICACHE_RODATA_ATTR = fmt;	\
-	os_printf_plus(flash_str, ##__VA_ARGS__);	\
-	} while(0)
+#define os_printf(fmt, ...) do {    \
+    static const char flash_str[] ICACHE_RODATA_ATTR = fmt; \
+    os_printf_plus(flash_str, ##__VA_ARGS__);   \
+    } while(0)
 #else
-#define os_printf	os_printf_plus
+extern int os_printf_plus(const char * format, ...) __attribute__ ((format (printf, 1, 2)));  //added by shao
+#define os_printf   os_printf_plus
 #endif
 
 #endif

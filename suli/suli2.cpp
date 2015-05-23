@@ -134,15 +134,19 @@ int suli_uart_read_bytes_timeout(UART_T *uart, uint8_t *buff, int len, int timeo
 //---------------------------------------------arduino---------------------------------------------
 #elif defined(ARDUINO)
 
-
-#if  defined (ARDUINO_USE_I2C)
+#if  defined (ARDUINO_USE_I2C) || defined(ESP8266)
 /**
  * I2C interface initialize.
  */
 void suli_i2c_init(I2C_T *i2c_device, int pin_sda, int pin_clk)
 {
+#ifdef ESP8266
+    *i2c_device = new TwoWire();  //change the pin defined in pin_arduino.h
+    (*i2c_device)->begin(SDA, SCL);
+#else
     *i2c_device = &Wire;
     (*i2c_device)->begin();
+#endif
 }
 
 
@@ -200,15 +204,29 @@ uint8_t suli_i2c_read(I2C_T *i2c_device, uint8_t dev_addr, uint8_t *buff, int le
 
 void suli_uart_init(UART_T *uart, int pin_tx, int pin_rx, uint32_t baud)
 {
-    if (pin_tx == 1 && pin_rx == 0)
+#if defined(ESP8266)  //a
+    if (pin_tx == 1 && pin_rx == 3)
     {
-#if defined(__AVR_ATmega32U4__)
-        *uart = (Stream *)&Serial1;
-        Serial1.begin(baud);
-#else
         *uart = (Stream *)&Serial;
         Serial.begin(baud);
-#endif
+    } else if (pin_tx == 2)
+    {
+        *uart = (Stream *)&Serial1;
+        Serial1.begin(baud);
+    } else
+    {
+        *uart = NULL;  //this will cause the program not passing the compiling
+    }
+#else  //a
+    if (pin_tx == 1 && pin_rx == 0)
+    {
+#if defined(__AVR_ATmega32U4__)  //b
+        *uart = (Stream *)&Serial1;
+        Serial1.begin(baud);
+#else  //b
+        *uart = (Stream *)&Serial;
+        Serial.begin(baud);
+#endif  //b
     }
 #if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
     else if (pin_tx == 18 && pin_rx == 19)
@@ -226,14 +244,14 @@ void suli_uart_init(UART_T *uart, int pin_tx, int pin_rx, uint32_t baud)
         *uart = (Stream *)&Serial3;
         Serial3.begin(baud);
     }
+#endif  //defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
+
+#endif  //a
+
 #if defined(ARDUINO_SOFTWARE_SERIAL)
-    else
-    {
-        SoftwareSerial *ser = new SoftwareSerial(pin_rx, pin_tx);
-        *uart = ser;
-        ser->begin(baud);
-    }
-#endif
+    SoftwareSerial *ser = new SoftwareSerial(pin_rx, pin_tx);
+    *uart = ser;
+    ser->begin(baud);
 #endif
 
 }

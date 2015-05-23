@@ -1,10 +1,10 @@
-/* 
+/*
  main.cpp - platform initialization and context switching
  emulation
 
  Copyright (c) 2014 Ivan Grokhotkov. All rights reserved.
  This file is part of the esp8266 core for Arduino environment.
- 
+
  This library is free software; you can redistribute it and/or
  modify it under the terms of the GNU Lesser General Public
  License as published by the Free Software Foundation; either
@@ -54,8 +54,7 @@ void preloop_update_frequency() {
 #endif
 }
 
-extern void (*__init_array_start)(void);
-extern void (*__init_array_end)(void);
+
 
 static cont_t g_cont;
 static os_event_t g_loop_queue[LOOP_QUEUE_SIZE];
@@ -85,18 +84,21 @@ extern "C" void __yield() {
 }
 extern "C" void yield(void) __attribute__ ((weak, alias("__yield")));
 
-static void loop_wrapper() {
+extern void pre_user_loop();
+
+void loop_wrapper() {
     static bool setup_done = false;
     if(!setup_done) {
         setup();
         setup_done = true;
     }
     preloop_update_frequency();
+    pre_user_loop();
     loop();
     esp_schedule();
 }
 
-static void loop_task(os_event_t *events) {
+void loop_task(os_event_t *events) {
     g_micros_at_task_start = system_get_time();
     cont_run(&g_cont, &loop_wrapper);
     if(cont_check(&g_cont) != 0) {
@@ -105,22 +107,18 @@ static void loop_task(os_event_t *events) {
     }
 }
 
-static void do_global_ctors(void) {
-    void (**p)(void);
-    for(p = &__init_array_start; p != &__init_array_end; ++p)
-        (*p)();
-}
 
-void init_done() {
+
+/*void init_done() {
     do_global_ctors();
     esp_schedule();
-}
+}*/
 
-extern "C" {
-void user_init(void) {
-    uart_div_modify(0, UART_CLK_FREQ / (115200));
 
-    init();
+void arduino_init(void) {
+    //uart_div_modify(0, UART_CLK_FREQ / (115200));
+
+    init();  //init wiring system: pins, timer1
 
     initVariant();
 
@@ -130,7 +128,7 @@ void user_init(void) {
     LOOP_TASK_PRIORITY, g_loop_queue,
     LOOP_QUEUE_SIZE);
 
-    system_init_done_cb(&init_done);
+    //system_init_done_cb(&init_done);
 }
-}
+
 

@@ -42,8 +42,6 @@
 #include "mbed.h"
 #elif defined(ARDUINO)
 #include "Arduino.h"
-#elif defined(ESP8266)
-#include "c_types.h"
 #endif
 
 
@@ -225,14 +223,22 @@ inline void suli_pwm_init(PWM_T *pwm, int pin)
  * Arduino Pins 9, 10, 11, and 3: 500Hz
  */
 inline void suli_pwm_frequency(PWM_T *pwm, uint32_t hz)
-{ }
+{
+#ifdef ESP8266
+    analogWriteFreq(hz);
+#endif
+}
 
 /**
  * void suli_pwm_output(PWM_T *, float percent)
  */
 inline void suli_pwm_output(PWM_T *pwm, float percent)
 {
+#ifdef ESP8266
+    int duty = constrain((int)(1023 * percent), 0, 1023);
+#else
     uint8_t duty = constrain((int)(255.0 * percent), 0, 255);
+#endif
     analogWrite(*pwm, duty);
 }
 
@@ -316,7 +322,7 @@ inline uint8_t suli_i2c_read(I2C_T *i2c_device, uint8_t dev_addr, uint8_t *buff,
 
 
 //-------------- Arduino ---------------
-#elif defined(ARDUINO) && defined (ARDUINO_USE_I2C)
+#elif defined(ARDUINO) && (defined (ARDUINO_USE_I2C) || defined(ESP8266))
 
 #include <Wire.h>
 
@@ -325,7 +331,7 @@ typedef TwoWire *I2C_T;
  * I2C interface initialize.
  * ignore pin definations for Arduino
  */
-void suli_i2c_init(I2C_T *i2c_device, int pin_sda, int pin_clk);
+void suli_i2c_init(I2C_T *i2c_device, int pin_sda=0, int pin_clk=0);
 
 
 /**

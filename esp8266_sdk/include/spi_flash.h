@@ -1,6 +1,6 @@
-/* 
+/*
  * copyright (c) Espressif System 2010
- * 
+ *
  */
 
 #ifndef SPI_FLASH_H
@@ -13,15 +13,18 @@ typedef enum {
 } SpiFlashOpResult;
 
 typedef struct{
-	uint32	deviceId;
-	uint32	chip_size;    // chip size in byte
-	uint32	block_size;
-	uint32  sector_size;
-	uint32  page_size;
-	uint32  status_mask;
+    uint32  deviceId;
+    uint32  chip_size;    // chip size in byte
+    uint32  block_size;
+    uint32  sector_size;
+    uint32  page_size;
+    uint32  status_mask;
 } SpiFlashChip;
 
 #define SPI_FLASH_SEC_SIZE      4096
+
+/* Hacked by community */
+extern SpiFlashChip * flashchip; // in ram ROM-BIOS
 
 uint32 spi_flash_get_id(void);
 SpiFlashOpResult spi_flash_erase_sector(uint16 sec);

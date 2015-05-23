@@ -8,5 +8,7 @@
 #define os_malloc   pvPortMalloc
 #define os_free     vPortFree
 #define os_zalloc   pvPortZalloc
+/* added by shao */
+#define os_realloc  pvPortRealloc
 
 #endif

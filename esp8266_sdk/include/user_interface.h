@@ -23,19 +23,19 @@
 #endif
 
 enum rst_reason {
-	DEFAULT_RST_FLAG	= 0,
-	WDT_RST_FLAG	= 1,
-	EXP_RST_FLAG    = 2
+    DEFAULT_RST_FLAG    = 0,
+    WDT_RST_FLAG    = 1,
+    EXP_RST_FLAG    = 2
 };
 
 struct rst_info{
-	uint32 flag;
-	uint32 exccause;
-	uint32 epc1;
-	uint32 epc2;
-	uint32 epc3;
-	uint32 excvaddr;
-	uint32 depc;
+    uint32 flag;
+    uint32 exccause;
+    uint32 epc1;
+    uint32 epc2;
+    uint32 epc3;
+    uint32 excvaddr;
+    uint32 depc;
 };
 
 #define UPGRADE_FW_BIN1         0x00
@@ -93,19 +93,19 @@ uint16 system_get_vdd33(void);
 
 const char *system_get_sdk_version(void);
 
-#define SYS_BOOT_ENHANCE_MODE	0
-#define SYS_BOOT_NORMAL_MODE	1
+#define SYS_BOOT_ENHANCE_MODE   0
+#define SYS_BOOT_NORMAL_MODE    1
 
-#define SYS_BOOT_NORMAL_BIN		0
-#define SYS_BOOT_TEST_BIN		1
+#define SYS_BOOT_NORMAL_BIN     0
+#define SYS_BOOT_TEST_BIN       1
 
 uint8 system_get_boot_version(void);
 uint32 system_get_userbin_addr(void);
 uint8 system_get_boot_mode(void);
 bool system_restart_enhance(uint8 bin_type, uint32 bin_addr);
 
-#define SYS_CPU_80MHZ	80
-#define SYS_CPU_160MHZ	160
+#define SYS_CPU_80MHZ   80
+#define SYS_CPU_160MHZ  160
 
 bool system_update_cpu_freq(uint8 freq);
 uint8 system_get_cpu_freq(void);
@@ -156,7 +156,7 @@ typedef void (* scan_done_cb_t)(void *arg, STATUS status);
 struct station_config {
     uint8 ssid[32];
     uint8 password[64];
-    uint8 bssid_set;	// Note: If bssid_set is 1, station will just connect to the router
+    uint8 bssid_set;    // Note: If bssid_set is 1, station will just connect to the router
                         // with both ssid[] and bssid[] matched. Please check about this.
     uint8 bssid[6];
 };
@@ -170,10 +170,10 @@ bool wifi_station_connect(void);
 bool wifi_station_disconnect(void);
 
 struct scan_config {
-    uint8 *ssid;	// Note: ssid == NULL, don't filter ssid.
-    uint8 *bssid;	// Note: bssid == NULL, don't filter bssid.
-    uint8 channel;	// Note: channel == 0, scan all channels, otherwise scan set channel.
-    uint8 show_hidden;	// Note: show_hidden == 1, can get hidden ssid routers' info.
+    uint8 *ssid;    // Note: ssid == NULL, don't filter ssid.
+    uint8 *bssid;   // Note: bssid == NULL, don't filter bssid.
+    uint8 channel;  // Note: channel == 0, scan all channels, otherwise scan set channel.
+    uint8 show_hidden;  // Note: show_hidden == 1, can get hidden ssid routers' info.
 };
 
 bool wifi_station_scan(struct scan_config *config, scan_done_cb_t cb);
@@ -191,8 +191,8 @@ enum {
 };
 
 enum dhcp_status {
-	DHCP_STOPPED,
-	DHCP_STARTED
+    DHCP_STOPPED,
+    DHCP_STARTED
 };
 
 uint8 wifi_station_get_connect_status(void);
@@ -208,12 +208,12 @@ enum dhcp_status wifi_station_dhcpc_status(void);
 struct softap_config {
     uint8 ssid[32];
     uint8 password[64];
-    uint8 ssid_len;	// Note: Recommend to set it according to your ssid
-    uint8 channel;	// Note: support 1 ~ 13
-    AUTH_MODE authmode;	// Note: Don't support AUTH_WEP in softAP mode.
-    uint8 ssid_hidden;	// Note: default 0
-    uint8 max_connection;	// Note: default 4, max 4
-    uint16 beacon_interval;	// Note: support 100 ~ 60000 ms, default 100
+    uint8 ssid_len; // Note: Recommend to set it according to your ssid
+    uint8 channel;  // Note: support 1 ~ 13
+    AUTH_MODE authmode; // Note: Don't support AUTH_WEP in softAP mode.
+    uint8 ssid_hidden;  // Note: default 0
+    uint8 max_connection;   // Note: default 4, max 4
+    uint16 beacon_interval; // Note: support 100 ~ 60000 ms, default 100
 };
 
 bool wifi_softap_get_config(struct softap_config *config);
@@ -222,15 +222,15 @@ bool wifi_softap_set_config(struct softap_config *config);
 bool wifi_softap_set_config_current(struct softap_config *config);
 
 struct station_info {
-	STAILQ_ENTRY(station_info)	next;
+    STAILQ_ENTRY(station_info)  next;
 
-	uint8 bssid[6];
-	struct ip_addr ip;
+    uint8 bssid[6];
+    struct ip_addr ip;
 };
 
 struct dhcps_lease {
-	uint32 start_ip;
-	uint32 end_ip;
+    uint32 start_ip;
+    uint32 end_ip;
 };
 
 struct station_info * wifi_softap_get_station_info(void);
@@ -269,21 +269,23 @@ void wifi_set_promiscuous_rx_cb(wifi_promiscuous_cb_t cb);
 void wifi_promiscuous_set_mac(const uint8_t *address);
 
 enum phy_mode {
-	PHY_MODE_11B	= 1,
-	PHY_MODE_11G	= 2,
-	PHY_MODE_11N    = 3
+    PHY_MODE_11B    = 1,
+    PHY_MODE_11G    = 2,
+    PHY_MODE_11N    = 3
 };
 
 enum phy_mode wifi_get_phy_mode(void);
 bool wifi_set_phy_mode(enum phy_mode mode);
 
 enum sleep_type {
-	NONE_SLEEP_T	= 0,
-	LIGHT_SLEEP_T,
-	MODEM_SLEEP_T
+    NONE_SLEEP_T    = 0,
+    LIGHT_SLEEP_T,
+    MODEM_SLEEP_T
 };
 
 bool wifi_set_sleep_type(enum sleep_type type);
 enum sleep_type wifi_get_sleep_type(void);
+
+void user_rf_pre_init(void);
 
 #endif
