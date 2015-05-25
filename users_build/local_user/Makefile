@@ -306,7 +306,6 @@ else
 	@python $(SDK_DIR)/tools/gen_appbin.py $< 1 $(mode) $(freqdiv) $(size_map)
 	@echo "Support boot_v1.1 and +"
 endif
-
 	@mv eagle.app.flash.bin $(OUTPUT).bin
 	@rm eagle.app.v6.*
 	@echo "Generate $(BIN_NAME).bin successully."

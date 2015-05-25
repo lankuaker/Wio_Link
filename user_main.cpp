@@ -10,16 +10,13 @@
 *******************************************************************************/
 extern "C"
 {
-#include <stddef.h>
-#include "c_types.h"
-#include "osapi.h"
-#include "at_custom.h"
-#include "user_interface.h"
+#include "esp8266.h"
 }
 
 extern void (*__init_array_start)(void);
 extern void (*__init_array_end)(void);
 extern "C" void system_phy_set_rfoption(uint8 option);
+extern "C" bool system_os_post(uint8 prio, os_signal_t sig, os_param_t par);
 
 extern void arduino_init(void);
 extern "C" void esp_schedule();
@@ -34,14 +31,15 @@ void init_done()
 {
     do_global_ctors();
     esp_schedule();
-}
 
+}
 
 extern "C"
 void user_rf_pre_init()
 {
     system_phy_set_rfoption(1);
 }
+
 
 /**
  * Global function needed by libmain.a when linking
@@ -52,6 +50,10 @@ void user_rf_pre_init()
 extern "C"
 void user_init(void)
 {
+    uart_div_modify(0, UART_CLK_FREQ / (115200));
+
+
+
     arduino_init();
     system_init_done_cb(&init_done);
 }

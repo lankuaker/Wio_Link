@@ -4,6 +4,7 @@
 extern "C"{
 #endif
 
+#include <stdlib.h>
 #include <stddef.h>
 #include "c_types.h"
 #include "ip_addr.h"

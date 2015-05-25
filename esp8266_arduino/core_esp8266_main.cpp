@@ -31,6 +31,7 @@ extern "C" {
 #include "user_interface.h"
 #include "cont.h"
 }
+
 #define LOOP_TASK_PRIORITY 0
 #define LOOP_QUEUE_SIZE    1
 

@@ -37,7 +37,6 @@ at_upDate_rsp(void *arg)
     {
         Serial.println("device_upgrade_success\r\n");
         wifi_station_disconnect();
-        delay(1000);
         system_upgrade_reboot();
     } else
     {
@@ -76,9 +75,11 @@ at_exeCmdCiupdate(uint8_t id)
 
     if(system_upgrade_userbin_check() == UPGRADE_FW_BIN1)
     {
+        Serial.printf("Running user1.bin \r\n\r\n");
         os_memcpy(user_bin, "user2.bin", 10);
     } else if(system_upgrade_userbin_check() == UPGRADE_FW_BIN2)
     {
+        Serial.printf("Running user2.bin \r\n\r\n");
         os_memcpy(user_bin, "user1.bin", 10);
     }
 
@@ -96,9 +97,30 @@ at_exeCmdCiupdate(uint8_t id)
     }
 }
 
+static int cnt = 0;
+
+os_timer_t t1;
+
+void print_cnt(void *arg)
+{
+    int *counter = (int *)arg;
+    Serial.printf("cnt: %d \r\n", *counter);
+}
+void task1(os_event_t *event)
+{
+    Serial.println("task1");
+    cnt++;
+    os_timer_arm(&t1, 1, 0);
+}
+void task2(os_event_t *event)
+{
+    Serial.print("task2");
+    Serial.println(cnt);
+}
 
 struct station_config config;
-
+static os_event_t q1[2];
+static os_event_t q2[2];
 
 // the setup function runs once when you press reset or power the board
 void setup()
@@ -114,6 +136,9 @@ void setup()
     wifi_station_set_config_current(&config);
     wifi_station_disconnect();
     wifi_station_connect();
+    system_os_task(task1, USER_TASK_PRIO_1, q1, 2);
+    os_timer_disarm(&t1);
+    os_timer_setfn(&t1, print_cnt, &cnt);
 
 }
 
@@ -126,7 +151,7 @@ void loop()
     delay(1000);              // wait for a second
     digitalWrite(12, LOW);    // turn the LED off by making the voltage LOW
     delay(200);              // wait for a second
-    Serial.println("hello");
+    Serial.println("hello2");
     //suli_i2c_write(&i2c, 0, "adfasdfasd", 5);
     if(Serial.available()>0)
     {
@@ -137,5 +162,10 @@ void loop()
             at_exeCmdCiupdate(0);
         }
     }
+    system_os_post(USER_TASK_PRIO_1, 0, 0);
+    uint8_t app = system_upgrade_userbin_check() + 1;
+    Serial.print("user");
+    Serial.println(app);
+
 }
 
