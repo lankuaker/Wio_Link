@@ -1,0 +1,5 @@
+Grove_Example1:
+    name: Grove_Example
+    construct_arg_list:
+        pinsda: 2
+        pinscl: 4

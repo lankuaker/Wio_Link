@@ -18,6 +18,8 @@ bool grove_example_read_acc(I2C_T *i2c, float *ax, float *ay, float *az);
 
 bool grove_example_read_compass(I2C_T *i2c, float *cx, float *cy, float *cz, int *degree);
 
+bool grove_example_read_with_arg(I2C_T *i2c, float *cx, float *cy, float *cz, int *degree, int arg);
+
 bool grove_example_write_acc_mode(I2C_T *i2c, uint8_t mode);
 
 bool grove_example_write_float_value(I2C_T *i2c, float f);

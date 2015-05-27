@@ -37,6 +37,12 @@ bool grove_example_read_compass(I2C_T *i2c, float *cx, float *cy, float *cz, int
     return true;
 }
 
+bool grove_example_read_with_arg(I2C_T *i2c, float *cx, float *cy, float *cz, int *degree, int arg)
+{
+    *cx = 12.3; *cy = 45.6; *cz = 78.0; *degree = arg;
+    return true;
+}
+
 bool grove_example_write_acc_mode(I2C_T *i2c, uint8_t mode)
 {
     suli_i2c_write(i2c, 0x00, &mode, 1);
@@ -45,6 +51,9 @@ bool grove_example_write_acc_mode(I2C_T *i2c, uint8_t mode)
 
 bool grove_example_write_float_value(I2C_T *i2c, float f)
 {
+    String str(f);
+    Serial1.print("get float: ");
+    Serial1.println(str);
     return false;
 }
 

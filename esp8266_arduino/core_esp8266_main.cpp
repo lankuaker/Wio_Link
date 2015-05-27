@@ -55,7 +55,15 @@ void preloop_update_frequency() {
 #endif
 }
 
-
+/**
+ * init cpp stuff
+ */
+extern void (*__init_array_start)(void);
+extern void (*__init_array_end)(void);
+void do_global_ctors(void) {
+    void(**p)(void);
+    for(p = &__init_array_start; p != &__init_array_end; ++p) (*p)();
+}
 
 static cont_t g_cont;
 static os_event_t g_loop_queue[LOOP_QUEUE_SIZE];
@@ -86,10 +94,12 @@ extern "C" void __yield() {
 extern "C" void yield(void) __attribute__ ((weak, alias("__yield")));
 
 extern void pre_user_loop();
+extern void pre_user_setup();
 
 void loop_wrapper() {
     static bool setup_done = false;
     if(!setup_done) {
+        pre_user_setup();
         setup();
         setup_done = true;
     }
@@ -119,15 +129,13 @@ void loop_task(os_event_t *events) {
 void arduino_init(void) {
     //uart_div_modify(0, UART_CLK_FREQ / (115200));
 
-    init();  //init wiring system: pins, timer1
+    init();  //disable uart0 debug, init wiring system: pins, timer1
 
     initVariant();
 
     cont_init(&g_cont);
 
-    system_os_task(loop_task,
-    LOOP_TASK_PRIORITY, g_loop_queue,
-    LOOP_QUEUE_SIZE);
+    system_os_task(loop_task, LOOP_TASK_PRIORITY, g_loop_queue, LOOP_QUEUE_SIZE);
 
     //system_init_done_cb(&init_done);
 }

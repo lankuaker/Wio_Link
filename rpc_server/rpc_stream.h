@@ -11,6 +11,8 @@ char stream_read();
 
 bool stream_write(char c);
 
+int stream_available();
+
 void writer_print(type_t type, const void *data, bool append_comma = false);
 
 void response_msg_open(char *msg_type);

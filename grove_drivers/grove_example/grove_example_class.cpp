@@ -34,6 +34,11 @@ bool GroveExample::read_compass(float *cx, float *cy, float *cz, int *degree)
     return grove_example_read_compass(this->i2c, cx, cy, cz, degree);
 }
 
+bool GroveExample::read_with_arg(float *cx, float *cy, float *cz, int *degree, int arg)
+{
+    return grove_example_read_with_arg(this->i2c, cx, cy, cz, degree, arg);
+}
+
 bool GroveExample::write_acc_mode(uint8_t mode)
 {
     return grove_example_write_acc_mode(this->i2c, mode);

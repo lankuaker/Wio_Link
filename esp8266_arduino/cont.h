@@ -1,8 +1,8 @@
-/* 
+/*
  cont.h - continuations support for Xtensa call0 ABI
  Copyright (c) 2014 Ivan Grokhotkov. All rights reserved.
  This file is part of the esp8266 core for Arduino environment.
- 
+
  This library is free software; you can redistribute it and/or
  modify it under the terms of the GNU Lesser General Public
  License as published by the Free Software Foundation; either
@@ -22,7 +22,7 @@
 #define CONT_H_
 
 #ifndef CONT_STACKSIZE
-#define CONT_STACKSIZE 4096
+#define CONT_STACKSIZE 8192
 #endif
 
 typedef struct cont_ {

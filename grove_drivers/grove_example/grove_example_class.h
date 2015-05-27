@@ -18,6 +18,7 @@ public:
     bool read_humidity(float *humidity);
     bool read_acc(float *ax, float *ay, float *az);
     bool read_compass(float *cx, float *cy, float *cz, int *degree);
+    bool read_with_arg(float *cx, float *cy, float *cz, int *degree, int arg);
     bool write_acc_mode(uint8_t mode);
     bool write_float_value(float f);
     bool write_multi_value(int a, float b, int8_t c);

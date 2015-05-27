@@ -1,13 +1,15 @@
 #  copyright (c) 2015 seeed.cc
 #
 
-APP?=0
+COMPILE?=gcc
+BOOT?=new
+APP?=1
 SPI_SPEED?=40
 SPI_MODE?=QIO
-SPI_SIZE_MAP?=6
+SPI_SIZE_MAP?=4
 
-GROVES ?=  #it's a list of grove driver directions, passed in by caller
-#GROVES ?= grove_example #it's a list of grove driver directions, passed in by caller
+#GROVES ?=  #it's a list of grove driver directions, passed in by caller
+GROVES ?= grove_example #it's a list of grove driver directions, passed in by caller
 
 BASE_DIR = ../..
 SDK_DIR = $(BASE_DIR)/esp8266_sdk
@@ -164,9 +166,11 @@ rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 
 C_SRC = $(notdir $(call rwildcard,$(ARDUINO_DIR),*.c))
 C_SRC += $(notdir $(call rwildcard,./,*.c))
+C_SRC += $(notdir $(call rwildcard,$(BASE_DIR),*.c))
 
 CPP_SRC = $(notdir $(call rwildcard,$(ARDUINO_DIR),*.cpp))
 CPP_SRC += $(notdir $(call rwildcard,./,*.cpp))
+CPP_SRC += $(notdir $(call rwildcard,$(BASE_DIR),*.cpp))
 
 s_SRC = $(notdir $(call rwildcard,$(ARDUINO_DIR),*.s))
 s_SRC += $(notdir $(call rwildcard,./,*.s))
@@ -177,7 +181,7 @@ s_SRC += $(notdir $(call rwildcard,./,*.s))
 OBJECTS_NONCPP = 
 OBJECTS_NONCPP += $(C_SRC:%.c=%.o) $(s_SRC:%.s=%.o) $(S_SRC:%.S=%.o) 
 
-OBJECTS_CPP = user_main.cpp.o suli2.cpp.o
+OBJECTS_CPP = suli2.cpp.o network.cpp.o rpc_server.cpp.o rpc_stream.cpp.o
 OBJECTS_CPP += $(CPP_SRC:%.cpp=%.cpp.o) 
 ## for each grove driver to be compiled
 OBJECTS_CPP += $(foreach g,$(GROVES),$(g).cpp.o $(g)_class.cpp.o $(g)_gen.cpp.o)
@@ -190,6 +194,8 @@ ALL_USER_SRC += $(dir $(call rwildcard,./,*.c))
 ALL_USER_SRC += $(dir $(call rwildcard,./,*.cpp))
 ALL_USER_SRC_DIR = $(sort $(ALL_USER_SRC))
 
+$(info "groves:")
+$(info $GROVES)
 $(info "all user's src dirs:")
 $(info $(ALL_USER_SRC_DIR))
 

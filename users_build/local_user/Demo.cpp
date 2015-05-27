@@ -127,16 +127,15 @@ void setup()
 {
     // initialize digital pin 13 as an output.
     pinMode(12, OUTPUT);
-    Serial.begin(9600);
+    Serial.begin(115200);
     //suli_i2c_init(&i2c, 0, 0);
+#if 0
     wifi_set_opmode_current(0x01);
-    delay(3000);
     memcpy(config.ssid, "Xiaomi_Blindeggb", 17);
     memcpy(config.password, "~375837~",9);
     wifi_station_set_config_current(&config);
-    wifi_station_disconnect();
-    wifi_station_connect();
-    system_os_task(task1, USER_TASK_PRIO_1, q1, 2);
+#endif
+    system_os_task(task1, USER_TASK_PRIO_2, q1, 2);
     os_timer_disarm(&t1);
     os_timer_setfn(&t1, print_cnt, &cnt);
 
@@ -145,6 +144,8 @@ void setup()
 // the loop function runs over and over again forever
 void loop()
 {
+    delay(1);
+    return;
     Serial.println(wifi_station_get_connect_status());
     Serial.flush();
     digitalWrite(12, HIGH);   // turn the LED on (HIGH is the voltage level)
@@ -162,10 +163,11 @@ void loop()
             at_exeCmdCiupdate(0);
         }
     }
-    system_os_post(USER_TASK_PRIO_1, 0, 0);
+    system_os_post(USER_TASK_PRIO_2, 0, 0);
     uint8_t app = system_upgrade_userbin_check() + 1;
     Serial.print("user");
     Serial.println(app);
 
+    os_printf("test print from loop 3333\r\n");
 }
 

@@ -1,8 +1,8 @@
-/* 
+/*
  cbuf.h - Circular buffer implementation
  Copyright (c) 2014 Ivan Grokhotkov. All rights reserved.
  This file is part of the esp8266 core for Arduino environment.
- 
+
  This library is free software; you can redistribute it and/or
  modify it under the terms of the GNU Lesser General Public
  License as published by the Free Software Foundation; either
@@ -66,15 +66,19 @@ class cbuf {
             size_t bytes_available = getSize();
             size_t size_to_read = (size < bytes_available) ? size : bytes_available;
             size_t size_read = size_to_read;
-            if(_end < _begin && size_to_read > _bufend - _begin) {
+            if((_end < _begin) && (size_to_read > (_bufend - _begin))) {  //mod by jack
                 size_t top_size = _bufend - _begin;
-                memcpy(dst, _begin, top_size);
+                if(top_size > 0) {
+                    memcpy(dst, _begin, top_size);
+                }
                 _begin = _buf;
                 size_to_read -= top_size;
                 dst += top_size;
             }
-            memcpy(dst, _begin, size_to_read);
-            _begin += size_to_read;
+            if(size_to_read > 0) {
+                memcpy(dst, _begin, size_to_read);
+                _begin += size_to_read;
+            }
             if(_begin == _bufend) _begin = _buf;
             return size_read;
         }
@@ -91,15 +95,19 @@ class cbuf {
             size_t bytes_available = room();
             size_t size_to_write = (size < bytes_available) ? size : bytes_available;
             size_t size_written = size_to_write;
-            if(_end > _begin && size_to_write > _bufend - _end) {
+            if((_end > _begin) && (size_to_write > (_bufend - _end))) {  //mod by jack
                 size_t top_size = _bufend - _end;
-                memcpy(_end, src, top_size);
+                if(top_size > 0) {
+                    memcpy(_end, src, top_size);
+                }
                 _end = _buf;
                 size_to_write -= top_size;
                 src += top_size;
             }
-            memcpy(_end, src, size_to_write);
-            _end += size_to_write;
+            if(size_to_write > 0) {
+                memcpy(_end, src, size_to_write);
+                _end += size_to_write;
+            }
             if(_end == _bufend) _end = _buf;
             return size_written;
         }

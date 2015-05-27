@@ -1,8 +1,8 @@
-/* 
+/*
  Esp.cpp - ESP8266-specific APIs
  Copyright (c) 2015 Ivan Grokhotkov. All rights reserved.
  This file is part of the esp8266 core for Arduino environment.
- 
+
  This library is free software; you can redistribute it and/or
  modify it under the terms of the GNU Lesser General Public
  License as published by the Free Software Foundation; either
@@ -27,7 +27,7 @@ extern "C" {
 //extern "C" void ets_wdt_init(uint32_t val);
 extern "C" void ets_wdt_enable(void);
 extern "C" void ets_wdt_disable(void);
-extern "C" void wdt_feed(void);
+extern "C" void ets_wdt_restore(void);
 
 /**
  * User-defined Literals
@@ -83,7 +83,7 @@ EspClass::EspClass()
 void EspClass::wdtEnable(uint32_t timeout_ms)
 {
     //todo find doku for ets_wdt_init may set the timeout
-	ets_wdt_enable();
+    ets_wdt_enable();
 }
 
 void EspClass::wdtEnable(WDTO_t timeout_ms)
@@ -93,23 +93,23 @@ void EspClass::wdtEnable(WDTO_t timeout_ms)
 
 void EspClass::wdtDisable(void)
 {
-	ets_wdt_disable();
+    ets_wdt_disable();
 }
 
 void EspClass::wdtFeed(void)
 {
-	wdt_feed();
+    ets_wdt_restore();
 }
 
 void EspClass::deepSleep(uint32_t time_us, WakeMode mode)
 {
-	system_deep_sleep_set_option(static_cast<int>(mode));
- 	system_deep_sleep(time_us);
+    system_deep_sleep_set_option(static_cast<int>(mode));
+    system_deep_sleep(time_us);
 }
 
 void EspClass::reset(void)
 {
-	((void (*)(void))0x40000080)();
+    ((void (*)(void))0x40000080)();
 }
 
 void EspClass::restart(void)
