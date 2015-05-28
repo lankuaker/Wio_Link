@@ -195,7 +195,7 @@ ALL_USER_SRC += $(dir $(call rwildcard,./,*.cpp))
 ALL_USER_SRC_DIR = $(sort $(ALL_USER_SRC))
 
 $(info "groves:")
-$(info $GROVES)
+$(info $(GROVES))
 $(info "all user's src dirs:")
 $(info $(ALL_USER_SRC_DIR))
 

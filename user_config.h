@@ -7,3 +7,5 @@
 #define NODE_NAME                   "iot_node_1"
 #define SERVER_IP                   {192,168,18,147}
 #define SERVER_PORT                 8000
+#define OTA_SERVER_IP               { 192, 168, 18, 149 }
+#define OTA_SERVER_PORT             80

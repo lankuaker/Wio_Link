@@ -5,7 +5,7 @@
 #include "rpc_server.h"
 #include "Arduino.h"
 #include "network.h"
-#include "cbuf.h"
+#include "ota.h"
 
 
 resource_t *p_first_resource;
@@ -422,8 +422,22 @@ void rpc_server_loop()
             case DIVE_INTO_OTA:
                 {
                     //TODO: refer to the ota related code here
+                    ch = stream_read();
+                    while (ch != '\r' && ch != '\n')
+                    {
+                        ch = stream_read();
+                    }
+                    //espconn_disconnect(&main_conn);
+                    parse_stage = PARSE_REQ_TYPE;
+                    ota_start();
+                    while (!ota_fini)
+                    {
+                        digitalWrite(STATUS_LED, ~digitalRead(STATUS_LED));
+                        delay(50);
+                    }
                     break;
                 }
+
             default:
                 break;
         }

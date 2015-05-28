@@ -1,0 +1,412 @@
+../../network.cpp: In function 'void user_devicefind_recv(void*, char*, short unsigned int)':
+../../network.cpp:80:43: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+         wifi_get_macaddr(SOFTAP_IF, hwaddr);
+                                           ^
+In file included from ../../esp8266.h:23:0,
+                 from ../../network.cpp:2:
+../../esp8266_sdk/include/user_interface.h:250:6: warning:   initializing argument 2 of 'bool wifi_get_macaddr(uint8, uint8*)' [-fpermissive]
+ bool wifi_get_macaddr(uint8 if_index, uint8 *macaddr);
+      ^
+../../network.cpp:85:48: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+             wifi_get_macaddr(STATION_IF, hwaddr);
+                                                ^
+In file included from ../../esp8266.h:23:0,
+                 from ../../network.cpp:2:
+../../esp8266_sdk/include/user_interface.h:250:6: warning:   initializing argument 2 of 'bool wifi_get_macaddr(uint8, uint8*)' [-fpermissive]
+ bool wifi_get_macaddr(uint8 if_index, uint8 *macaddr);
+      ^
+../../network.cpp:89:44: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+         wifi_get_macaddr(STATION_IF, hwaddr);
+                                            ^
+In file included from ../../esp8266.h:23:0,
+                 from ../../network.cpp:2:
+../../esp8266_sdk/include/user_interface.h:250:6: warning:   initializing argument 2 of 'bool wifi_get_macaddr(uint8, uint8*)' [-fpermissive]
+ bool wifi_get_macaddr(uint8 if_index, uint8 *macaddr);
+      ^
+../../network.cpp:103:53: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+         espconn_sent(conn, Device_mac_buffer, length);
+                                                     ^
+In file included from ../../esp8266.h:12:0,
+                 from ../../network.cpp:2:
+../../esp8266_sdk/include/espconn.h:276:7: warning:   initializing argument 2 of 'sint8 espconn_sent(espconn*, uint8*, uint16)' [-fpermissive]
+ sint8 espconn_sent(struct espconn *espconn, uint8 *psent, uint16 length);
+       ^
+../../network.cpp: In function 'void main_connection_recv_cb(void*, char*, short unsigned int)':
+../../network.cpp:118:32: warning: invalid conversion from 'void*' to 'espconn*' [-fpermissive]
+     struct espconn *pespconn = arg;
+                                ^
+../../network.cpp: In function 'void main_connection_sent_cb(void*)':
+../../network.cpp:144:32: warning: invalid conversion from 'void*' to 'espconn*' [-fpermissive]
+     struct espconn *pespconn = arg;
+                                ^
+../../network.cpp:153:42: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+         espconn_sent(pespconn, data, size);
+                                          ^
+In file included from ../../esp8266.h:12:0,
+                 from ../../network.cpp:2:
+../../esp8266_sdk/include/espconn.h:276:7: warning:   initializing argument 2 of 'sint8 espconn_sent(espconn*, uint8*, uint16)' [-fpermissive]
+ sint8 espconn_sent(struct espconn *espconn, uint8 *psent, uint16 length);
+       ^
+../../network.cpp: In function 'void confirm_hello(void*)':
+../../network.cpp:197:66: warning: invalid conversion from 'const char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+         espconn_sent(pespconn, ACCESS_TOKEN, strlen(ACCESS_TOKEN));
+                                                                  ^
+In file included from ../../esp8266.h:12:0,
+                 from ../../network.cpp:2:
+../../esp8266_sdk/include/espconn.h:276:7: warning:   initializing argument 2 of 'sint8 espconn_sent(espconn*, uint8*, uint16)' [-fpermissive]
+ sint8 espconn_sent(struct espconn *espconn, uint8 *psent, uint16 length);
+       ^
+../../network.cpp: In function 'void main_connection_connected_callback(void*)':
+../../network.cpp:230:42: warning: invalid conversion from 'const char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+     espconn_sent(pespconn, "hello\r\n", 7);
+                                          ^
+In file included from ../../esp8266.h:12:0,
+                 from ../../network.cpp:2:
+../../esp8266_sdk/include/espconn.h:276:7: warning:   initializing argument 2 of 'sint8 espconn_sent(espconn*, uint8*, uint16)' [-fpermissive]
+ sint8 espconn_sent(struct espconn *espconn, uint8 *psent, uint16 length);
+       ^
+../../network.cpp: In function 'void main_connection_reconnect_callback(void*, sint8)':
+../../network.cpp:249:64: warning: invalid conversion from 'void (*)()' to 'void (*)(void*)' [-fpermissive]
+     os_timer_setfn(&timer_main_conn, main_connection_init, NULL);
+                                                                ^
+In file included from ../../esp8266.h:13:0,
+                 from ../../network.cpp:2:
+../../esp8266_sdk/include/ets_sys.h:101:6: warning:   initializing argument 2 of 'void ets_timer_setfn(ETSTimer*, void (*)(void*), void*)' [-fpermissive]
+ void ets_timer_setfn(ETSTimer *t, ETSTimerFunc *fn, void *parg);
+      ^
+../../network.cpp: In function 'void main_connection_init()':
+../../network.cpp:311:76: warning: invalid conversion from 'void (*)()' to 'void (*)(void*)' [-fpermissive]
+     os_timer_setfn(&timer_network_check, network_check_timer_callback, NULL);
+                                                                            ^
+In file included from ../../esp8266.h:13:0,
+                 from ../../network.cpp:2:
+../../esp8266_sdk/include/ets_sys.h:101:6: warning:   initializing argument 2 of 'void ets_timer_setfn(ETSTimer*, void (*)(void*), void*)' [-fpermissive]
+ void ets_timer_setfn(ETSTimer *t, ETSTimerFunc *fn, void *parg);
+      ^
+../../rpc_server/rpc_server.cpp: In function 'void rpc_server_loop()':
+../../rpc_server/rpc_server.cpp:177:34: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+         response_msg_open("event");
+                                  ^
+../../rpc_server/rpc_server.cpp:222:53: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+                         response_msg_open("resp_get");
+                                                     ^
+../../rpc_server/rpc_server.cpp:230:54: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+                         response_msg_open("resp_post");
+                                                      ^
+../../rpc_server/rpc_server.cpp:238:57: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+                         response_msg_open("ota_trig_ack");
+                                                         ^
+../../rpc_server/rpc_stream.cpp: In function 'char stream_read()':
+../../rpc_server/rpc_stream.cpp:22:19: warning: converting to non-pointer type 'char' from NULL [-Wconversion-null]
+     } else return NULL;
+                   ^
+../../rpc_server/rpc_stream.cpp: In function 'void writer_print(type_t, const void*, bool)':
+../../rpc_server/rpc_stream.cpp:78:52: warning: passing NULL to non-pointer argument 2 of 'char* dtostrf(double, signed char, unsigned char, char*)' [-Wconversion-null]
+             dtostrf((*(float *)data), NULL, 2, buff);
+                                                    ^
+../../rpc_server/rpc_stream.cpp:81:58: warning: invalid conversion from 'const void*' to 'const char*' [-fpermissive]
+             stream_write_string((char *)data, strlen(data));
+                                                          ^
+../../rpc_server/rpc_stream.cpp: In function 'void response_msg_open(char*)':
+../../rpc_server/rpc_stream.cpp:92:18: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     char *msg1 = "{\"msg_type\":\"";
+                  ^
+../../rpc_server/rpc_stream.cpp:93:18: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     char *msg2 = "\", \"msg\":\"";
+                  ^
+../../rpc_server/rpc_stream.cpp: In function 'void response_msg_close()':
+../../rpc_server/rpc_stream.cpp:102:18: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     char *msg3 = "\"}\r\n";
+                  ^
+In file included from ../../esp8266_arduino/pgmspace.h:9:0,
+                 from ../../esp8266_arduino/Arduino.h:38,
+                 from ../../esp8266_arduino/HardwareSerial.cpp:30:
+../../esp8266_arduino/HardwareSerial.cpp: In function 'void uart_interrupt_enable(uart_t*)':
+../../esp8266_sdk/include/ets_sys.h:58:56: warning: invalid conversion from 'void (*)(uart_t*) {aka void (*)(uart_*)}' to 'int_handler_t {aka void (*)(void*)}' [-fpermissive]
+     ets_isr_attach(ETS_UART_INUM, (func), (void *)(arg))
+                                                        ^
+../../esp8266_arduino/HardwareSerial.cpp:226:5: note: in expansion of macro 'ETS_UART_INTR_ATTACH'
+     ETS_UART_INTR_ATTACH(&uart_interrupt_handler, uart); // uart parameter is not osed in irq function!
+     ^
+../../esp8266_sdk/include/ets_sys.h:117:6: warning:   initializing argument 2 of 'void ets_isr_attach(int, int_handler_t, void*)' [-fpermissive]
+ void ets_isr_attach(int intr, int_handler_t handler, void *arg);
+      ^
+Demo.cpp: In function 'void at_upDate_rsp(void*)':
+Demo.cpp:33:42: warning: invalid conversion from 'void*' to 'upgrade_server_info*' [-fpermissive]
+     struct upgrade_server_info *server = arg;
+                                          ^
+Demo.cpp: In function 'void at_exeCmdCiupdate(uint8_t)':
+Demo.cpp:88:50: warning: invalid conversion from 'uint8* {aka unsigned char*}' to 'char*' [-fpermissive]
+                user_bin, IP2STR(upServer->ip), 80);
+                                                  ^
+In file included from ../../esp8266.h:13:0,
+                 from Demo.cpp:16:
+../../esp8266_sdk/include/ets_sys.h:110:5: warning:   initializing argument 1 of 'int ets_sprintf(char*, const char*, ...)' [-fpermissive]
+ int ets_sprintf(char *str, const char *format, ...)  __attribute__ ((format (printf, 2, 3)));
+     ^
+rpc_server_registration.cpp: In function 'void rpc_server_register_resources()':
+rpc_server_registration.cpp:15:123: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     rpc_server_register_method("Grove_Example1", "temp", METHOD_READ, __grove_example_read_temp, Grove_Example1, arg_types);
+                                                                                                                           ^
+rpc_server_registration.cpp:15:123: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:17:137: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     rpc_server_register_method("Grove_Example1", "uint8_value", METHOD_READ, __grove_example_read_uint8_value, Grove_Example1, arg_types);
+                                                                                                                                         ^
+rpc_server_registration.cpp:17:137: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:20:131: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     rpc_server_register_method("Grove_Example1", "with_arg", METHOD_READ, __grove_example_read_with_arg, Grove_Example1, arg_types);
+                                                                                                                                   ^
+rpc_server_registration.cpp:20:131: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:22:129: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     rpc_server_register_method("Grove_Example1", "compass", METHOD_READ, __grove_example_read_compass, Grove_Example1, arg_types);
+                                                                                                                                 ^
+rpc_server_registration.cpp:22:129: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:24:121: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     rpc_server_register_method("Grove_Example1", "acc", METHOD_READ, __grove_example_read_acc, Grove_Example1, arg_types);
+                                                                                                                         ^
+rpc_server_registration.cpp:24:121: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:26:131: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     rpc_server_register_method("Grove_Example1", "humidity", METHOD_READ, __grove_example_read_humidity, Grove_Example1, arg_types);
+                                                                                                                                   ^
+rpc_server_registration.cpp:26:131: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:32:139: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     rpc_server_register_method("Grove_Example1", "multi_value", METHOD_WRITE, __grove_example_write_multi_value, Grove_Example1, arg_types);
+                                                                                                                                           ^
+rpc_server_registration.cpp:32:139: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:35:133: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     rpc_server_register_method("Grove_Example1", "acc_mode", METHOD_WRITE, __grove_example_write_acc_mode, Grove_Example1, arg_types);
+                                                                                                                                     ^
+rpc_server_registration.cpp:35:133: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:38:139: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     rpc_server_register_method("Grove_Example1", "float_value", METHOD_WRITE, __grove_example_write_float_value, Grove_Example1, arg_types);
+                                                                                                                                           ^
+rpc_server_registration.cpp:38:139: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+../../ota.cpp: In function 'void ota_response(void*)':
+../../ota.cpp:28:42: warning: invalid conversion from 'void*' to 'upgrade_server_info*' [-fpermissive]
+     struct upgrade_server_info *server = arg;
+                                          ^
+../../ota.cpp:36:39: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+         response_msg_open("ota_result");
+                                       ^
+../../ota.cpp:44:39: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+         response_msg_open("ota_result");
+                                       ^
+../../ota.cpp: In function 'void ota_start()':
+../../ota.cpp:91:63: warning: invalid conversion from 'uint8* {aka unsigned char*}' to 'char*' [-fpermissive]
+                user_bin, IP2STR(upServer->ip), OTA_SERVER_PORT);
+                                                               ^
+In file included from ../../esp8266.h:13:0,
+                 from ../../ota.cpp:4:
+../../esp8266_sdk/include/ets_sys.h:110:5: warning:   initializing argument 1 of 'int ets_sprintf(char*, const char*, ...)' [-fpermissive]
+ int ets_sprintf(char *str, const char *format, ...)  __attribute__ ((format (printf, 2, 3)));
+     ^
+../../grove_drivers/grove_example/grove_example.cpp: In function 'void _trigger()':
+../../grove_drivers/grove_example/grove_example.cpp:91:44: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     suli_event_trigger(&event1, "fire", 250);
+                                            ^
+../../network.cpp: In function 'void user_devicefind_recv(void*, char*, short unsigned int)':
+../../network.cpp:80:43: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+         wifi_get_macaddr(SOFTAP_IF, hwaddr);
+                                           ^
+In file included from ../../esp8266.h:23:0,
+                 from ../../network.cpp:2:
+../../esp8266_sdk/include/user_interface.h:250:6: warning:   initializing argument 2 of 'bool wifi_get_macaddr(uint8, uint8*)' [-fpermissive]
+ bool wifi_get_macaddr(uint8 if_index, uint8 *macaddr);
+      ^
+../../network.cpp:85:48: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+             wifi_get_macaddr(STATION_IF, hwaddr);
+                                                ^
+In file included from ../../esp8266.h:23:0,
+                 from ../../network.cpp:2:
+../../esp8266_sdk/include/user_interface.h:250:6: warning:   initializing argument 2 of 'bool wifi_get_macaddr(uint8, uint8*)' [-fpermissive]
+ bool wifi_get_macaddr(uint8 if_index, uint8 *macaddr);
+      ^
+../../network.cpp:89:44: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+         wifi_get_macaddr(STATION_IF, hwaddr);
+                                            ^
+In file included from ../../esp8266.h:23:0,
+                 from ../../network.cpp:2:
+../../esp8266_sdk/include/user_interface.h:250:6: warning:   initializing argument 2 of 'bool wifi_get_macaddr(uint8, uint8*)' [-fpermissive]
+ bool wifi_get_macaddr(uint8 if_index, uint8 *macaddr);
+      ^
+../../network.cpp:103:53: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+         espconn_sent(conn, Device_mac_buffer, length);
+                                                     ^
+In file included from ../../esp8266.h:12:0,
+                 from ../../network.cpp:2:
+../../esp8266_sdk/include/espconn.h:276:7: warning:   initializing argument 2 of 'sint8 espconn_sent(espconn*, uint8*, uint16)' [-fpermissive]
+ sint8 espconn_sent(struct espconn *espconn, uint8 *psent, uint16 length);
+       ^
+../../network.cpp: In function 'void main_connection_recv_cb(void*, char*, short unsigned int)':
+../../network.cpp:118:32: warning: invalid conversion from 'void*' to 'espconn*' [-fpermissive]
+     struct espconn *pespconn = arg;
+                                ^
+../../network.cpp: In function 'void main_connection_sent_cb(void*)':
+../../network.cpp:144:32: warning: invalid conversion from 'void*' to 'espconn*' [-fpermissive]
+     struct espconn *pespconn = arg;
+                                ^
+../../network.cpp:153:42: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+         espconn_sent(pespconn, data, size);
+                                          ^
+In file included from ../../esp8266.h:12:0,
+                 from ../../network.cpp:2:
+../../esp8266_sdk/include/espconn.h:276:7: warning:   initializing argument 2 of 'sint8 espconn_sent(espconn*, uint8*, uint16)' [-fpermissive]
+ sint8 espconn_sent(struct espconn *espconn, uint8 *psent, uint16 length);
+       ^
+../../network.cpp: In function 'void confirm_hello(void*)':
+../../network.cpp:197:66: warning: invalid conversion from 'const char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+         espconn_sent(pespconn, ACCESS_TOKEN, strlen(ACCESS_TOKEN));
+                                                                  ^
+In file included from ../../esp8266.h:12:0,
+                 from ../../network.cpp:2:
+../../esp8266_sdk/include/espconn.h:276:7: warning:   initializing argument 2 of 'sint8 espconn_sent(espconn*, uint8*, uint16)' [-fpermissive]
+ sint8 espconn_sent(struct espconn *espconn, uint8 *psent, uint16 length);
+       ^
+../../network.cpp: In function 'void main_connection_connected_callback(void*)':
+../../network.cpp:230:42: warning: invalid conversion from 'const char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+     espconn_sent(pespconn, "hello\r\n", 7);
+                                          ^
+In file included from ../../esp8266.h:12:0,
+                 from ../../network.cpp:2:
+../../esp8266_sdk/include/espconn.h:276:7: warning:   initializing argument 2 of 'sint8 espconn_sent(espconn*, uint8*, uint16)' [-fpermissive]
+ sint8 espconn_sent(struct espconn *espconn, uint8 *psent, uint16 length);
+       ^
+../../network.cpp: In function 'void main_connection_reconnect_callback(void*, sint8)':
+../../network.cpp:249:64: warning: invalid conversion from 'void (*)()' to 'void (*)(void*)' [-fpermissive]
+     os_timer_setfn(&timer_main_conn, main_connection_init, NULL);
+                                                                ^
+In file included from ../../esp8266.h:13:0,
+                 from ../../network.cpp:2:
+../../esp8266_sdk/include/ets_sys.h:101:6: warning:   initializing argument 2 of 'void ets_timer_setfn(ETSTimer*, void (*)(void*), void*)' [-fpermissive]
+ void ets_timer_setfn(ETSTimer *t, ETSTimerFunc *fn, void *parg);
+      ^
+../../network.cpp: In function 'void main_connection_init()':
+../../network.cpp:311:76: warning: invalid conversion from 'void (*)()' to 'void (*)(void*)' [-fpermissive]
+     os_timer_setfn(&timer_network_check, network_check_timer_callback, NULL);
+                                                                            ^
+In file included from ../../esp8266.h:13:0,
+                 from ../../network.cpp:2:
+../../esp8266_sdk/include/ets_sys.h:101:6: warning:   initializing argument 2 of 'void ets_timer_setfn(ETSTimer*, void (*)(void*), void*)' [-fpermissive]
+ void ets_timer_setfn(ETSTimer *t, ETSTimerFunc *fn, void *parg);
+      ^
+../../rpc_server/rpc_server.cpp: In function 'void rpc_server_loop()':
+../../rpc_server/rpc_server.cpp:177:34: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+         response_msg_open("event");
+                                  ^
+../../rpc_server/rpc_server.cpp:222:53: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+                         response_msg_open("resp_get");
+                                                     ^
+../../rpc_server/rpc_server.cpp:230:54: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+                         response_msg_open("resp_post");
+                                                      ^
+../../rpc_server/rpc_server.cpp:238:57: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+                         response_msg_open("ota_trig_ack");
+                                                         ^
+../../rpc_server/rpc_stream.cpp: In function 'char stream_read()':
+../../rpc_server/rpc_stream.cpp:22:19: warning: converting to non-pointer type 'char' from NULL [-Wconversion-null]
+     } else return NULL;
+                   ^
+../../rpc_server/rpc_stream.cpp: In function 'void writer_print(type_t, const void*, bool)':
+../../rpc_server/rpc_stream.cpp:78:52: warning: passing NULL to non-pointer argument 2 of 'char* dtostrf(double, signed char, unsigned char, char*)' [-Wconversion-null]
+             dtostrf((*(float *)data), NULL, 2, buff);
+                                                    ^
+../../rpc_server/rpc_stream.cpp:81:58: warning: invalid conversion from 'const void*' to 'const char*' [-fpermissive]
+             stream_write_string((char *)data, strlen(data));
+                                                          ^
+../../rpc_server/rpc_stream.cpp: In function 'void response_msg_open(char*)':
+../../rpc_server/rpc_stream.cpp:92:18: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     char *msg1 = "{\"msg_type\":\"";
+                  ^
+../../rpc_server/rpc_stream.cpp:93:18: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     char *msg2 = "\", \"msg\":\"";
+                  ^
+../../rpc_server/rpc_stream.cpp: In function 'void response_msg_close()':
+../../rpc_server/rpc_stream.cpp:102:18: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     char *msg3 = "\"}\r\n";
+                  ^
+In file included from ../../esp8266_arduino/pgmspace.h:9:0,
+                 from ../../esp8266_arduino/Arduino.h:38,
+                 from ../../esp8266_arduino/HardwareSerial.cpp:30:
+../../esp8266_arduino/HardwareSerial.cpp: In function 'void uart_interrupt_enable(uart_t*)':
+../../esp8266_sdk/include/ets_sys.h:58:56: warning: invalid conversion from 'void (*)(uart_t*) {aka void (*)(uart_*)}' to 'int_handler_t {aka void (*)(void*)}' [-fpermissive]
+     ets_isr_attach(ETS_UART_INUM, (func), (void *)(arg))
+                                                        ^
+../../esp8266_arduino/HardwareSerial.cpp:226:5: note: in expansion of macro 'ETS_UART_INTR_ATTACH'
+     ETS_UART_INTR_ATTACH(&uart_interrupt_handler, uart); // uart parameter is not osed in irq function!
+     ^
+../../esp8266_sdk/include/ets_sys.h:117:6: warning:   initializing argument 2 of 'void ets_isr_attach(int, int_handler_t, void*)' [-fpermissive]
+ void ets_isr_attach(int intr, int_handler_t handler, void *arg);
+      ^
+Demo.cpp: In function 'void at_upDate_rsp(void*)':
+Demo.cpp:33:42: warning: invalid conversion from 'void*' to 'upgrade_server_info*' [-fpermissive]
+     struct upgrade_server_info *server = arg;
+                                          ^
+Demo.cpp: In function 'void at_exeCmdCiupdate(uint8_t)':
+Demo.cpp:88:50: warning: invalid conversion from 'uint8* {aka unsigned char*}' to 'char*' [-fpermissive]
+                user_bin, IP2STR(upServer->ip), 80);
+                                                  ^
+In file included from ../../esp8266.h:13:0,
+                 from Demo.cpp:16:
+../../esp8266_sdk/include/ets_sys.h:110:5: warning:   initializing argument 1 of 'int ets_sprintf(char*, const char*, ...)' [-fpermissive]
+ int ets_sprintf(char *str, const char *format, ...)  __attribute__ ((format (printf, 2, 3)));
+     ^
+rpc_server_registration.cpp: In function 'void rpc_server_register_resources()':
+rpc_server_registration.cpp:15:123: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     rpc_server_register_method("Grove_Example1", "temp", METHOD_READ, __grove_example_read_temp, Grove_Example1, arg_types);
+                                                                                                                           ^
+rpc_server_registration.cpp:15:123: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:17:137: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     rpc_server_register_method("Grove_Example1", "uint8_value", METHOD_READ, __grove_example_read_uint8_value, Grove_Example1, arg_types);
+                                                                                                                                         ^
+rpc_server_registration.cpp:17:137: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:20:131: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     rpc_server_register_method("Grove_Example1", "with_arg", METHOD_READ, __grove_example_read_with_arg, Grove_Example1, arg_types);
+                                                                                                                                   ^
+rpc_server_registration.cpp:20:131: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:22:129: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     rpc_server_register_method("Grove_Example1", "compass", METHOD_READ, __grove_example_read_compass, Grove_Example1, arg_types);
+                                                                                                                                 ^
+rpc_server_registration.cpp:22:129: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:24:121: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     rpc_server_register_method("Grove_Example1", "acc", METHOD_READ, __grove_example_read_acc, Grove_Example1, arg_types);
+                                                                                                                         ^
+rpc_server_registration.cpp:24:121: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:26:131: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     rpc_server_register_method("Grove_Example1", "humidity", METHOD_READ, __grove_example_read_humidity, Grove_Example1, arg_types);
+                                                                                                                                   ^
+rpc_server_registration.cpp:26:131: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:32:139: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     rpc_server_register_method("Grove_Example1", "multi_value", METHOD_WRITE, __grove_example_write_multi_value, Grove_Example1, arg_types);
+                                                                                                                                           ^
+rpc_server_registration.cpp:32:139: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:35:133: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     rpc_server_register_method("Grove_Example1", "acc_mode", METHOD_WRITE, __grove_example_write_acc_mode, Grove_Example1, arg_types);
+                                                                                                                                     ^
+rpc_server_registration.cpp:35:133: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:38:139: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     rpc_server_register_method("Grove_Example1", "float_value", METHOD_WRITE, __grove_example_write_float_value, Grove_Example1, arg_types);
+                                                                                                                                           ^
+rpc_server_registration.cpp:38:139: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+../../ota.cpp: In function 'void ota_response(void*)':
+../../ota.cpp:28:42: warning: invalid conversion from 'void*' to 'upgrade_server_info*' [-fpermissive]
+     struct upgrade_server_info *server = arg;
+                                          ^
+../../ota.cpp:36:39: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+         response_msg_open("ota_result");
+                                       ^
+../../ota.cpp:44:39: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+         response_msg_open("ota_result");
+                                       ^
+../../ota.cpp: In function 'void ota_start()':
+../../ota.cpp:91:63: warning: invalid conversion from 'uint8* {aka unsigned char*}' to 'char*' [-fpermissive]
+                user_bin, IP2STR(upServer->ip), OTA_SERVER_PORT);
+                                                               ^
+In file included from ../../esp8266.h:13:0,
+                 from ../../ota.cpp:4:
+../../esp8266_sdk/include/ets_sys.h:110:5: warning:   initializing argument 1 of 'int ets_sprintf(char*, const char*, ...)' [-fpermissive]
+ int ets_sprintf(char *str, const char *format, ...)  __attribute__ ((format (printf, 2, 3)));
+     ^
+../../grove_drivers/grove_example/grove_example.cpp: In function 'void _trigger()':
+../../grove_drivers/grove_example/grove_example.cpp:91:44: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     suli_event_trigger(&event1, "fire", 250);
+                                            ^

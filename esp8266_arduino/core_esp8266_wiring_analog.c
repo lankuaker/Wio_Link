@@ -1,9 +1,9 @@
-/* 
+/*
   analog.c - analogRead implementation for esp8266
 
   Copyright (c) 2015 Hristo Gochkov. All rights reserved.
   This file is part of the esp8266 core for Arduino environment.
- 
+
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
   License as published by the Free Software Foundation; either
@@ -27,7 +27,7 @@ void analogReference(uint8_t mode) {}
 
 extern int __analogRead(uint8_t pin) {
   if(pin == 17){
-    return readvdd33() >> 2; // readvdd33 is 12 bit
+    return system_adc_read(); // readvdd33 is 12 bit
   }
   return digitalRead(pin) * 1023;
 }

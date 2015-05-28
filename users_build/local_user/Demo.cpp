@@ -144,7 +144,9 @@ void setup()
 // the loop function runs over and over again forever
 void loop()
 {
-    delay(1);
+    return;
+    Serial1.println(analogRead(A0));
+    delay(1000);
     return;
     Serial.println(wifi_station_get_connect_status());
     Serial.flush();

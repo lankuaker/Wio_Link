@@ -19,7 +19,7 @@ static os_event_t update_network_task_q;
 
 const char *device_find_request = "Node112233445566?";
 static struct espconn udp_conn;
-static struct espconn main_conn;
+struct espconn main_conn;
 static struct _esp_tcp user_tcp;
 static os_timer_t timer_main_conn;
 static os_timer_t timer_network_check;

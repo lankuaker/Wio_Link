@@ -49,6 +49,7 @@ TYPE_MAP = {
     'char *':'TYPE_STRING'
     }
 
+error_msg = ""
 
 def find_grove_in_database (grove_name, json_obj):
     for grove in json_obj:
@@ -71,6 +72,7 @@ def build_read_call_args (arg_list):
     return result.rstrip(',')
 
 def build_read_print (arg_list):
+    global error_msg
     arg_list = [arg for arg in arg_list if arg.find("*")>-1]  #find out the ones have "*"
     result = ""
     cnt = len(arg_list)
@@ -80,11 +82,13 @@ def build_read_print (arg_list):
             result += "        writer_print(%s, %s%s);\r\n" %(TYPE_MAP[t], arg_list[i].strip().split(' ')[1].replace('*', '&'), \
                                                               ', true' if i < (cnt-1) else '')
         else:
-            print 'arg type %s not supported' % t
-            sys.exit()
+            error_msg = 'arg type %s not supported' % t
+            #sys.exit()
+            return ""
     return result
 
 def build_unpack_vars (arg_list):
+    global error_msg
     result = ""
     arg_list = [arg for arg in arg_list if arg.find("*") < 0]  #find out the ones dont have "*"
     for arg in arg_list:
@@ -94,6 +98,7 @@ def build_unpack_vars (arg_list):
     return result;
 
 def build_reg_write_arg_type (arg_list):
+    global error_msg
     result = ""
     arg_list = [arg for arg in arg_list if arg.find("*") < 0]
     length = min(4, len(arg_list))
@@ -102,12 +107,14 @@ def build_reg_write_arg_type (arg_list):
         if t in TYPE_MAP.keys():
             result += "    arg_types[%d] = %s;\r\n" %(i, TYPE_MAP[t])
         else:
-            print 'arg type %s not supported' % t
-            sys.exit()
+            error_msg = 'arg type %s not supported' % t
+            #sys.exit()
+            return ""
     return result
 
 
 def gen_wrapper_registration (instance_name, info, arg_list):
+    global error_msg
     grove_name = info['GroveName'].lower()
     gen_header_file_name = grove_name+"_gen.h"
     gen_cpp_file_name = grove_name+"_gen.cpp"
@@ -115,6 +122,7 @@ def gen_wrapper_registration (instance_name, info, arg_list):
     fp_wrapper_cpp = open(os.path.join(GEN_DIR, gen_cpp_file_name), 'w')
     str_reg_include = ""
     str_reg_method = ""
+    error_msg = ""
 
     #leading part
     fp_wrapper_h.write('#include "%s"\r\n\r\n' % info['ClassFile'])
@@ -127,8 +135,9 @@ def gen_wrapper_registration (instance_name, info, arg_list):
             args_in_string += ","
             args_in_string += str(arg_list[arg_name])
         else:
-            print "ERR: no construct arg name in config file matchs %s" % arg_name
-            sys.exit()
+            error_msg = "ERR: no construct arg name in config file matchs %s" % arg_name
+            #sys.exit()
+            return (False, "", "")
     str_reg_method += '    %s *%s = new %s(%s);\r\n' % (info['ClassName'], instance_name, info['ClassName'], args_in_string.lstrip(","))
 
 
@@ -190,12 +199,15 @@ def gen_wrapper_registration (instance_name, info, arg_list):
 
     fp_wrapper_h.close()
     fp_wrapper_cpp.close()
-    return (str_reg_include, str_reg_method)
+    if error_msg:
+        return (False, "","")
+
+    return (True, str_reg_include, str_reg_method)
 
 
 
-if __name__ == '__main__':
-
+def gen_and_build (user_id):
+    global error_msg
     ###generate rpc wrapper and registration files
 
     cur_dir = os.path.split(os.path.realpath(__file__))[0]
@@ -212,17 +224,21 @@ if __name__ == '__main__':
     str_reg_include = ""
     str_reg_method = ""
     str_reg_event = ""
+    grove_list = ""
 
     for grove_instance_name in config.keys():
         grove = find_grove_in_database(config[grove_instance_name]['name'], js)
         if grove:
-            inc, method = \
+            ret, inc, method = \
             gen_wrapper_registration(grove_instance_name, grove, config[grove_instance_name]['construct_arg_list'])
+            if(ret == False):
+                return False
             str_reg_include += inc
             str_reg_method  += method
+            grove_list += (grove["IncludePath"].replace("./grove_drivers/", " "))
         else:
-            print "can not find %s in database"%grove_instance_name
-            sys.exit()
+            error_msg = "can not find %s in database"%grove_instance_name
+            return False
 
     fp_reg_cpp.write('#include "suli2.h"\r\n')
     fp_reg_cpp.write('#include "rpc_server.h"\r\n\r\n')
@@ -241,6 +257,44 @@ if __name__ == '__main__':
     fp_reg_cpp.close()
 
     ### make
+    grove_list = '"%s"' % grove_list.lstrip(" ")
+
+    user_build_dir = cur_dir + '/users_build/' + user_id
+
+    if not os.path.exists(user_build_dir):
+        os.mkdir(user_build_dir)
+
+    os.system('cd %s;make clean;make APP=1 SPI_SPEED=40 SPI_MODE=QIO SPI_SIZE_MAP=4 GROVES=%s > build.log 2>error.log' \
+              % (user_build_dir, grove_list))
+
+    content = open(user_build_dir+"/error.log", 'r').readlines()
+    for line in content:
+        if line.find("error:") > -1:
+            error_msg = line
+            return False
+
+    os.system('cd %s;make clean;make APP=2 SPI_SPEED=40 SPI_MODE=QIO SPI_SIZE_MAP=4 GROVES=%s >> build.log 2>>error.log' \
+              % (user_build_dir, grove_list))
+
+    content = open(user_build_dir+"/error.log", 'r').readlines()
+    for line in content:
+        if line.find("error:") > -1:
+            error_msg = line
+            return False
+
+    os.system('rm -rf *.S;rm -rf *.dump;rm -rf *.d;rm -rf *.o')
+
+
+
+def get_error_msg ():
+    global error_msg
+    return error_msg
+
+if __name__ == '__main__':
+
+    user_id = "local_user" if len(sys.argv) < 2 else sys.argv[1]
+    if not gen_and_build(user_id):
+        print get_error_msg()
 
 
 
