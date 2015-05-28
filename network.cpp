@@ -24,6 +24,7 @@ static struct _esp_tcp user_tcp;
 static os_timer_t timer_main_conn;
 static os_timer_t timer_network_check;
 static os_timer_t timer_confirm_hello;
+static os_timer_t timer_tx;
 
 CircularBuffer *rx_stream_buffer = NULL;
 CircularBuffer *tx_stream_buffer = NULL;
@@ -138,6 +139,23 @@ static void main_connection_recv_cb(void *arg, char *pusrdata, unsigned short le
     }
 }
 
+static void main_connection_sent_cb(void *arg)
+{
+    struct espconn *pespconn = arg;
+    //Serial1.println("main_connection_sent_cb");
+    if (!tx_stream_buffer) return;
+
+    size_t size = tx_stream_buffer->size();
+    if (size > 0)
+    {
+        char *data = (char *)malloc(size);
+        tx_stream_buffer->read(data, size);
+        espconn_sent(pespconn, data, size);
+        free(data);
+    }
+}
+
+
 void network_putc(char c)
 {
 #if 0
@@ -155,43 +173,19 @@ void network_puts(char *data, int len)
     if (main_conn_status != KEEP_ALIVE) return;
     if (main_conn.state > ESPCONN_NONE)
     {
-        if (main_conn.state != ESPCONN_WRITE)
+        noInterrupts();
+        tx_stream_buffer->write(data, len);
+        interrupts();
+        if ((strchr(data, '\r') || strchr(data, '\n') || tx_stream_buffer->capacity() < 10) && main_conn.state != ESPCONN_WRITE)
         {
-            if (len > 10)
-            {
-                espconn_sent(&main_conn, data, 10);
-                noInterrupts();
-                tx_stream_buffer->write(data + 10, len - 10);
-                interrupts();
-            } else
-            {
-                espconn_sent(&main_conn, data, len);
-            }
-
-        } else
-        {
-            noInterrupts();
-            tx_stream_buffer->write(data, len);
-            interrupts();
+            os_timer_disarm(&timer_tx);
+            os_timer_setfn(&timer_tx, main_connection_sent_cb, &main_conn);
+            os_timer_arm(&timer_tx, 1, 0);
         }
     }
 }
 
-static void main_connection_sent_cb(void *arg)
-{
-    struct espconn *pespconn = arg;
-    //Serial1.println("main_connection_sent_cb");
-    if (!tx_stream_buffer) return;
 
-    size_t size = tx_stream_buffer->size();
-    if (size > 0)
-    {
-        char *data = (char *)malloc(size);
-        tx_stream_buffer->read(data, size);
-        espconn_sent(pespconn, data, size);
-        free(data);
-    }
-}
 
 static void confirm_hello(void *arg)
 {
@@ -328,7 +322,7 @@ void establish_network()
     if (!tx_stream_buffer) tx_stream_buffer = new CircularBuffer(128);
 
 
-    pinMode(SMARTCONFIG_KEY, INPUT);
+    pinMode(SMARTCONFIG_KEY, INPUT_PULLUP);
     pinMode(STATUS_LED, OUTPUT);
 
     if (digitalRead(SMARTCONFIG_KEY) == 0)

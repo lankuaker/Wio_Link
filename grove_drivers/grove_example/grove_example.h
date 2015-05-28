@@ -24,10 +24,12 @@ bool grove_example_write_acc_mode(I2C_T *i2c, uint8_t mode);
 
 bool grove_example_write_float_value(I2C_T *i2c, float f);
 
-bool grove_example_write_multi_value(I2C_T *i2c, int a, float b, int8_t c);
+bool grove_example_write_multi_value(I2C_T *i2c, int a, float b, uint32_t c);
 
 bool grove_example_attach_event_handler(CALLBACK_T handler);
 
 void _grove_example_internal_function(I2C_T *i2c, float x);
+
+void _trigger();
 
 #endif

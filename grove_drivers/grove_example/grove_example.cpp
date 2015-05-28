@@ -3,9 +3,14 @@
 #include "suli2.h"
 #include "grove_example.h"
 
+static IO_T pin;
+
 void grove_example_init(I2C_T *i2c, int pinsda, int pinscl)
 {
     suli_i2c_init(i2c, pinsda, pinscl);
+    //suli_pin_init(&pin, 13, INPUT);
+    //suli_pin_attach_interrupt_handler(&pin, _trigger, RISING);
+    attachInterrupt(13, _trigger, RISING);
 }
 
 bool grove_example_read_temp(I2C_T *i2c, int *temp)
@@ -57,9 +62,12 @@ bool grove_example_write_float_value(I2C_T *i2c, float f)
     return false;
 }
 
-bool grove_example_write_multi_value(I2C_T *i2c, int a, float b, int8_t c)
+bool grove_example_write_multi_value(I2C_T *i2c, int a, float b, uint32_t c)
 {
-    _grove_example_internal_function(i2c, b);
+    //_grove_example_internal_function(i2c, b);
+    Serial1.print("get uint32: ");
+    Serial1.println(c);
+    _trigger();
     return true;
 }
 
@@ -68,9 +76,18 @@ EVENT_T event1;
 bool grove_example_attach_event_handler(CALLBACK_T handler)
 {
     suli_event_init(&event1, handler);
+    pinMode(13, INPUT_PULLUP);
+    attachInterrupt(13, _trigger, FALLING);
+    return true;
 }
 
 void _grove_example_internal_function(I2C_T *i2c, float x)
 {
+
+}
+
+void _trigger()
+{
     suli_event_trigger(&event1, "fire", 250);
+    Serial1.println("triggered");
 }

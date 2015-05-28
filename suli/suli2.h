@@ -82,6 +82,8 @@ typedef gpio_t IO_T;
  */
 uint32_t suli_pin_pulse_in(IO_T *pio, int state, uint32_t timeout);
 
+#define suli_pin_attach_interrupt_handler(pio, func, mode)
+
 
 //-------------- arduino ---------------
 #elif defined(ARDUINO)
@@ -116,6 +118,8 @@ typedef int IO_T;
  * uint32_t suli_pin_pulse_in(IO_T *, what_state, timeout)
  */
 #define suli_pin_pulse_in(pio,state,timeout)  pulseIn(*(pio), state, timeout)
+
+#define suli_pin_attach_interrupt_handler(pio, func, mode) attachInterrupt(*pio, func, mode)
 
 #endif
 
@@ -520,7 +524,10 @@ inline void suli_event_init(EVENT_T *event, CALLBACK_T cb)
 }
 inline void suli_event_trigger(EVENT_T *event, char *event_name, uint32_t event_data)
 {
-    (*event)(event_name, event_data);
+    if (event)
+    {
+        (*event)(event_name, event_data);
+    }
 }
 
 

@@ -49,12 +49,12 @@ bool GroveExample::write_float_value(float f)
     return grove_example_write_float_value(this->i2c, f);
 }
 
-bool GroveExample::write_multi_value(int a, float b, int8_t c)
+bool GroveExample::write_multi_value(int a, float b, uint32_t c)
 {
     return grove_example_write_multi_value(this->i2c, a, b, c);
 }
 
 bool GroveExample::attach_event_handler(CALLBACK_T handler)
 {
-    grove_example_attach_event_handler(handler);
+    return grove_example_attach_event_handler(handler);
 }

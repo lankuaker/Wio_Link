@@ -434,18 +434,21 @@ void rpc_server_loop()
 
 void rpc_server_event_report(char *event_name, uint32_t event_data)
 {
-    noInterrupts();
+    //noInterrupts();
     event_t *ev = (event_t *)malloc(sizeof(event_t));
     ev->event_name = event_name;
     ev->event_data = event_data;
+    if (p_event_queue_tail == NULL)
+    {
+        p_event_queue_head = ev;
+    } else
+    {
+        p_event_queue_tail->next = ev;
+    }
     ev->prev = p_event_queue_tail;
     ev->next = NULL;
     p_event_queue_tail = ev;
-    if (ev->prev == NULL)
-    {
-        p_event_queue_head = ev;
-    }
-    interrupts();
+    //interrupts();
 }
 
 bool rpc_server_event_queue_pop(event_t *event)
@@ -457,6 +460,7 @@ bool rpc_server_event_queue_pop(event_t *event)
         memcpy(event, p_event_queue_head, sizeof(event_t));
         event_t *tmp = p_event_queue_head;
         p_event_queue_head = tmp->next;
+        if (p_event_queue_head == NULL) p_event_queue_tail = NULL;
         free(tmp);
         ret = true;
     }
