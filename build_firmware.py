@@ -208,19 +208,34 @@ def gen_wrapper_registration (instance_name, info, arg_list):
 
 def gen_and_build (user_id):
     global error_msg
+    global GEN_DIR
     ###generate rpc wrapper and registration files
 
     cur_dir = os.path.split(os.path.realpath(__file__))[0]
-    f_database = open('%s/database.json' % cur_dir,'r')
-    js = json.load(f_database)
 
-    f_config = open('connection_config.yaml','r')
-    config = yaml.load(f_config)
+    try:
+        f_database = open('%s/database.json' % cur_dir,'r')
+        js = json.load(f_database)
+    except Exception,e:
+        error_msg = str(e)
+        return False
 
-    if not os.path.exists(GEN_DIR):
-        os.mkdir(GEN_DIR)
+    user_build_dir = cur_dir + '/users_build/' + user_id
+    os.chdir(user_build_dir)
 
-    fp_reg_cpp = open(os.path.join(GEN_DIR, "rpc_server_registration.cpp"),'w')
+    try:
+        f_config = open('%s/connection_config.yaml'%user_build_dir,'r')
+        config = yaml.load(f_config)
+    except Exception,e:
+        error_msg = str(e)
+        return False
+
+    GEN_DIR = user_build_dir
+
+    if not os.path.exists(user_build_dir):
+        os.mkdir(user_build_dir)
+
+    fp_reg_cpp = open(os.path.join(user_build_dir, "rpc_server_registration.cpp"),'w')
     str_reg_include = ""
     str_reg_method = ""
     str_reg_event = ""
@@ -259,17 +274,31 @@ def gen_and_build (user_id):
     ### make
     grove_list = '"%s"' % grove_list.lstrip(" ")
 
-    user_build_dir = cur_dir + '/users_build/' + user_id
 
     if not os.path.exists(user_build_dir):
         os.mkdir(user_build_dir)
+
+    find_cpp = False
+    find_makefile = False
+    for f in os.listdir(user_build_dir):
+        if f.find(".cpp") > -1:
+            find_cpp = True
+            break
+    for f in os.listdir(user_build_dir):
+        if f.find("Makefile") > -1:
+            find_cpp = True
+            break
+    if not find_cpp:
+        os.system('cd %s;cp -f ../../Demo.cpp.template ./Demo.cpp ' % user_build_dir)
+    if not find_makefile:
+        os.system('cd %s;cp -f ../../Makefile.template ./Makefile ' % user_build_dir)
 
     os.system('cd %s;make clean;make APP=1 SPI_SPEED=40 SPI_MODE=QIO SPI_SIZE_MAP=4 GROVES=%s > build.log 2>error.log' \
               % (user_build_dir, grove_list))
 
     content = open(user_build_dir+"/error.log", 'r').readlines()
     for line in content:
-        if line.find("error:") > -1:
+        if line.find("error:") > -1 or line.find("make:") > -1:
             error_msg = line
             return False
 
@@ -278,11 +307,11 @@ def gen_and_build (user_id):
 
     content = open(user_build_dir+"/error.log", 'r').readlines()
     for line in content:
-        if line.find("error:") > -1:
+        if line.find("error:") > -1 or line.find("make:") > -1:
             error_msg = line
             return False
 
-    os.system('rm -rf *.S;rm -rf *.dump;rm -rf *.d;rm -rf *.o')
+    os.system('cd %s;rm -rf *.S;rm -rf *.dump;rm -rf *.d;rm -rf *.o'%user_build_dir)
 
 
 
