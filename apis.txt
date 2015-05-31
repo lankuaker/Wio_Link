@@ -1,0 +1,55 @@
+curl -H "Authorization: token eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXNzd29yZCI6IjEiLCJlbWFpbCI6ImFhYUBhYWEuY29tIn0.WhLoHHLakYlWkX6qhpJrLoxGEwiA-5TKh5vHio7pOfY" -d name="node_1" localhost:8080/nodes/create
+
+curl -H "Authorization: token eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXNzd29yZCI6IjEiLCJlbWFpbCI6ImFhYUBhYWEuY29tIn0.WhLoHHLakYlWkX6qhpJrLoxGEwiA-5TKh5vHio7pOfY"  localhost:8080/nodes/list
+
+curl -H "Authorization: token eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFhYUBhYWEuY29tIiwidXVpZCI6ImUxY2I0YzQyLTMyN2YtNGNkMS04MWRlLWZkMDFlMzk5MGRjYyJ9.b5LRGl9-dwQeFykr4blf6gs9bnlfJDI-0WZn_KAufug"  localhost:8080/node/Grove1/temp
+
+
+{"msg_type":"resp_get", "msg":"25.6"}
+
+curl -H "Authorization: token eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXNzd29yZCI6IjEiLCJlbWFpbCI6ImFhYUBhYWEuY29tIn0.WhLoHHLakYlWkX6qhpJrLoxGEwiA-5TKh5vHio7pOfY"  localhost:8080/scan/drivers
+
+c4ca4238a0b923820dcc509a6f75849b
+
+
+
+version2:
+
+curl -d email=aaa@aaa.com -d password=aaa localhost:8080/user/create
+{"status": 200, "msg": "User created", "token": "9L0_ofzPHnan91UQbtcCS4KzCI8BGQk6-OgMOtmnI3Q"}
+
+curl -d password=aaa localhost:8080/user/changepassword?access_token=9L0_ofzPHnan91UQbtcCS4KzCI8BGQk6-OgMOtmnI3Q
+{"status": 200, "msg": "Password changed, new token is given", "token": "aKleqQebIsjmQMSCokemtgNXMD4Y7OTe3uyzEL1iwwA"}
+
+curl -d email=aaa@aaa.com -d password=aaa localhost:8080/user/login
+{"status": 200, "msg": "Logged in", "token": "aKleqQebIsjmQMSCokemtgNXMD4Y7OTe3uyzEL1iwwA"}
+
+curl -H "Authorization: token aKleqQebIsjmQMSCokemtgNXMD4Y7OTe3uyzEL1iwwA"  localhost:8080/scan/drivers
+database.json
+
+curl -H "Authorization: token aKleqQebIsjmQMSCokemtgNXMD4Y7OTe3uyzEL1iwwA"  localhost:8080/scan/status
+{"status":"OK", "msg":"scanned 1 grove drivers at 2015-05-30 00:25:30.229032"}
+
+curl -H "Authorization: token aKleqQebIsjmQMSCokemtgNXMD4Y7OTe3uyzEL1iwwA" -d name=node_1  localhost:8080/nodes/create
+{"status": 200, "msg": "Node created", "server_key": "!@#$%^&*RG)))))))JM<==TTTT==>((((((&^HVFT767JJH", "node_key": "Ou5jZKBewF1SwWEPET9wuMk_3BVRL5rClbAefBShF1k", "node_sn": "fe569fe5856b2bf93898b4efbd3e168f"}
+
+curl -H "Authorization: token aKleqQebIsjmQMSCokemtgNXMD4Y7OTe3uyzEL1iwwA" localhost:8080/nodes/list
+{"status": 200, "msg": "", "nodes": [{"node_key": "Ou5jZKBewF1SwWEPET9wuMk_3BVRL5rClbAefBShF1k", "server_key": "!@#$%^&*RG)))))))JM<==TTTT==>((((((&^HVFT767JJH", "name": "node_1", "node_sn": "fe569fe5856b2bf93898b4efbd3e168f"}]}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

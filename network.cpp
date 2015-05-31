@@ -3,6 +3,7 @@
 #include "Arduino.h"
 #include "cbuf.h"
 #include "network.h"
+#include "eeprom.h"
 
 enum
 {
@@ -17,7 +18,10 @@ static bool get_hello = false;
 static uint8_t confirm_hello_retry_cnt = 0;
 static os_event_t update_network_task_q;
 
-const char *device_find_request = "Node112233445566?";
+const char *device_find_request = "Node?";
+const char *device_key_write_req = "Key: ";
+const char *device_name_write_req = "Name: ";
+#define KEY_LEN             64
 static struct espconn udp_conn;
 struct espconn main_conn;
 static struct _esp_tcp user_tcp;
@@ -93,6 +97,7 @@ static void user_devicefind_recv(void *arg, char *pusrdata, unsigned short lengt
         return;
     }
 
+    char *pkey;
     if (length == os_strlen(device_find_request) &&
             os_strncmp(pusrdata, device_find_request, os_strlen(device_find_request)) == 0)
     {
@@ -101,6 +106,35 @@ static void user_devicefind_recv(void *arg, char *pusrdata, unsigned short lengt
         Serial1.printf("%s\n", Device_mac_buffer);
         length = os_strlen(Device_mac_buffer);
         espconn_sent(conn, Device_mac_buffer, length);
+    } else if ((pkey=os_strstr(pusrdata, device_key_write_req)) != NULL)
+    {
+        if ((pusrdata + length - pkey - os_strlen(device_key_write_req)) >= KEY_LEN)
+        {
+            pkey += os_strlen(device_key_write_req);
+            char *keybuf = new char[KEY_LEN + 1];
+            os_memcpy(keybuf, pkey, KEY_LEN);
+            keybuf[64] = 0;
+            os_memcpy(EEPROM.getDataPtr(), keybuf, KEY_LEN + 1);
+            Serial1.printf("write key: %s\n", keybuf);
+            delete [] keybuf;
+            espconn_sent(conn, "ok", 2);
+        }
+    }
+    else if ((pkey = os_strstr(pusrdata, device_name_write_req)) != NULL)
+    {
+        int len = pusrdata + length - pkey - os_strlen(device_name_write_req);
+        if (len >= 1)
+        {
+            pkey += os_strlen(device_name_write_req);
+            char *buff = new char[60];
+            os_memcpy(buff, pkey, len);
+            buff[len] = 0;
+            os_memcpy(EEPROM.getDataPtr() + 100, "#$%^", 4);
+            os_memcpy(EEPROM.getDataPtr()+104, buff, len+1);
+            Serial1.printf("write name: %s\n", buff);
+            delete[] buff;
+            espconn_sent(conn, "ok", 2);
+        }
     }
 }
 
@@ -315,12 +349,24 @@ void main_connection_init()
 
 void establish_network()
 {
+#if ENABLE_DEBUG_ON_UART1
     Serial1.begin(74880);
+#endif
     Serial1.printf("start to establish network connection.\r\n");
 
     if (!rx_stream_buffer) rx_stream_buffer = new CircularBuffer(256);
     if (!tx_stream_buffer) tx_stream_buffer = new CircularBuffer(128);
 
+    /* get key and name */
+    EEPROM.begin(4096);
+    Serial1.printf("Device key in flash: %s\n", EEPROM.getDataPtr());
+    if (os_strncmp(EEPROM.getDataPtr() + 100, "#$%^", 4) != 0)
+    {
+        /* first power up */
+        os_memcpy(EEPROM.getDataPtr() + 100, "#$%^blank iot node", 18);
+        os_memset(EEPROM.getDataPtr() + 118, '\0', 1);
+    }
+    Serial1.printf("Device name in flash: %s\n", EEPROM.getDataPtr()+104);
 
     pinMode(SMARTCONFIG_KEY, INPUT_PULLUP);
     pinMode(STATUS_LED, OUTPUT);

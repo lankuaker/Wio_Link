@@ -27,6 +27,7 @@ import os
 import sys
 import re
 import json
+from datetime import *
 
 def parse_one_driver_dir (driver_dir):
     files = []
@@ -143,7 +144,7 @@ if __name__ == '__main__':
                 break
     if not failed:
         open("%s/database.json"%cur_dir,"w").write(json.dumps(grove_database))
-        open("%s/scan_status.json"%cur_dir,"w").write("OK")
+        open("%s/scan_status.json"%cur_dir,"w").write('{"status":"OK", "msg":"scanned %d grove drivers at %s"}' % (len(grove_database), str(datetime.now())))
     else:
-        open("%s/scan_status.json"%cur_dir,"w").write(failed_msg)
+        open("%s/scan_status.json"%cur_dir,"w").write('{"status":"Failed", "msg":"%s"}' % (failed_msg))
 

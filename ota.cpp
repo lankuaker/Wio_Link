@@ -87,8 +87,8 @@ void ota_start()
     }
 
     os_sprintf(upServer->url,
-               "GET /%s HTTP/1.1\r\nHost: " IPSTR ":%d\r\n" pheadbuffer "",
-               user_bin, IP2STR(upServer->ip), OTA_SERVER_PORT);
+               "GET %s/%s HTTP/1.1\r\nHost: " IPSTR ":%d\r\n" pheadbuffer "",
+               OTA_SERVER_URL_PREFIX, user_bin, IP2STR(upServer->ip), OTA_SERVER_PORT);
 
 
     if(system_upgrade_start(upServer) == false)
