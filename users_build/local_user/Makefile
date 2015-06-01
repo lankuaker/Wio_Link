@@ -166,11 +166,11 @@ rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 
 C_SRC = $(notdir $(call rwildcard,$(ARDUINO_DIR),*.c))
 C_SRC += $(notdir $(call rwildcard,./,*.c))
-C_SRC += $(notdir $(wildcard,$(BASE_DIR)/*.c))
+C_SRC += $(notdir $(call rwildcard,$(BASE_DIR),*.c))
 
 CPP_SRC = $(notdir $(call rwildcard,$(ARDUINO_DIR),*.cpp))
 CPP_SRC += $(notdir $(call rwildcard,./,*.cpp))
-CPP_SRC += $(notdir $(wildcard,$(BASE_DIR)/*.cpp))
+CPP_SRC += $(notdir $(call rwildcard,$(BASE_DIR),*.cpp))
 
 s_SRC = $(notdir $(call rwildcard,$(ARDUINO_DIR),*.s))
 s_SRC += $(notdir $(call rwildcard,./,*.s))
@@ -181,7 +181,7 @@ s_SRC += $(notdir $(call rwildcard,./,*.s))
 OBJECTS_NONCPP = 
 OBJECTS_NONCPP += $(C_SRC:%.c=%.o) $(s_SRC:%.s=%.o) $(S_SRC:%.S=%.o) 
 
-OBJECTS_CPP = suli2.cpp.o rpc_server.cpp.o rpc_stream.cpp.o
+OBJECTS_CPP = suli2.cpp.o network.cpp.o rpc_server.cpp.o rpc_stream.cpp.o
 OBJECTS_CPP += $(CPP_SRC:%.cpp=%.cpp.o) 
 ## for each grove driver to be compiled
 OBJECTS_CPP += $(foreach g,$(GROVES),$(g).cpp.o $(g)_class.cpp.o $(g)_gen.cpp.o)
