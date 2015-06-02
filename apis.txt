@@ -9,8 +9,8 @@ curl -H "Authorization: token eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6I
 
 curl -H "Authorization: token eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXNzd29yZCI6IjEiLCJlbWFpbCI6ImFhYUBhYWEuY29tIn0.WhLoHHLakYlWkX6qhpJrLoxGEwiA-5TKh5vHio7pOfY"  localhost:8080/scan/drivers
 
-c4ca4238a0b923820dcc509a6f75849b
-
+96a4a7fb4b6ce0ea44f838948d0ec980
+cd7b7f9ff3ed8f7b7f8b2d152731144a
 
 
 version2:
@@ -31,10 +31,16 @@ curl -H "Authorization: token aKleqQebIsjmQMSCokemtgNXMD4Y7OTe3uyzEL1iwwA"  loca
 {"status":"OK", "msg":"scanned 1 grove drivers at 2015-05-30 00:25:30.229032"}
 
 curl -H "Authorization: token aKleqQebIsjmQMSCokemtgNXMD4Y7OTe3uyzEL1iwwA" -d name=node_1  localhost:8080/nodes/create
-{"status": 200, "msg": "Node created", "server_key": "!@#$%^&*RG)))))))JM<==TTTT==>((((((&^HVFT767JJH", "node_key": "Ou5jZKBewF1SwWEPET9wuMk_3BVRL5rClbAefBShF1k", "node_sn": "fe569fe5856b2bf93898b4efbd3e168f"}
+{"status": 200, "msg": "Node created", "node_key": "85a7c2b2fd97c357137414733e65d516", "node_sn": "200d8a94ac5f0905e1fbf9acdfcaba78"}
 
 curl -H "Authorization: token aKleqQebIsjmQMSCokemtgNXMD4Y7OTe3uyzEL1iwwA" localhost:8080/nodes/list
-{"status": 200, "msg": "", "nodes": [{"node_key": "Ou5jZKBewF1SwWEPET9wuMk_3BVRL5rClbAefBShF1k", "server_key": "!@#$%^&*RG)))))))JM<==TTTT==>((((((&^HVFT767JJH", "name": "node_1", "node_sn": "fe569fe5856b2bf93898b4efbd3e168f"}]}
+{"status": 200, "msg": "", "nodes": [{"node_key": "d6d68b4b6b43f213569f5832dd8277b2", "name": "node_1", "node_sn": "f70fd643b73f0c721b007ce453bafddd"}, {"node_key": "85a7c2b2fd97c357137414733e65d516", "name": "node_2", "node_sn": "200d8a94ac5f0905e1fbf9acdfcaba78"}]}
+
+curl -H "Authorization: token d6d68b4b6b43f213569f5832dd8277b2" localhost:8080/node/Grove_Example1/temp
+
+curl -H "Authorization: token d6d68b4b6b43f213569f5832dd8277b2" -d "{\"f\":10.5}" localhost:8080/node/Grove_Example1/float_value
+
+
 
 
 

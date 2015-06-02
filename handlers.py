@@ -23,8 +23,7 @@
 #   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 #   THE SOFTWARE.
 
-#   Dependences: pip install tornado
-#                pip install PyJWT
+#   Dependences: see server.py header section
 
 import os
 from datetime import timedelta
@@ -241,12 +240,12 @@ class NodeCreateHandler(BaseHandler):
         email = user["email"]
         user_id = user["user_id"]
         node_sn = md5.new(email+self.get_uuid()).hexdigest()
-        node_key = self.gen_token(email)
+        node_key = md5.new(self.gen_token(email)).hexdigest()  #we need the key to be 32bytes long too
 
         cur = self.application.cur
         try:
             cur.execute("INSERT INTO nodes(user_id,node_sn,name,private_key) VALUES('%s','%s','%s','%s')"%(user_id, node_sn,node_name, node_key))
-            self.resp(200, "Node created",{"server_key":TOKEN_SECRET,"node_sn":node_sn,"node_key": node_key})
+            self.resp(200, "Node created",{"node_sn":node_sn,"node_key": node_key})
         except Exception,e:
             self.resp(500,str(e))
             return
@@ -267,7 +266,7 @@ class NodeListHandler(BaseHandler):
             rows = cur.fetchall()
             nodes = []
             for r in rows:
-                nodes.append({"name":r["name"], "server_key":TOKEN_SECRET,"node_sn":r["node_sn"],"node_key":r['private_key']})
+                nodes.append({"name":r["name"],"node_sn":r["node_sn"],"node_key":r['private_key']})
             self.resp(200, meta={"nodes": nodes})
         except Exception,e:
             self.resp(500,str(e))
@@ -323,7 +322,7 @@ class NodeReadWriteHandler(BaseHandler):
             return
 
         for conn in self.conns:
-            if conn.node_token == node['token']:
+            if conn.sn == node['node_sn']:
                 try:
                     cmd = "GET /%s\r\n"%(uri)
                     cmd = cmd.encode("ascii")
@@ -335,42 +334,57 @@ class NodeReadWriteHandler(BaseHandler):
         self.resp(404, "Node is offline")
 
     @gen.coroutine
-    def post (self, node_id, grove_name, method):
-        print "post", node_id, grove_name, method, self.request.body
+    def post (self, uri):
 
-        if not self.get_node():
+        uri = uri.split("?")[0].rstrip("/")
+        print "post to:",uri
+
+        node = self.get_node()
+        if not node:
             return
 
-        if self.request.body.find("&") > 0 and self.request.body.find(",") > 0:
-            self.resp(400, "Bad format of the post body. Allowed format:arg1=value1&arg2=value2 in order.")
-            return
-
-        if self.request.body.find("&") > 0:
-            arg_list = self.request.body.split('&')
-        else:
-            arg_list = self.request.body.split(',')
-
-        if len(arg_list) == 1 and arg_list[0] == "":
-            arg_list = []
+        try:
+            json_obj = json.loads(self.request.body)
+        except:
+            json_obj = None
 
         cmd_args = ""
-        for arg in arg_list:
-            if arg.find('=') > -1:
-                value = arg.split('=')[1]
-                cmd_args += value
+
+        if json_obj:
+            print "post request:", json_obj
+
+            if not isinstance(json_obj, dict):
+                self.resp(400, "Bad format of json: must be key/value pair.")
+                return
+            for k,v in json_obj.items():
+                cmd_args += str(v)
                 cmd_args += "/"
-            else:
-                cmd_args += arg
-                cmd_args += "/"
+        else:
+
+            arg_list = self.request.body.split('&')
+
+            print "post request:", arg_list
+
+            if len(arg_list) == 1 and arg_list[0] == "":
+                arg_list = []
+
+            for arg in arg_list:
+                if arg.find('=') > -1:
+                    value = arg.split('=')[1]
+                    cmd_args += value
+                    cmd_args += "/"
+                else:
+                    cmd_args += arg
+                    cmd_args += "/"
 
 
-        for conn in DeviceServer.accepted_conns:
-            if conn.node_id == node_id:
+        for conn in self.conns:
+            if conn.sn == node['node_sn']:
                 try:
-                    cmd = "POST /%s/%s/%s\r\n"%(grove_name, method, cmd_args)
+                    cmd = "POST /%s/%s\r\n"%(uri, cmd_args)
                     cmd = cmd.encode("ascii")
                     ok, resp = yield conn.submit_and_wait_resp (cmd, "resp_post")
-                    self.write(resp)
+                    self.resp(200,resp)
                 except Exception,e:
                     print e
                 return

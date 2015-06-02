@@ -90,16 +90,18 @@ void writer_print(type_t type, const void *data, bool append_comma)
 void response_msg_open(char *msg_type)
 {
     char *msg1 = "{\"msg_type\":\"";
-    char *msg2 = "\", \"msg\":\"";
+    char *msg2 = "\", \"msg\":";
 
     stream_write_string(msg1, strlen(msg1));
     stream_write_string(msg_type, strlen(msg_type));
     stream_write_string(msg2, strlen(msg2));
 }
 
+
 void response_msg_close()
 {
-    char *msg3 = "\"}\r\n";
+    char *msg3 = "}\r\n";
 
     stream_write_string(msg3, strlen(msg3));
 }
+

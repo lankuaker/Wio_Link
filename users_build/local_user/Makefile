@@ -7,6 +7,7 @@ APP?=1
 SPI_SPEED?=40
 SPI_MODE?=QIO
 SPI_SIZE_MAP?=4
+NODE_NAME?=esp8266_node
 
 #GROVES ?=  #it's a list of grove driver directions, passed in by caller
 GROVES ?= grove_example #it's a list of grove driver directions, passed in by caller
@@ -240,7 +241,7 @@ S_FLAGS = -c -g -x assembler-with-cpp -MMD
 
 LD_FLAGS = -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static
 
-DEFINES = -DICACHE_FLASH -DF_CPU=80000000 -D__ets__ -U__STRICT_ANSI__ -DARDUINO=10604 -DARDUINO_ESP8266_ESP12 -DARDUINO_ARCH_ESP8266 -DESP8266
+DEFINES = -DICACHE_FLASH -DF_CPU=80000000 -D__ets__ -U__STRICT_ANSI__ -DARDUINO=10604 -DARDUINO_ESP8266_ESP12 -DARDUINO_ARCH_ESP8266 -DESP8266 -D'NODE_NAME="$(NODE_NAME)"'
 
 GET_FILESIZE ?= stat -f%z
 

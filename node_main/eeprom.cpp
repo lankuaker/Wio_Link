@@ -1,9 +1,9 @@
-/* 
+/*
   EEPROM.cpp - esp8266 EEPROM emulation
 
   Copyright (c) 2014 Ivan Grokhotkov. All rights reserved.
   This file is part of the esp8266 core for Arduino environment.
- 
+
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
   License as published by the Free Software Foundation; either
@@ -31,7 +31,7 @@
 extern uint32_t _SPIFFS_end;
 }
 
-#define CONFIG_START_SECTOR (((uint32_t)_SPIFFS_end - 0x40200000) / 4096)
+#define CONFIG_START_SECTOR (((uint32_t)&_SPIFFS_end - 0x40200000) / 4096)
 #define CONFIG_SECTOR (CONFIG_START_SECTOR + 0)
 #define CONFIG_ADDR (SPI_FLASH_SEC_SIZE * CONFIG_SECTOR)
 

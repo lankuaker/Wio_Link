@@ -1,5 +1,5 @@
 ../../node_main/network.cpp: In function 'void user_devicefind_recv(void*, char*, short unsigned int)':
-../../node_main/network.cpp:84:43: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+../../node_main/network.cpp:91:43: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
          wifi_get_macaddr(SOFTAP_IF, hwaddr);
                                            ^
 In file included from ../../node_main/esp8266.h:23:0,
@@ -7,7 +7,7 @@ In file included from ../../node_main/esp8266.h:23:0,
 ../../esp8266_sdk/include/user_interface.h:250:6: warning:   initializing argument 2 of 'bool wifi_get_macaddr(uint8, uint8*)' [-fpermissive]
  bool wifi_get_macaddr(uint8 if_index, uint8 *macaddr);
       ^
-../../node_main/network.cpp:89:48: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+../../node_main/network.cpp:96:48: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
              wifi_get_macaddr(STATION_IF, hwaddr);
                                                 ^
 In file included from ../../node_main/esp8266.h:23:0,
@@ -15,7 +15,7 @@ In file included from ../../node_main/esp8266.h:23:0,
 ../../esp8266_sdk/include/user_interface.h:250:6: warning:   initializing argument 2 of 'bool wifi_get_macaddr(uint8, uint8*)' [-fpermissive]
  bool wifi_get_macaddr(uint8 if_index, uint8 *macaddr);
       ^
-../../node_main/network.cpp:93:44: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+../../node_main/network.cpp:100:44: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
          wifi_get_macaddr(STATION_IF, hwaddr);
                                             ^
 In file included from ../../node_main/esp8266.h:23:0,
@@ -23,7 +23,7 @@ In file included from ../../node_main/esp8266.h:23:0,
 ../../esp8266_sdk/include/user_interface.h:250:6: warning:   initializing argument 2 of 'bool wifi_get_macaddr(uint8, uint8*)' [-fpermissive]
  bool wifi_get_macaddr(uint8 if_index, uint8 *macaddr);
       ^
-../../node_main/network.cpp:108:53: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+../../node_main/network.cpp:122:53: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
          espconn_sent(conn, Device_mac_buffer, length);
                                                      ^
 In file included from ../../node_main/esp8266.h:12:0,
@@ -31,58 +31,110 @@ In file included from ../../node_main/esp8266.h:12:0,
 ../../esp8266_sdk/include/espconn.h:276:7: warning:   initializing argument 2 of 'sint8 espconn_sent(espconn*, uint8*, uint16)' [-fpermissive]
  sint8 espconn_sent(struct espconn *espconn, uint8 *psent, uint16 length);
        ^
-../../node_main/network.cpp:120:39: warning: invalid conversion from 'const char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
-             espconn_sent(conn, "ok", 2);
-                                       ^
+../../node_main/network.cpp:135:43: warning: invalid conversion from 'const char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+             espconn_sent(conn, "ok\r\n", 4);
+                                           ^
 In file included from ../../node_main/esp8266.h:12:0,
                  from ../../node_main/network.cpp:2:
 ../../esp8266_sdk/include/espconn.h:276:7: warning:   initializing argument 2 of 'sint8 espconn_sent(espconn*, uint8*, uint16)' [-fpermissive]
  sint8 espconn_sent(struct espconn *espconn, uint8 *psent, uint16 length);
        ^
-../../node_main/network.cpp:136:39: warning: invalid conversion from 'const char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
-             espconn_sent(conn, "ok", 2);
-                                       ^
+../../node_main/network.cpp:151:43: warning: invalid conversion from 'const char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+             espconn_sent(conn, "ok\r\n", 4);
+                                           ^
 In file included from ../../node_main/esp8266.h:12:0,
                  from ../../node_main/network.cpp:2:
 ../../esp8266_sdk/include/espconn.h:276:7: warning:   initializing argument 2 of 'sint8 espconn_sent(espconn*, uint8*, uint16)' [-fpermissive]
  sint8 espconn_sent(struct espconn *espconn, uint8 *psent, uint16 length);
        ^
 ../../node_main/network.cpp: In function 'void main_connection_recv_cb(void*, char*, short unsigned int)':
-../../node_main/network.cpp:152:32: warning: invalid conversion from 'void*' to 'espconn*' [-fpermissive]
+../../node_main/network.cpp:167:32: warning: invalid conversion from 'void*' to 'espconn*' [-fpermissive]
      struct espconn *pespconn = arg;
                                 ^
+../../node_main/network.cpp:191:105: warning: invalid conversion from 'int*' to 'size_t* {aka unsigned int*}' [-fpermissive]
+             aes_crypt_cfb128(&aes_ctx, AES_DECRYPT, length - 16, &iv_offset, iv, pusrdata + 16, pusrdata);
+                                                                                                         ^
+In file included from ../../node_main/network.cpp:8:0:
+../../node_main/polarssl/aes.h:183:5: warning:   initializing argument 4 of 'int aes_crypt_cfb128(aes_context*, int, size_t, size_t*, unsigned char*, const unsigned char*, unsigned char*)' [-fpermissive]
+ int aes_crypt_cfb128( aes_context *ctx,
+     ^
+../../node_main/network.cpp:191:91: warning: invalid conversion from 'char*' to 'const unsigned char*' [-fpermissive]
+             aes_crypt_cfb128(&aes_ctx, AES_DECRYPT, length - 16, &iv_offset, iv, pusrdata + 16, pusrdata);
+                                                                                           ^
+In file included from ../../node_main/network.cpp:8:0:
+../../node_main/polarssl/aes.h:183:5: warning:   initializing argument 6 of 'int aes_crypt_cfb128(aes_context*, int, size_t, size_t*, unsigned char*, const unsigned char*, unsigned char*)' [-fpermissive]
+ int aes_crypt_cfb128( aes_context *ctx,
+     ^
+../../node_main/network.cpp:191:105: warning: invalid conversion from 'char*' to 'unsigned char*' [-fpermissive]
+             aes_crypt_cfb128(&aes_ctx, AES_DECRYPT, length - 16, &iv_offset, iv, pusrdata + 16, pusrdata);
+                                                                                                         ^
+In file included from ../../node_main/network.cpp:8:0:
+../../node_main/polarssl/aes.h:183:5: warning:   initializing argument 7 of 'int aes_crypt_cfb128(aes_context*, int, size_t, size_t*, unsigned char*, const unsigned char*, unsigned char*)' [-fpermissive]
+ int aes_crypt_cfb128( aes_context *ctx,
+     ^
+../../node_main/network.cpp:200:91: warning: invalid conversion from 'int*' to 'size_t* {aka unsigned int*}' [-fpermissive]
+         aes_crypt_cfb128(&aes_ctx, AES_DECRYPT, length, &iv_offset, iv, pusrdata, pusrdata);
+                                                                                           ^
+In file included from ../../node_main/network.cpp:8:0:
+../../node_main/polarssl/aes.h:183:5: warning:   initializing argument 4 of 'int aes_crypt_cfb128(aes_context*, int, size_t, size_t*, unsigned char*, const unsigned char*, unsigned char*)' [-fpermissive]
+ int aes_crypt_cfb128( aes_context *ctx,
+     ^
+../../node_main/network.cpp:200:91: warning: invalid conversion from 'char*' to 'const unsigned char*' [-fpermissive]
+         aes_crypt_cfb128(&aes_ctx, AES_DECRYPT, length, &iv_offset, iv, pusrdata, pusrdata);
+                                                                                           ^
+In file included from ../../node_main/network.cpp:8:0:
+../../node_main/polarssl/aes.h:183:5: warning:   initializing argument 6 of 'int aes_crypt_cfb128(aes_context*, int, size_t, size_t*, unsigned char*, const unsigned char*, unsigned char*)' [-fpermissive]
+ int aes_crypt_cfb128( aes_context *ctx,
+     ^
+../../node_main/network.cpp:200:91: warning: invalid conversion from 'char*' to 'unsigned char*' [-fpermissive]
+         aes_crypt_cfb128(&aes_ctx, AES_DECRYPT, length, &iv_offset, iv, pusrdata, pusrdata);
+                                                                                           ^
+In file included from ../../node_main/network.cpp:8:0:
+../../node_main/polarssl/aes.h:183:5: warning:   initializing argument 7 of 'int aes_crypt_cfb128(aes_context*, int, size_t, size_t*, unsigned char*, const unsigned char*, unsigned char*)' [-fpermissive]
+ int aes_crypt_cfb128( aes_context *ctx,
+     ^
+../../node_main/network.cpp:206:45: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+             network_puts("##ALIVE##\r\n", 11);
+                                             ^
 ../../node_main/network.cpp: In function 'void main_connection_sent_cb(void*)':
-../../node_main/network.cpp:178:32: warning: invalid conversion from 'void*' to 'espconn*' [-fpermissive]
+../../node_main/network.cpp:227:32: warning: invalid conversion from 'void*' to 'espconn*' [-fpermissive]
      struct espconn *pespconn = arg;
                                 ^
-../../node_main/network.cpp:187:42: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
-         espconn_sent(pespconn, data, size);
+../../node_main/network.cpp:239:82: warning: invalid conversion from 'int*' to 'size_t* {aka unsigned int*}' [-fpermissive]
+         aes_crypt_cfb128(&aes_ctx, AES_ENCRYPT, size2, &iv_offset, iv, data, data);
+                                                                                  ^
+In file included from ../../node_main/network.cpp:8:0:
+../../node_main/polarssl/aes.h:183:5: warning:   initializing argument 4 of 'int aes_crypt_cfb128(aes_context*, int, size_t, size_t*, unsigned char*, const unsigned char*, unsigned char*)' [-fpermissive]
+ int aes_crypt_cfb128( aes_context *ctx,
+     ^
+../../node_main/network.cpp:239:82: warning: invalid conversion from 'char*' to 'const unsigned char*' [-fpermissive]
+         aes_crypt_cfb128(&aes_ctx, AES_ENCRYPT, size2, &iv_offset, iv, data, data);
+                                                                                  ^
+In file included from ../../node_main/network.cpp:8:0:
+../../node_main/polarssl/aes.h:183:5: warning:   initializing argument 6 of 'int aes_crypt_cfb128(aes_context*, int, size_t, size_t*, unsigned char*, const unsigned char*, unsigned char*)' [-fpermissive]
+ int aes_crypt_cfb128( aes_context *ctx,
+     ^
+../../node_main/network.cpp:239:82: warning: invalid conversion from 'char*' to 'unsigned char*' [-fpermissive]
+         aes_crypt_cfb128(&aes_ctx, AES_ENCRYPT, size2, &iv_offset, iv, data, data);
+                                                                                  ^
+In file included from ../../node_main/network.cpp:8:0:
+../../node_main/polarssl/aes.h:183:5: warning:   initializing argument 7 of 'int aes_crypt_cfb128(aes_context*, int, size_t, size_t*, unsigned char*, const unsigned char*, unsigned char*)' [-fpermissive]
+ int aes_crypt_cfb128( aes_context *ctx,
+     ^
+../../node_main/network.cpp:240:43: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+         espconn_sent(pespconn, data, size2);
+                                           ^
+In file included from ../../node_main/esp8266.h:12:0,
+                 from ../../node_main/network.cpp:2:
+../../esp8266_sdk/include/espconn.h:276:7: warning:   initializing argument 2 of 'sint8 espconn_sent(espconn*, uint8*, uint16)' [-fpermissive]
+ sint8 espconn_sent(struct espconn *espconn, uint8 *psent, uint16 length);
+       ^
+../../node_main/network.cpp: In function 'void main_connection_send_hello(void*)':
+../../node_main/network.cpp:314:42: warning: invalid conversion from 'void*' to 'uint8_t* {aka unsigned char*}' [-fpermissive]
+     uint8_t *buff = os_malloc(SN_LEN + 32);
                                           ^
-In file included from ../../node_main/esp8266.h:12:0,
-                 from ../../node_main/network.cpp:2:
-../../esp8266_sdk/include/espconn.h:276:7: warning:   initializing argument 2 of 'sint8 espconn_sent(espconn*, uint8*, uint16)' [-fpermissive]
- sint8 espconn_sent(struct espconn *espconn, uint8 *psent, uint16 length);
-       ^
-../../node_main/network.cpp: In function 'void confirm_hello(void*)':
-../../node_main/network.cpp:231:66: warning: invalid conversion from 'const char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
-         espconn_sent(pespconn, ACCESS_TOKEN, strlen(ACCESS_TOKEN));
-                                                                  ^
-In file included from ../../node_main/esp8266.h:12:0,
-                 from ../../node_main/network.cpp:2:
-../../esp8266_sdk/include/espconn.h:276:7: warning:   initializing argument 2 of 'sint8 espconn_sent(espconn*, uint8*, uint16)' [-fpermissive]
- sint8 espconn_sent(struct espconn *espconn, uint8 *psent, uint16 length);
-       ^
-../../node_main/network.cpp: In function 'void main_connection_connected_callback(void*)':
-../../node_main/network.cpp:264:42: warning: invalid conversion from 'const char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
-     espconn_sent(pespconn, "hello\r\n", 7);
-                                          ^
-In file included from ../../node_main/esp8266.h:12:0,
-                 from ../../node_main/network.cpp:2:
-../../esp8266_sdk/include/espconn.h:276:7: warning:   initializing argument 2 of 'sint8 espconn_sent(espconn*, uint8*, uint16)' [-fpermissive]
- sint8 espconn_sent(struct espconn *espconn, uint8 *psent, uint16 length);
-       ^
 ../../node_main/network.cpp: In function 'void main_connection_reconnect_callback(void*, sint8)':
-../../node_main/network.cpp:283:64: warning: invalid conversion from 'void (*)()' to 'void (*)(void*)' [-fpermissive]
+../../node_main/network.cpp:366:64: warning: invalid conversion from 'void (*)()' to 'void (*)(void*)' [-fpermissive]
      os_timer_setfn(&timer_main_conn, main_connection_init, NULL);
                                                                 ^
 In file included from ../../node_main/esp8266.h:13:0,
@@ -91,7 +143,7 @@ In file included from ../../node_main/esp8266.h:13:0,
  void ets_timer_setfn(ETSTimer *t, ETSTimerFunc *fn, void *parg);
       ^
 ../../node_main/network.cpp: In function 'void main_connection_init()':
-../../node_main/network.cpp:345:76: warning: invalid conversion from 'void (*)()' to 'void (*)(void*)' [-fpermissive]
+../../node_main/network.cpp:436:76: warning: invalid conversion from 'void (*)()' to 'void (*)(void*)' [-fpermissive]
      os_timer_setfn(&timer_network_check, network_check_timer_callback, NULL);
                                                                             ^
 In file included from ../../node_main/esp8266.h:13:0,
@@ -99,15 +151,6 @@ In file included from ../../node_main/esp8266.h:13:0,
 ../../esp8266_sdk/include/ets_sys.h:101:6: warning:   initializing argument 2 of 'void ets_timer_setfn(ETSTimer*, void (*)(void*), void*)' [-fpermissive]
  void ets_timer_setfn(ETSTimer *t, ETSTimerFunc *fn, void *parg);
       ^
-../../node_main/network.cpp: In function 'void establish_network()':
-../../node_main/network.cpp:363:40: warning: invalid conversion from 'uint8_t* {aka unsigned char*}' to 'const char*' [-fpermissive]
-     if (os_strncmp(EEPROM.getDataPtr() + 100, "#$%^", 4) != 0)
-                                        ^
-In file included from ../../node_main/esp8266.h:13:0,
-                 from ../../node_main/network.cpp:2:
-../../esp8266_sdk/include/ets_sys.h:104:5: warning:   initializing argument 1 of 'int ets_strncmp(const char*, const char*, int)' [-fpermissive]
- int ets_strncmp(const char *s1, const char *s2, int len);
-     ^
 ../../rpc_server/rpc_server.cpp: In function 'void rpc_server_loop()':
 ../../rpc_server/rpc_server.cpp:177:34: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
          response_msg_open("event");
@@ -137,11 +180,11 @@ In file included from ../../node_main/esp8266.h:13:0,
      char *msg1 = "{\"msg_type\":\"";
                   ^
 ../../rpc_server/rpc_stream.cpp:93:18: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-     char *msg2 = "\", \"msg\":\"";
+     char *msg2 = "\", \"msg\":";
                   ^
 ../../rpc_server/rpc_stream.cpp: In function 'void response_msg_close()':
-../../rpc_server/rpc_stream.cpp:102:18: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-     char *msg3 = "\"}\r\n";
+../../rpc_server/rpc_stream.cpp:103:18: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     char *msg3 = "}\r\n";
                   ^
 In file included from ../../esp8266_arduino/pgmspace.h:9:0,
                  from ../../esp8266_arduino/Arduino.h:38,
@@ -206,6 +249,13 @@ rpc_server_registration.cpp:38:139: warning: deprecated conversion from string c
      rpc_server_register_method("Grove_Example1", "float_value", METHOD_WRITE, __grove_example_write_float_value, Grove_Example1, arg_types);
                                                                                                                                            ^
 rpc_server_registration.cpp:38:139: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+../../node_main/eeprom.cpp:34:0: warning: "CONFIG_START_SECTOR" redefined [enabled by default]
+ #define CONFIG_START_SECTOR (((uint32_t)&_SPIFFS_end - 0x40200000) / 4096)
+ ^
+In file included from ../../node_main/eeprom.cpp:23:0:
+../../node_main/EEPROM.h:29:0: note: this is the location of the previous definition
+ #define CONFIG_START_SECTOR (((uint32_t)_SPIFFS_end - 0x40200000) / 4096)
+ ^
 ../../node_main/ota.cpp: In function 'void ota_response(void*)':
 ../../node_main/ota.cpp:28:42: warning: invalid conversion from 'void*' to 'upgrade_server_info*' [-fpermissive]
      struct upgrade_server_info *server = arg;
@@ -230,7 +280,7 @@ In file included from ../../node_main/esp8266.h:13:0,
      suli_event_trigger(&event1, "fire", 250);
                                             ^
 ../../node_main/network.cpp: In function 'void user_devicefind_recv(void*, char*, short unsigned int)':
-../../node_main/network.cpp:84:43: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+../../node_main/network.cpp:91:43: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
          wifi_get_macaddr(SOFTAP_IF, hwaddr);
                                            ^
 In file included from ../../node_main/esp8266.h:23:0,
@@ -238,7 +288,7 @@ In file included from ../../node_main/esp8266.h:23:0,
 ../../esp8266_sdk/include/user_interface.h:250:6: warning:   initializing argument 2 of 'bool wifi_get_macaddr(uint8, uint8*)' [-fpermissive]
  bool wifi_get_macaddr(uint8 if_index, uint8 *macaddr);
       ^
-../../node_main/network.cpp:89:48: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+../../node_main/network.cpp:96:48: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
              wifi_get_macaddr(STATION_IF, hwaddr);
                                                 ^
 In file included from ../../node_main/esp8266.h:23:0,
@@ -246,7 +296,7 @@ In file included from ../../node_main/esp8266.h:23:0,
 ../../esp8266_sdk/include/user_interface.h:250:6: warning:   initializing argument 2 of 'bool wifi_get_macaddr(uint8, uint8*)' [-fpermissive]
  bool wifi_get_macaddr(uint8 if_index, uint8 *macaddr);
       ^
-../../node_main/network.cpp:93:44: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+../../node_main/network.cpp:100:44: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
          wifi_get_macaddr(STATION_IF, hwaddr);
                                             ^
 In file included from ../../node_main/esp8266.h:23:0,
@@ -254,7 +304,7 @@ In file included from ../../node_main/esp8266.h:23:0,
 ../../esp8266_sdk/include/user_interface.h:250:6: warning:   initializing argument 2 of 'bool wifi_get_macaddr(uint8, uint8*)' [-fpermissive]
  bool wifi_get_macaddr(uint8 if_index, uint8 *macaddr);
       ^
-../../node_main/network.cpp:108:53: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+../../node_main/network.cpp:122:53: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
          espconn_sent(conn, Device_mac_buffer, length);
                                                      ^
 In file included from ../../node_main/esp8266.h:12:0,
@@ -262,58 +312,110 @@ In file included from ../../node_main/esp8266.h:12:0,
 ../../esp8266_sdk/include/espconn.h:276:7: warning:   initializing argument 2 of 'sint8 espconn_sent(espconn*, uint8*, uint16)' [-fpermissive]
  sint8 espconn_sent(struct espconn *espconn, uint8 *psent, uint16 length);
        ^
-../../node_main/network.cpp:120:39: warning: invalid conversion from 'const char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
-             espconn_sent(conn, "ok", 2);
-                                       ^
+../../node_main/network.cpp:135:43: warning: invalid conversion from 'const char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+             espconn_sent(conn, "ok\r\n", 4);
+                                           ^
 In file included from ../../node_main/esp8266.h:12:0,
                  from ../../node_main/network.cpp:2:
 ../../esp8266_sdk/include/espconn.h:276:7: warning:   initializing argument 2 of 'sint8 espconn_sent(espconn*, uint8*, uint16)' [-fpermissive]
  sint8 espconn_sent(struct espconn *espconn, uint8 *psent, uint16 length);
        ^
-../../node_main/network.cpp:136:39: warning: invalid conversion from 'const char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
-             espconn_sent(conn, "ok", 2);
-                                       ^
+../../node_main/network.cpp:151:43: warning: invalid conversion from 'const char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+             espconn_sent(conn, "ok\r\n", 4);
+                                           ^
 In file included from ../../node_main/esp8266.h:12:0,
                  from ../../node_main/network.cpp:2:
 ../../esp8266_sdk/include/espconn.h:276:7: warning:   initializing argument 2 of 'sint8 espconn_sent(espconn*, uint8*, uint16)' [-fpermissive]
  sint8 espconn_sent(struct espconn *espconn, uint8 *psent, uint16 length);
        ^
 ../../node_main/network.cpp: In function 'void main_connection_recv_cb(void*, char*, short unsigned int)':
-../../node_main/network.cpp:152:32: warning: invalid conversion from 'void*' to 'espconn*' [-fpermissive]
+../../node_main/network.cpp:167:32: warning: invalid conversion from 'void*' to 'espconn*' [-fpermissive]
      struct espconn *pespconn = arg;
                                 ^
+../../node_main/network.cpp:191:105: warning: invalid conversion from 'int*' to 'size_t* {aka unsigned int*}' [-fpermissive]
+             aes_crypt_cfb128(&aes_ctx, AES_DECRYPT, length - 16, &iv_offset, iv, pusrdata + 16, pusrdata);
+                                                                                                         ^
+In file included from ../../node_main/network.cpp:8:0:
+../../node_main/polarssl/aes.h:183:5: warning:   initializing argument 4 of 'int aes_crypt_cfb128(aes_context*, int, size_t, size_t*, unsigned char*, const unsigned char*, unsigned char*)' [-fpermissive]
+ int aes_crypt_cfb128( aes_context *ctx,
+     ^
+../../node_main/network.cpp:191:91: warning: invalid conversion from 'char*' to 'const unsigned char*' [-fpermissive]
+             aes_crypt_cfb128(&aes_ctx, AES_DECRYPT, length - 16, &iv_offset, iv, pusrdata + 16, pusrdata);
+                                                                                           ^
+In file included from ../../node_main/network.cpp:8:0:
+../../node_main/polarssl/aes.h:183:5: warning:   initializing argument 6 of 'int aes_crypt_cfb128(aes_context*, int, size_t, size_t*, unsigned char*, const unsigned char*, unsigned char*)' [-fpermissive]
+ int aes_crypt_cfb128( aes_context *ctx,
+     ^
+../../node_main/network.cpp:191:105: warning: invalid conversion from 'char*' to 'unsigned char*' [-fpermissive]
+             aes_crypt_cfb128(&aes_ctx, AES_DECRYPT, length - 16, &iv_offset, iv, pusrdata + 16, pusrdata);
+                                                                                                         ^
+In file included from ../../node_main/network.cpp:8:0:
+../../node_main/polarssl/aes.h:183:5: warning:   initializing argument 7 of 'int aes_crypt_cfb128(aes_context*, int, size_t, size_t*, unsigned char*, const unsigned char*, unsigned char*)' [-fpermissive]
+ int aes_crypt_cfb128( aes_context *ctx,
+     ^
+../../node_main/network.cpp:200:91: warning: invalid conversion from 'int*' to 'size_t* {aka unsigned int*}' [-fpermissive]
+         aes_crypt_cfb128(&aes_ctx, AES_DECRYPT, length, &iv_offset, iv, pusrdata, pusrdata);
+                                                                                           ^
+In file included from ../../node_main/network.cpp:8:0:
+../../node_main/polarssl/aes.h:183:5: warning:   initializing argument 4 of 'int aes_crypt_cfb128(aes_context*, int, size_t, size_t*, unsigned char*, const unsigned char*, unsigned char*)' [-fpermissive]
+ int aes_crypt_cfb128( aes_context *ctx,
+     ^
+../../node_main/network.cpp:200:91: warning: invalid conversion from 'char*' to 'const unsigned char*' [-fpermissive]
+         aes_crypt_cfb128(&aes_ctx, AES_DECRYPT, length, &iv_offset, iv, pusrdata, pusrdata);
+                                                                                           ^
+In file included from ../../node_main/network.cpp:8:0:
+../../node_main/polarssl/aes.h:183:5: warning:   initializing argument 6 of 'int aes_crypt_cfb128(aes_context*, int, size_t, size_t*, unsigned char*, const unsigned char*, unsigned char*)' [-fpermissive]
+ int aes_crypt_cfb128( aes_context *ctx,
+     ^
+../../node_main/network.cpp:200:91: warning: invalid conversion from 'char*' to 'unsigned char*' [-fpermissive]
+         aes_crypt_cfb128(&aes_ctx, AES_DECRYPT, length, &iv_offset, iv, pusrdata, pusrdata);
+                                                                                           ^
+In file included from ../../node_main/network.cpp:8:0:
+../../node_main/polarssl/aes.h:183:5: warning:   initializing argument 7 of 'int aes_crypt_cfb128(aes_context*, int, size_t, size_t*, unsigned char*, const unsigned char*, unsigned char*)' [-fpermissive]
+ int aes_crypt_cfb128( aes_context *ctx,
+     ^
+../../node_main/network.cpp:206:45: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+             network_puts("##ALIVE##\r\n", 11);
+                                             ^
 ../../node_main/network.cpp: In function 'void main_connection_sent_cb(void*)':
-../../node_main/network.cpp:178:32: warning: invalid conversion from 'void*' to 'espconn*' [-fpermissive]
+../../node_main/network.cpp:227:32: warning: invalid conversion from 'void*' to 'espconn*' [-fpermissive]
      struct espconn *pespconn = arg;
                                 ^
-../../node_main/network.cpp:187:42: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
-         espconn_sent(pespconn, data, size);
+../../node_main/network.cpp:239:82: warning: invalid conversion from 'int*' to 'size_t* {aka unsigned int*}' [-fpermissive]
+         aes_crypt_cfb128(&aes_ctx, AES_ENCRYPT, size2, &iv_offset, iv, data, data);
+                                                                                  ^
+In file included from ../../node_main/network.cpp:8:0:
+../../node_main/polarssl/aes.h:183:5: warning:   initializing argument 4 of 'int aes_crypt_cfb128(aes_context*, int, size_t, size_t*, unsigned char*, const unsigned char*, unsigned char*)' [-fpermissive]
+ int aes_crypt_cfb128( aes_context *ctx,
+     ^
+../../node_main/network.cpp:239:82: warning: invalid conversion from 'char*' to 'const unsigned char*' [-fpermissive]
+         aes_crypt_cfb128(&aes_ctx, AES_ENCRYPT, size2, &iv_offset, iv, data, data);
+                                                                                  ^
+In file included from ../../node_main/network.cpp:8:0:
+../../node_main/polarssl/aes.h:183:5: warning:   initializing argument 6 of 'int aes_crypt_cfb128(aes_context*, int, size_t, size_t*, unsigned char*, const unsigned char*, unsigned char*)' [-fpermissive]
+ int aes_crypt_cfb128( aes_context *ctx,
+     ^
+../../node_main/network.cpp:239:82: warning: invalid conversion from 'char*' to 'unsigned char*' [-fpermissive]
+         aes_crypt_cfb128(&aes_ctx, AES_ENCRYPT, size2, &iv_offset, iv, data, data);
+                                                                                  ^
+In file included from ../../node_main/network.cpp:8:0:
+../../node_main/polarssl/aes.h:183:5: warning:   initializing argument 7 of 'int aes_crypt_cfb128(aes_context*, int, size_t, size_t*, unsigned char*, const unsigned char*, unsigned char*)' [-fpermissive]
+ int aes_crypt_cfb128( aes_context *ctx,
+     ^
+../../node_main/network.cpp:240:43: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+         espconn_sent(pespconn, data, size2);
+                                           ^
+In file included from ../../node_main/esp8266.h:12:0,
+                 from ../../node_main/network.cpp:2:
+../../esp8266_sdk/include/espconn.h:276:7: warning:   initializing argument 2 of 'sint8 espconn_sent(espconn*, uint8*, uint16)' [-fpermissive]
+ sint8 espconn_sent(struct espconn *espconn, uint8 *psent, uint16 length);
+       ^
+../../node_main/network.cpp: In function 'void main_connection_send_hello(void*)':
+../../node_main/network.cpp:314:42: warning: invalid conversion from 'void*' to 'uint8_t* {aka unsigned char*}' [-fpermissive]
+     uint8_t *buff = os_malloc(SN_LEN + 32);
                                           ^
-In file included from ../../node_main/esp8266.h:12:0,
-                 from ../../node_main/network.cpp:2:
-../../esp8266_sdk/include/espconn.h:276:7: warning:   initializing argument 2 of 'sint8 espconn_sent(espconn*, uint8*, uint16)' [-fpermissive]
- sint8 espconn_sent(struct espconn *espconn, uint8 *psent, uint16 length);
-       ^
-../../node_main/network.cpp: In function 'void confirm_hello(void*)':
-../../node_main/network.cpp:231:66: warning: invalid conversion from 'const char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
-         espconn_sent(pespconn, ACCESS_TOKEN, strlen(ACCESS_TOKEN));
-                                                                  ^
-In file included from ../../node_main/esp8266.h:12:0,
-                 from ../../node_main/network.cpp:2:
-../../esp8266_sdk/include/espconn.h:276:7: warning:   initializing argument 2 of 'sint8 espconn_sent(espconn*, uint8*, uint16)' [-fpermissive]
- sint8 espconn_sent(struct espconn *espconn, uint8 *psent, uint16 length);
-       ^
-../../node_main/network.cpp: In function 'void main_connection_connected_callback(void*)':
-../../node_main/network.cpp:264:42: warning: invalid conversion from 'const char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
-     espconn_sent(pespconn, "hello\r\n", 7);
-                                          ^
-In file included from ../../node_main/esp8266.h:12:0,
-                 from ../../node_main/network.cpp:2:
-../../esp8266_sdk/include/espconn.h:276:7: warning:   initializing argument 2 of 'sint8 espconn_sent(espconn*, uint8*, uint16)' [-fpermissive]
- sint8 espconn_sent(struct espconn *espconn, uint8 *psent, uint16 length);
-       ^
 ../../node_main/network.cpp: In function 'void main_connection_reconnect_callback(void*, sint8)':
-../../node_main/network.cpp:283:64: warning: invalid conversion from 'void (*)()' to 'void (*)(void*)' [-fpermissive]
+../../node_main/network.cpp:366:64: warning: invalid conversion from 'void (*)()' to 'void (*)(void*)' [-fpermissive]
      os_timer_setfn(&timer_main_conn, main_connection_init, NULL);
                                                                 ^
 In file included from ../../node_main/esp8266.h:13:0,
@@ -322,7 +424,7 @@ In file included from ../../node_main/esp8266.h:13:0,
  void ets_timer_setfn(ETSTimer *t, ETSTimerFunc *fn, void *parg);
       ^
 ../../node_main/network.cpp: In function 'void main_connection_init()':
-../../node_main/network.cpp:345:76: warning: invalid conversion from 'void (*)()' to 'void (*)(void*)' [-fpermissive]
+../../node_main/network.cpp:436:76: warning: invalid conversion from 'void (*)()' to 'void (*)(void*)' [-fpermissive]
      os_timer_setfn(&timer_network_check, network_check_timer_callback, NULL);
                                                                             ^
 In file included from ../../node_main/esp8266.h:13:0,
@@ -330,15 +432,6 @@ In file included from ../../node_main/esp8266.h:13:0,
 ../../esp8266_sdk/include/ets_sys.h:101:6: warning:   initializing argument 2 of 'void ets_timer_setfn(ETSTimer*, void (*)(void*), void*)' [-fpermissive]
  void ets_timer_setfn(ETSTimer *t, ETSTimerFunc *fn, void *parg);
       ^
-../../node_main/network.cpp: In function 'void establish_network()':
-../../node_main/network.cpp:363:40: warning: invalid conversion from 'uint8_t* {aka unsigned char*}' to 'const char*' [-fpermissive]
-     if (os_strncmp(EEPROM.getDataPtr() + 100, "#$%^", 4) != 0)
-                                        ^
-In file included from ../../node_main/esp8266.h:13:0,
-                 from ../../node_main/network.cpp:2:
-../../esp8266_sdk/include/ets_sys.h:104:5: warning:   initializing argument 1 of 'int ets_strncmp(const char*, const char*, int)' [-fpermissive]
- int ets_strncmp(const char *s1, const char *s2, int len);
-     ^
 ../../rpc_server/rpc_server.cpp: In function 'void rpc_server_loop()':
 ../../rpc_server/rpc_server.cpp:177:34: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
          response_msg_open("event");
@@ -368,11 +461,11 @@ In file included from ../../node_main/esp8266.h:13:0,
      char *msg1 = "{\"msg_type\":\"";
                   ^
 ../../rpc_server/rpc_stream.cpp:93:18: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-     char *msg2 = "\", \"msg\":\"";
+     char *msg2 = "\", \"msg\":";
                   ^
 ../../rpc_server/rpc_stream.cpp: In function 'void response_msg_close()':
-../../rpc_server/rpc_stream.cpp:102:18: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-     char *msg3 = "\"}\r\n";
+../../rpc_server/rpc_stream.cpp:103:18: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     char *msg3 = "}\r\n";
                   ^
 In file included from ../../esp8266_arduino/pgmspace.h:9:0,
                  from ../../esp8266_arduino/Arduino.h:38,
@@ -437,6 +530,13 @@ rpc_server_registration.cpp:38:139: warning: deprecated conversion from string c
      rpc_server_register_method("Grove_Example1", "float_value", METHOD_WRITE, __grove_example_write_float_value, Grove_Example1, arg_types);
                                                                                                                                            ^
 rpc_server_registration.cpp:38:139: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+../../node_main/eeprom.cpp:34:0: warning: "CONFIG_START_SECTOR" redefined [enabled by default]
+ #define CONFIG_START_SECTOR (((uint32_t)&_SPIFFS_end - 0x40200000) / 4096)
+ ^
+In file included from ../../node_main/eeprom.cpp:23:0:
+../../node_main/EEPROM.h:29:0: note: this is the location of the previous definition
+ #define CONFIG_START_SECTOR (((uint32_t)_SPIFFS_end - 0x40200000) / 4096)
+ ^
 ../../node_main/ota.cpp: In function 'void ota_response(void*)':
 ../../node_main/ota.cpp:28:42: warning: invalid conversion from 'void*' to 'upgrade_server_info*' [-fpermissive]
      struct upgrade_server_info *server = arg;

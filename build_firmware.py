@@ -74,17 +74,20 @@ def build_read_call_args (arg_list):
 def build_read_print (arg_list):
     global error_msg
     arg_list = [arg for arg in arg_list if arg.find("*")>-1]  #find out the ones have "*"
-    result = ""
+    result = '        writer_print(TYPE_STRING, "{");\r\n'
     cnt = len(arg_list)
     for i in xrange(cnt):
         t = arg_list[i].strip().split(' ')[0]
+        name = arg_list[i].strip().split(' ')[1]
         if t in TYPE_MAP.keys():
-            result += "        writer_print(%s, %s%s);\r\n" %(TYPE_MAP[t], arg_list[i].strip().split(' ')[1].replace('*', '&'), \
+            result += '        writer_print(TYPE_STRING, "\\"%s\\":");\r\n' %(name.replace('*',''))
+            result += "        writer_print(%s, %s%s);\r\n" %(TYPE_MAP[t], name.replace('*', '&'), \
                                                               ', true' if i < (cnt-1) else '')
         else:
             error_msg = 'arg type %s not supported' % t
             #sys.exit()
             return ""
+    result += '        writer_print(TYPE_STRING, "}");\r\n'
     return result
 
 def build_unpack_vars (arg_list):
@@ -160,7 +163,7 @@ def gen_wrapper_registration (instance_name, info, arg_list):
         fp_wrapper_cpp.write(build_read_print(fun[1]))
         fp_wrapper_cpp.write('    }else\r\n')
         fp_wrapper_cpp.write('    {\r\n')
-        fp_wrapper_cpp.write('        writer_print(TYPE_STRING, "Failed");\r\n')
+        fp_wrapper_cpp.write('        writer_print(TYPE_STRING, "null");\r\n')
         fp_wrapper_cpp.write('    }\r\n')
         fp_wrapper_cpp.write('}\r\n\r\n')
 
@@ -183,9 +186,9 @@ def gen_wrapper_registration (instance_name, info, arg_list):
         fp_wrapper_cpp.write(build_unpack_vars(fun[1]))
         fp_wrapper_cpp.write('\r\n')
         fp_wrapper_cpp.write('    if(grove->%s(%s))\r\n'%(fun[0],build_read_call_args(fun[1])))
-        fp_wrapper_cpp.write('        writer_print(TYPE_STRING, "OK");\r\n')
+        fp_wrapper_cpp.write('        writer_print(TYPE_STRING, "\\"OK\\"");\r\n')
         fp_wrapper_cpp.write('    else\r\n')
-        fp_wrapper_cpp.write('        writer_print(TYPE_STRING, "Failed");\r\n')
+        fp_wrapper_cpp.write('        writer_print(TYPE_STRING, "\\"Failed\\"");\r\n')
         fp_wrapper_cpp.write('}\r\n\r\n')
 
         str_reg_method += '    memset(arg_types, TYPE_NONE, MAX_INPUT_ARG_LEN);\r\n'
@@ -206,7 +209,7 @@ def gen_wrapper_registration (instance_name, info, arg_list):
 
 
 
-def gen_and_build (user_id):
+def gen_and_build (user_id, node_name):
     global error_msg
     global GEN_DIR
     ###generate rpc wrapper and registration files
@@ -293,8 +296,8 @@ def gen_and_build (user_id):
     if not find_makefile:
         os.system('cd %s;cp -f ../../Makefile.template ./Makefile ' % user_build_dir)
 
-    os.system('cd %s;make clean;make APP=1 SPI_SPEED=40 SPI_MODE=QIO SPI_SIZE_MAP=4 GROVES=%s > build.log 2>error.log' \
-              % (user_build_dir, grove_list))
+    os.system('cd %s;make clean;make APP=1 SPI_SPEED=40 SPI_MODE=QIO SPI_SIZE_MAP=4 GROVES=%s NODE_NAME=%s > build.log 2>error.log' \
+              % (user_build_dir, grove_list, node_name))
 
     content = open(user_build_dir+"/error.log", 'r').readlines()
     for line in content:
@@ -302,8 +305,8 @@ def gen_and_build (user_id):
             error_msg = line
             return False
 
-    os.system('cd %s;make clean;make APP=2 SPI_SPEED=40 SPI_MODE=QIO SPI_SIZE_MAP=4 GROVES=%s >> build.log 2>>error.log' \
-              % (user_build_dir, grove_list))
+    os.system('cd %s;make clean;make APP=2 SPI_SPEED=40 SPI_MODE=QIO SPI_SIZE_MAP=4 GROVES=%s NODE_NAME=%s >> build.log 2>>error.log' \
+              % (user_build_dir, grove_list, node_name))
 
     content = open(user_build_dir+"/error.log", 'r').readlines()
     for line in content:
@@ -322,7 +325,8 @@ def get_error_msg ():
 if __name__ == '__main__':
 
     user_id = "local_user" if len(sys.argv) < 2 else sys.argv[1]
-    if not gen_and_build(user_id):
+    node_name = "esp8266_node" if len(sys.argv) < 3 else sys.argv[2]
+    if not gen_and_build(user_id, node_name):
         print get_error_msg()
 
 

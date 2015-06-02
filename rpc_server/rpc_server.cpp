@@ -236,6 +236,7 @@ void rpc_server_loop()
                         parsed_req_type = true;
                         parse_stage = DIVE_INTO_OTA;
                         response_msg_open("ota_trig_ack");
+                        writer_print(TYPE_STRING, "null");
                         response_msg_close();
                         break;
                     }
@@ -246,7 +247,7 @@ void rpc_server_loop()
                         if (ch != '/')
                         {
                             //error request format
-                            writer_print(TYPE_STRING, "BAD REQUEST: missing root:'/'.");
+                            writer_print(TYPE_STRING, "\"BAD REQUEST: missing root:'/'.\"");
                             response_msg_close();
                         } else
                         {
@@ -266,12 +267,12 @@ void rpc_server_loop()
                         buff[offset] = '\0';
                         if (strcmp(buff, ".well-known") == 0)
                         {
-                            writer_print(TYPE_STRING, "/.well-known is not implemented");
+                            writer_print(TYPE_STRING, "\"/.well-known is not implemented\"");
                             response_msg_close();
                             parse_stage = PARSE_REQ_TYPE;
                         } else
                         {
-                            writer_print(TYPE_STRING, "BAD REQUEST: missing method name.");
+                            writer_print(TYPE_STRING, "\"BAD REQUEST: missing method name.\"");
                             response_msg_close();
                             parse_stage = PARSE_REQ_TYPE;
                         }
@@ -325,14 +326,14 @@ void rpc_server_loop()
                     p_resource = __find_resource((char *)grove_name, (char *)method_name, req_type);
                     if (!p_resource)
                     {
-                        writer_print(TYPE_STRING, "GROVE OR METHOD NOT FOUND WHEN CHECK POST ARGS");
+                        writer_print(TYPE_STRING, "\"GROVE OR METHOD NOT FOUND WHEN CHECK POST ARGS\"");
                         response_msg_close();
                         parse_stage = PARSE_REQ_TYPE;
                         break;
                     }
                     if (p_resource->arg_types[0] != TYPE_NONE)
                     {
-                        writer_print(TYPE_STRING, "MISSING ARGS");
+                        writer_print(TYPE_STRING, "\"MISSING ARGS\"");
                         response_msg_close();
                         parse_stage = PARSE_REQ_TYPE;
                         break;
@@ -345,7 +346,7 @@ void rpc_server_loop()
                     p_resource = __find_resource((char *)grove_name, (char *)method_name, req_type);
                     if (!p_resource)
                     {
-                        writer_print(TYPE_STRING, "GROVE OR METHOD NOT FOUND WHEN PRE-PARSE ARGS");
+                        writer_print(TYPE_STRING, "\"GROVE OR METHOD NOT FOUND WHEN PRE-PARSE ARGS\"");
                         response_msg_close();
                         parse_stage = PARSE_REQ_TYPE;
                         break;
@@ -387,7 +388,7 @@ void rpc_server_loop()
                         if ((arg_index < 3 && p_resource->arg_types[arg_index + 1] != TYPE_NONE) ||
                             (arg_index <= 3 && p_resource->arg_types[arg_index] != TYPE_NONE && strlen(buff) < 1))
                         {
-                            writer_print(TYPE_STRING, "MISSING ARGS");
+                            writer_print(TYPE_STRING, "\"MISSING ARGS\"");
                             response_msg_close();
                             parse_stage = PARSE_REQ_TYPE;
                             break;
@@ -406,14 +407,14 @@ void rpc_server_loop()
 
                     if (!p_resource)
                     {
-                        writer_print(TYPE_STRING, "GROVE OR METHOD NOT FOUND WHEN CALL");
+                        writer_print(TYPE_STRING, "\"GROVE OR METHOD NOT FOUND WHEN CALL\"");
                         response_msg_close();
                         parse_stage = PARSE_REQ_TYPE;
                         break;
                     }
-                    writer_print(TYPE_STRING, "[");
+                    //writer_print(TYPE_STRING, "{");
                     p_resource->method_ptr(p_resource->class_ptr, arg_buff);
-                    writer_print(TYPE_STRING, "]");
+                    //writer_print(TYPE_STRING, "}");
                     response_msg_close();
 
                     parse_stage = PARSE_REQ_TYPE;
