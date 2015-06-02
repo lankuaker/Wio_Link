@@ -312,6 +312,7 @@ class myApplication(web.Application):
         (r"/nodes/create[/]?", NodeCreateHandler),
         (r"/nodes/list[/]?", NodeListHandler),
         (r"/node/(.+)", NodeReadWriteHandler, dict(conns=DeviceServer.accepted_conns)),
+        (r"/user/download[/]?", UserDownloadHandler),
         ]
         self.conn = db_conn
         self.cur = cursor

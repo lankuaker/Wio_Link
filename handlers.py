@@ -392,18 +392,43 @@ class NodeReadWriteHandler(BaseHandler):
         self.resp(404, "Node is offline")
 
 
+class UserDownloadHandler(BaseHandler):
+    """
+    post two para, project name  and  yaml file
 
+    """
+    def get (self):
+        self.resp(404, "Please post to this url\n")
 
+    @web.authenticated
+    def post(self):
+        node_sn = self.get_argument("node_sn","")
+        if not node_sn:
+            self.resp(400, "Missing node_sn information\n")
+            return
 
+        if self.request.files.get('yaml', None):
+            uploadFile = self.request.files['yaml'][0]
+            filename = uploadFile['filename']
+        else:
+            self.resp(400, "Missing Yaml file information\n")
+            return
 
+        user = self.current_user
+        email = user["email"]
 
+        # create user dir and project subdir
+        projectDir = 'users_build' + '/' + email
+        if not os.path.exists(projectDir):
+            os.makedirs(projectDir) 
 
+        # create yaml file on user dir
+        configYaml = open(projectDir + '/' + filename, 'wb')
+        configYaml.write(uploadFile['body'])
 
+        # add required file, such as Makefile
+        
+        # go make
 
-
-
-
-
-
-
+        self.resp(200, "User download",{"node_sn": node_sn})
 
