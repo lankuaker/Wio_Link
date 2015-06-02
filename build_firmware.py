@@ -286,7 +286,7 @@ def gen_and_build (user_id):
             break
     for f in os.listdir(user_build_dir):
         if f.find("Makefile") > -1:
-            find_cpp = True
+            find_makefile = True
             break
     if not find_cpp:
         os.system('cd %s;cp -f ../../Demo.cpp.template ./Demo.cpp ' % user_build_dir)

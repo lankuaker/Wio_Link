@@ -18,6 +18,7 @@ ARDUINO_DIR = $(BASE_DIR)/esp8266_arduino
 SULI_DIR = $(BASE_DIR)/suli
 GROVES_DIR = $(BASE_DIR)/grove_drivers
 RPC_SERVER_DIR = $(BASE_DIR)/rpc_server
+MAIN_DIR = $(BASE_DIR)/node_main
 BUILD_DIR = .
 
 
@@ -166,11 +167,13 @@ rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 
 C_SRC = $(notdir $(call rwildcard,$(ARDUINO_DIR),*.c))
 C_SRC += $(notdir $(call rwildcard,./,*.c))
-C_SRC += $(notdir $(call rwildcard,$(BASE_DIR),*.c))
+C_SRC += $(notdir $(call rwildcard,$(MAIN_DIR),*.c))
+C_SRC += $(notdir $(wildcard,$(BASE_DIR)/*.c))
 
 CPP_SRC = $(notdir $(call rwildcard,$(ARDUINO_DIR),*.cpp))
 CPP_SRC += $(notdir $(call rwildcard,./,*.cpp))
-CPP_SRC += $(notdir $(call rwildcard,$(BASE_DIR),*.cpp))
+CPP_SRC += $(notdir $(call rwildcard,$(MAIN_DIR),*.cpp))
+CPP_SRC += $(notdir $(wildcard,$(BASE_DIR)/*.cpp))
 
 s_SRC = $(notdir $(call rwildcard,$(ARDUINO_DIR),*.s))
 s_SRC += $(notdir $(call rwildcard,./,*.s))
@@ -200,6 +203,7 @@ $(info "all user's src dirs:")
 $(info $(ALL_USER_SRC_DIR))
 
 INCLUDE_PATHS = -I. -I$(BASE_DIR) -I$(SDK_DIR)/include -I$(SULI_DIR) -I$(RPC_SERVER_DIR) -I$(ARDUINO_DIR) -I$(ARDUINO_DIR)/spiffs
+INCLUDE_PATHS += -I$(MAIN_DIR) -I$(MAIN_DIR)/polarssl
 
 GROVES_DIR_LIST = $(foreach g,$(GROVES),$(GROVES_DIR)/$(g))
 INCLUDE_PATHS += $(addprefix -I,$(GROVES_DIR_LIST))
@@ -220,7 +224,7 @@ LIBRARIES = -lm -lgcc \
 		-lupgrade \
 		-lsmartconfig 
 
-GCC_PATH ?= /Users/Jack/Library/Arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9/bin/
+GCC_PATH ?= 
 
 AR      = $(GCC_PATH)xtensa-lx106-elf-ar
 CC      = $(GCC_PATH)xtensa-lx106-elf-gcc
@@ -247,7 +251,7 @@ $(info "")
 
 #########################
 
-VPATH = $(BASE_DIR):$(SULI_DIR):$(ARDUINO_DIR):$(ARDUINO_DIR)/spiffs:$(RPC_SERVER_DIR):$(BUILD_DIR):$(GROVES_DIR_LIST):$(ALL_USER_SRC_DIR)
+VPATH = $(BASE_DIR):$(SULI_DIR):$(ARDUINO_DIR):$(ARDUINO_DIR)/spiffs:$(MAIN_DIR):$(MAIN_DIR)/polarssl:$(RPC_SERVER_DIR):$(BUILD_DIR):$(GROVES_DIR_LIST):$(ALL_USER_SRC_DIR)
 
 .PHONY: all clean
 
