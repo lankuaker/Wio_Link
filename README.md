@@ -40,7 +40,7 @@ And also we need more grove drivers commit from community if you know Arduino an
 
 ## API Documentation
 
-[API documentation](wiki/API-Documentation)
+[API documentation](https://github.com/KillingJacky/esp8266_iot_node/wiki/API-Documentation)
 
 
 ## Rules for writing compatible grove drivers(beta, internal use)
