@@ -388,9 +388,9 @@ class UserDownloadHandler(BaseHandler):
 
     @web.authenticated
     def post(self):
-        projectName = self.get_argument("name","")
-        if not projectName:
-            self.resp(400, "Missing project name information\n")
+        node_sn = self.get_argument("node_sn","")
+        if not node_sn:
+            self.resp(400, "Missing node_sn information\n")
             return
 
         if self.request.files.get('yaml', None):
@@ -402,10 +402,9 @@ class UserDownloadHandler(BaseHandler):
 
         user = self.current_user
         email = user["email"]
-        # email = 'awong1900@163.com'
 
         # create user dir and project subdir
-        projectDir = 'users_build' + '/' + email + '/' + projectName
+        projectDir = 'users_build' + '/' + email
         if not os.path.exists(projectDir):
             os.makedirs(projectDir) 
 
@@ -414,25 +413,8 @@ class UserDownloadHandler(BaseHandler):
         configYaml.write(uploadFile['body'])
 
         # add required file, such as Makefile
-
+        
         # go make
 
-        self.resp(200, "User download",{"project name": projectName})
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        self.resp(200, "User download",{"node_sn": node_sn})
 
