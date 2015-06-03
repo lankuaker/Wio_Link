@@ -36,6 +36,10 @@ import md5
 import base64
 import httplib
 import uuid
+from shutil import copy
+from build_firmware import gen_and_build
+import yaml
+from server import DeviceServer
 
 from tornado.httpserver import HTTPServer
 from tornado.tcpserver import TCPServer
@@ -421,140 +425,56 @@ class NodeReadWriteHandler(BaseHandler):
 
 class UserDownloadHandler(BaseHandler):
     """
-    post two para, project name  and  yaml file
+    post two para, node_sn and yaml file
 
     """
     def get (self):
         self.resp(404, "Please post to this url\n")
 
-    @web.authenticated
     def post(self):
         node_sn = self.get_argument("node_sn","")
+        node_sn = "fe569fe5856b2bf93898b4efbd3e168f"
         if not node_sn:
             self.resp(400, "Missing node_sn information\n")
             return
 
         if self.request.files.get('yaml', None):
             uploadFile = self.request.files['yaml'][0]
-            filename = uploadFile['filename']
+            fileName = uploadFile['filename']
         else:
             self.resp(400, "Missing Yaml file information\n")
             return
 
-        user = self.current_user
-        email = user["email"]
+        try:
+            cur = self.application.cur
+            cur.execute("select user_id, name, private_key from nodes where node_sn='%s'"%(node_sn))
+            rows = cur.fetchall()
+            nodes = []
+            if len(rows) > 0:
+                nodes = rows[0]
+        except:
+            nodes = None
 
-        # create user dir and project subdir
-        projectDir = 'users_build' + '/' + email
-        if not os.path.exists(projectDir):
-            os.makedirs(projectDir)
+        print nodes
+        user_id = nodes["user_id"]
+        node_name = nodes["name"]
 
-        # create yaml file on user dir
-        configYaml = open(projectDir + '/' + filename, 'wb')
-        configYaml.write(uploadFile['body'])
+        pass # test node id is valid?
 
-        # add required file, such as Makefile
+        cur_dir = os.path.split(os.path.realpath(__file__))[0]
+        user_build_dir = cur_dir + '/users_build/' + str(user_id)
+        if not os.path.exists(user_build_dir):
+            os.makedirs(user_build_dir) 
+        yamlFile = open(user_build_dir + '/' + fileName, 'wr')
+        yamlFile.write(uploadFile['body'])
+        yamlFile.close()
 
-        # go make
+        copy('%s/users_build/local_user/Makefile'%cur_dir, user_build_dir)
+
+        gen_and_build(str(user_id), node_name)
+
+        # go OTA
+        DeviceServer.accepted_conns[0].submit_cmd("OTA\r\n")
 
         self.resp(200, "User download",{"node_sn": node_sn})
-
-
-
-
-class OTAHandler(BaseHandler):
-
-    def initialize (self, conns):
-        self.conns = conns
-
-    def get_node (self):
-        node = None
-        sn = self.get_argument("sn","")
-        if not sn:
-            gen_log.error("ota bin request has no sn provided")
-            return
-
-
-        sn = sn[:-4]
-        try:
-            sn = base64.b64decode(sn)
-        except:
-            sn = ""
-
-        if len(sn) != 32:
-            gen_log.error("ota bin request has no valid sn provided")
-            return
-
-        if sn:
-            try:
-                cur = self.application.cur
-                cur.execute('select * from nodes where node_sn="%s"'%sn)
-                rows = cur.fetchall()
-                if len(rows) > 0:
-                    node = rows[0]
-            except:
-                node = None
-        else:
-            node = None
-
-        print "get current node:", str(node)
-        if not node:
-            gen_log.error("can not find the specified node for ota bin request")
-        return node
-
-
-    @gen.coroutine
-    def get(self):
-        app = self.get_argument("app","")
-        if not app or app not in [1,2,"1","2"]:
-            gen_log.error("ota bin request has no app number provided")
-            return
-
-        node = self.get_node()
-        if not node:
-            return
-
-        #get the user dir
-        user_dir = "users_build/local_user"
-
-        #put user*.bin out
-        self.write(open(os.path.join(user_dir, "user%s.bin"%str(app))).read())
-
-
-    def post (self, uri):
-        self.resp(404, "Please get this url.")
-
-
-'''
-for test
-'''
-class OTATrigHandler(BaseHandler):
-
-    def initialize (self, conns):
-        self.conns = conns
-
-
-    @gen.coroutine
-    def get (self):
-
-        sn = self.get_argument("sn","")
-        if not sn:
-            gen_log.error("ota bin request has no sn provided")
-            return
-        print sn
-
-        for conn in self.conns:
-            if conn.sn == sn and not conn.killed:
-                try:
-                    cmd = "OTA\r\n"
-                    cmd = cmd.encode("ascii")
-                    ok, resp = yield conn.submit_and_wait_resp (cmd, "ota_trig_ack")
-                    self.resp(200,resp)
-                except Exception,e:
-                    print e
-                return
-        self.resp(404, "Node is offline")
-
-
-
 
