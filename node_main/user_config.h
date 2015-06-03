@@ -11,7 +11,7 @@
 #define SERVER_IP                   { 192, 168, 18, 148}
 #define SERVER_PORT                 8000
 #define OTA_SERVER_IP               { 192, 168, 18, 148 }
-#define OTA_SERVER_PORT             80
+#define OTA_SERVER_PORT             8080
 #ifndef OTA_SERVER_URL_PREFIX
 #define OTA_SERVER_URL_PREFIX       "/v1"
 #endif

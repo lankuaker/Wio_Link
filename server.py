@@ -125,6 +125,9 @@ class DeviceConnection(object):
                 print "valid hello packet from node"
                 self.sn = sn
                 self.private_key = key
+                #remove the junk connection of the same sn
+                self.stream.io_loop.add_callback(self.device_server.remove_junk_connection, self)
+                #init aes
                 self.iv = Random.new().read(AES.block_size)
                 self.cipher = AES.new(key, AES.MODE_CFB, self.iv, segment_size=128)
                 cipher_text = self.iv + self.cipher.encrypt(pad("hello"))
@@ -162,7 +165,7 @@ class DeviceConnection(object):
     def _loop_reading_input (self):
         line = ""
         piece = ""
-        while True:
+        while not self.killed:
             msg = ""
             try:
                 msg = yield self.stream.read_bytes(16)
@@ -192,7 +195,7 @@ class DeviceConnection(object):
 
     @gen.coroutine
     def _loop_sending_cmd (self):
-        while True:
+        while not self.killed:
             if len(self.send_msg_queue) > 0:
                 try:
                     cmd = self.send_msg_queue.pop()
@@ -204,12 +207,16 @@ class DeviceConnection(object):
 
     @gen.coroutine
     def _online_check (self):
-        while True:
+        while not self.killed:
             yield gen.sleep(1)
             self.idle_time += 1
             if self.idle_time == 60:
                 print "heartbeat sent"
-                self.secure_write("##PING##")
+                try:
+                    self.secure_write("##PING##")
+                except iostream.StreamClosedError:
+                    print "StreamClosedError when send ping to node"
+                    self.kill_myself()
             if self.idle_time == 70:
                 print "no answer from node, kill"
                 self.kill_myself()
@@ -247,6 +254,7 @@ class DeviceConnection(object):
     def kill_myself (self):
         if self.killed:
             return
+        self.sn = ""
         self.stream.io_loop.add_callback(self.device_server.remove_connection, self)
         self.stream.close()
         self.killed = True
@@ -296,6 +304,19 @@ class DeviceServer(TCPServer):
         print "will remove connection: ", conn
         try:
             self.accepted_conns.remove(conn)
+            del conn
+        except:
+            pass
+
+    def remove_junk_connection (self, conn):
+        try:
+            for c in self.accepted_conns:
+                if c.sn == conn.sn and c != conn :
+                    c.killed = True
+                    print "removed one junk connection of same sn: ", c
+                    self.accepted_conns.remove(c)
+                    del c
+                    break
         except:
             pass
 
@@ -312,8 +333,11 @@ class myApplication(web.Application):
         (r"/v1/scan/status[/]?", DriversStatusHandler),
         (r"/v1/nodes/create[/]?", NodeCreateHandler),
         (r"/v1/nodes/list[/]?", NodeListHandler),
+        (r"/v1/nodes/delete[/]?", NodeDeleteHandler),
         (r"/v1/node/(.+)", NodeReadWriteHandler, dict(conns=DeviceServer.accepted_conns)),
         (r"/v1/user/download[/]?", UserDownloadHandler),
+        (r"/v1/ota/bin", OTAHandler, dict(conns=DeviceServer.accepted_conns)),
+        (r"/v1/ota/trig", OTATrigHandler, dict(conns=DeviceServer.accepted_conns)),  #just for test, should be triggered in /user/download
         ]
         self.conn = db_conn
         self.cur = cursor

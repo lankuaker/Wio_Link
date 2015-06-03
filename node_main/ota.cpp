@@ -4,6 +4,8 @@
 #include "esp8266.h"
 #include "Arduino.h"
 #include "rpc_stream.h"
+#include "base64.h"
+#include "eeprom.h"
 
 #define pheadbuffer "Connection: keep-alive\r\n\
 Cache-Control: no-cache\r\n\
@@ -34,7 +36,7 @@ void ota_response(void *arg)
         os_timer_setfn(&timer_reboot, timer_reboot_proc, NULL);
         os_timer_arm(&timer_reboot, 1000, false);
         response_msg_open("ota_result");
-        writer_print(TYPE_STRING, "success");
+        writer_print(TYPE_STRING, "\"success\"");
         response_msg_close();
         //wifi_station_disconnect();
         //system_upgrade_reboot();
@@ -42,7 +44,7 @@ void ota_response(void *arg)
     {
         Serial1.println("device_upgrade_failed\r\n");
         response_msg_open("ota_result");
-        writer_print(TYPE_STRING, "fail");
+        writer_print(TYPE_STRING, "\"fail\"");
         response_msg_close();
         ota_succ = false;
     }
@@ -58,7 +60,8 @@ void ota_response(void *arg)
 void ota_start()
 {
 
-    uint8_t user_bin[12] = { 0 };
+    //uint8_t user_bin[12] = { 0 };
+    int bin_num = 1;
 
     struct upgrade_server_info *upServer = (struct upgrade_server_info *)os_zalloc(sizeof(struct upgrade_server_info));
 
@@ -79,23 +82,40 @@ void ota_start()
     if(system_upgrade_userbin_check() == UPGRADE_FW_BIN1)
     {
         Serial1.printf("Running user1.bin \r\n\r\n");
-        os_memcpy(user_bin, "user2.bin", 10);
+        //os_memcpy(user_bin, "user2.bin", 10);
+        bin_num = 2;
     } else if(system_upgrade_userbin_check() == UPGRADE_FW_BIN2)
     {
         Serial1.printf("Running user2.bin \r\n\r\n");
-        os_memcpy(user_bin, "user1.bin", 10);
+        //os_memcpy(user_bin, "user1.bin", 10);
+        bin_num = 1;
     }
 
+    char sn[64];
+    int len=64;
+    if(base64_encode(sn, &len, EEPROM.getDataPtr()+EEP_OFFSET_SN, 32) != 0)
+    {
+        Serial1.println("base64 encode failed");
+        ota_fini = true;
+        return;
+    }
+    os_strcpy(sn + len, "NiNz");
     os_sprintf(upServer->url,
-               "GET %s/%s HTTP/1.1\r\nHost: " IPSTR ":%d\r\n" pheadbuffer "",
-               OTA_SERVER_URL_PREFIX, user_bin, IP2STR(upServer->ip), OTA_SERVER_PORT);
+               "GET %s/ota/bin?app=%d&sn=%s HTTP/1.1\r\nHost: " IPSTR ":%d\r\n" pheadbuffer "",
+               OTA_SERVER_URL_PREFIX, bin_num, sn, IP2STR(upServer->ip), OTA_SERVER_PORT);
 
 
     if(system_upgrade_start(upServer) == false)
     {
         Serial1.println("Upgrade already started.");
+        response_msg_open("ota_status");
+        writer_print(TYPE_STRING, "\"already started\"");
+        response_msg_close();
     } else
     {
         Serial1.println("Upgrade started");
+        response_msg_open("ota_status");
+        writer_print(TYPE_STRING, "\"started\"");
+        response_msg_close();
     }
 }
