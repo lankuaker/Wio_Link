@@ -11,7 +11,7 @@ curl -H "Authorization: token eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXNzd29yZ
 
 96a4a7fb4b6ce0ea44f838948d0ec980
 cd7b7f9ff3ed8f7b7f8b2d152731144a
-
+{"msg_type":"resp_get", "msg":["GET /v1/Grove_Example1/temp -> int : temp","GET /v1/Grove_Example1/uint8_value -> uint8_t : value","GET /v1/Grove_Example1/with_arg/int_arg -> float : cx, float : cy, float : cz, int : degree","GET /v1/Grove_Example1/compass
 
 version2:
 
@@ -36,11 +36,21 @@ curl -H "Authorization: token aKleqQebIsjmQMSCokemtgNXMD4Y7OTe3uyzEL1iwwA" -d na
 curl -H "Authorization: token aKleqQebIsjmQMSCokemtgNXMD4Y7OTe3uyzEL1iwwA" localhost:8080/nodes/list
 {"status": 200, "msg": "", "nodes": [{"node_key": "d6d68b4b6b43f213569f5832dd8277b2", "name": "node_1", "node_sn": "f70fd643b73f0c721b007ce453bafddd"}, {"node_key": "85a7c2b2fd97c357137414733e65d516", "name": "node_2", "node_sn": "200d8a94ac5f0905e1fbf9acdfcaba78"}]}
 
-curl -H "Authorization: token d6d68b4b6b43f213569f5832dd8277b2" localhost:8080/node/Grove_Example1/temp
 
-curl -H "Authorization: token d6d68b4b6b43f213569f5832dd8277b2" -d "{\"f\":10.5}" localhost:8080/node/Grove_Example1/float_value
+curl -H "Authorization: token d6d68b4b6b43f213569f5832dd8277b2" localhost:8080/v1/node/.well-known
 
 
+curl -H "Authorization: token d6d68b4b6b43f213569f5832dd8277b2" localhost:8080/v1/node/Grove_Example1/temp
+
+curl -H "Authorization: token d6d68b4b6b43f213569f5832dd8277b2" localhost:8080/node/Grove_Example1/with_arg/90
+
+
+
+curl -H "Authorization: token d6d68b4b6b43f213569f5832dd8277b2" -d "{\"f\":10.5}" localhost:8080/v1/node/Grove_Example1/float_value
+
+curl -H "Authorization: token d6d68b4b6b43f213569f5832dd8277b2" -d "a=10&b=10.5&c=445566" localhost:8080/v1/node/Grove_Example1/multi_value
+
+curl -H "Authorization: token d6d68b4b6b43f213569f5832dd8277b2" -d "onoff=1" localhost:8080/v1/node/GroveRelay/onoff/
 
 
 

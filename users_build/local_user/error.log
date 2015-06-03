@@ -100,28 +100,28 @@ In file included from ../../node_main/network.cpp:8:0:
 ../../node_main/network.cpp:227:32: warning: invalid conversion from 'void*' to 'espconn*' [-fpermissive]
      struct espconn *pespconn = arg;
                                 ^
-../../node_main/network.cpp:239:82: warning: invalid conversion from 'int*' to 'size_t* {aka unsigned int*}' [-fpermissive]
+../../node_main/network.cpp:240:82: warning: invalid conversion from 'int*' to 'size_t* {aka unsigned int*}' [-fpermissive]
          aes_crypt_cfb128(&aes_ctx, AES_ENCRYPT, size2, &iv_offset, iv, data, data);
                                                                                   ^
 In file included from ../../node_main/network.cpp:8:0:
 ../../node_main/polarssl/aes.h:183:5: warning:   initializing argument 4 of 'int aes_crypt_cfb128(aes_context*, int, size_t, size_t*, unsigned char*, const unsigned char*, unsigned char*)' [-fpermissive]
  int aes_crypt_cfb128( aes_context *ctx,
      ^
-../../node_main/network.cpp:239:82: warning: invalid conversion from 'char*' to 'const unsigned char*' [-fpermissive]
+../../node_main/network.cpp:240:82: warning: invalid conversion from 'char*' to 'const unsigned char*' [-fpermissive]
          aes_crypt_cfb128(&aes_ctx, AES_ENCRYPT, size2, &iv_offset, iv, data, data);
                                                                                   ^
 In file included from ../../node_main/network.cpp:8:0:
 ../../node_main/polarssl/aes.h:183:5: warning:   initializing argument 6 of 'int aes_crypt_cfb128(aes_context*, int, size_t, size_t*, unsigned char*, const unsigned char*, unsigned char*)' [-fpermissive]
  int aes_crypt_cfb128( aes_context *ctx,
      ^
-../../node_main/network.cpp:239:82: warning: invalid conversion from 'char*' to 'unsigned char*' [-fpermissive]
+../../node_main/network.cpp:240:82: warning: invalid conversion from 'char*' to 'unsigned char*' [-fpermissive]
          aes_crypt_cfb128(&aes_ctx, AES_ENCRYPT, size2, &iv_offset, iv, data, data);
                                                                                   ^
 In file included from ../../node_main/network.cpp:8:0:
 ../../node_main/polarssl/aes.h:183:5: warning:   initializing argument 7 of 'int aes_crypt_cfb128(aes_context*, int, size_t, size_t*, unsigned char*, const unsigned char*, unsigned char*)' [-fpermissive]
  int aes_crypt_cfb128( aes_context *ctx,
      ^
-../../node_main/network.cpp:240:43: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+../../node_main/network.cpp:241:43: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
          espconn_sent(pespconn, data, size2);
                                            ^
 In file included from ../../node_main/esp8266.h:12:0,
@@ -130,11 +130,11 @@ In file included from ../../node_main/esp8266.h:12:0,
  sint8 espconn_sent(struct espconn *espconn, uint8 *psent, uint16 length);
        ^
 ../../node_main/network.cpp: In function 'void main_connection_send_hello(void*)':
-../../node_main/network.cpp:314:42: warning: invalid conversion from 'void*' to 'uint8_t* {aka unsigned char*}' [-fpermissive]
+../../node_main/network.cpp:317:42: warning: invalid conversion from 'void*' to 'uint8_t* {aka unsigned char*}' [-fpermissive]
      uint8_t *buff = os_malloc(SN_LEN + 32);
                                           ^
 ../../node_main/network.cpp: In function 'void main_connection_reconnect_callback(void*, sint8)':
-../../node_main/network.cpp:366:64: warning: invalid conversion from 'void (*)()' to 'void (*)(void*)' [-fpermissive]
+../../node_main/network.cpp:369:64: warning: invalid conversion from 'void (*)()' to 'void (*)(void*)' [-fpermissive]
      os_timer_setfn(&timer_main_conn, main_connection_init, NULL);
                                                                 ^
 In file included from ../../node_main/esp8266.h:13:0,
@@ -143,7 +143,7 @@ In file included from ../../node_main/esp8266.h:13:0,
  void ets_timer_setfn(ETSTimer *t, ETSTimerFunc *fn, void *parg);
       ^
 ../../node_main/network.cpp: In function 'void main_connection_init()':
-../../node_main/network.cpp:436:76: warning: invalid conversion from 'void (*)()' to 'void (*)(void*)' [-fpermissive]
+../../node_main/network.cpp:439:76: warning: invalid conversion from 'void (*)()' to 'void (*)(void*)' [-fpermissive]
      os_timer_setfn(&timer_network_check, network_check_timer_callback, NULL);
                                                                             ^
 In file included from ../../node_main/esp8266.h:13:0,
@@ -152,16 +152,16 @@ In file included from ../../node_main/esp8266.h:13:0,
  void ets_timer_setfn(ETSTimer *t, ETSTimerFunc *fn, void *parg);
       ^
 ../../rpc_server/rpc_server.cpp: In function 'void rpc_server_loop()':
-../../rpc_server/rpc_server.cpp:177:34: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+../../rpc_server/rpc_server.cpp:179:34: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
          response_msg_open("event");
                                   ^
-../../rpc_server/rpc_server.cpp:222:53: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+../../rpc_server/rpc_server.cpp:224:53: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
                          response_msg_open("resp_get");
                                                      ^
-../../rpc_server/rpc_server.cpp:230:54: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+../../rpc_server/rpc_server.cpp:232:54: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
                          response_msg_open("resp_post");
                                                       ^
-../../rpc_server/rpc_server.cpp:238:57: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+../../rpc_server/rpc_server.cpp:240:57: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
                          response_msg_open("ota_trig_ack");
                                                          ^
 ../../rpc_server/rpc_stream.cpp: In function 'char stream_read()':
@@ -199,61 +199,11 @@ In file included from ../../esp8266_arduino/pgmspace.h:9:0,
 ../../esp8266_sdk/include/ets_sys.h:117:6: warning:   initializing argument 2 of 'void ets_isr_attach(int, int_handler_t, void*)' [-fpermissive]
  void ets_isr_attach(int intr, int_handler_t handler, void *arg);
       ^
-Demo.cpp: In function 'void at_upDate_rsp(void*)':
-Demo.cpp:33:42: warning: invalid conversion from 'void*' to 'upgrade_server_info*' [-fpermissive]
-     struct upgrade_server_info *server = arg;
-                                          ^
-Demo.cpp: In function 'void at_exeCmdCiupdate(uint8_t)':
-Demo.cpp:88:50: warning: invalid conversion from 'uint8* {aka unsigned char*}' to 'char*' [-fpermissive]
-                user_bin, IP2STR(upServer->ip), 80);
-                                                  ^
-In file included from ../../node_main/esp8266.h:13:0,
-                 from Demo.cpp:16:
-../../esp8266_sdk/include/ets_sys.h:110:5: warning:   initializing argument 1 of 'int ets_sprintf(char*, const char*, ...)' [-fpermissive]
- int ets_sprintf(char *str, const char *format, ...)  __attribute__ ((format (printf, 2, 3)));
-     ^
-rpc_server_registration.cpp: In function 'void rpc_server_register_resources()':
-rpc_server_registration.cpp:15:123: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-     rpc_server_register_method("Grove_Example1", "temp", METHOD_READ, __grove_example_read_temp, Grove_Example1, arg_types);
-                                                                                                                           ^
-rpc_server_registration.cpp:15:123: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-rpc_server_registration.cpp:17:137: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-     rpc_server_register_method("Grove_Example1", "uint8_value", METHOD_READ, __grove_example_read_uint8_value, Grove_Example1, arg_types);
-                                                                                                                                         ^
-rpc_server_registration.cpp:17:137: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-rpc_server_registration.cpp:20:131: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-     rpc_server_register_method("Grove_Example1", "with_arg", METHOD_READ, __grove_example_read_with_arg, Grove_Example1, arg_types);
-                                                                                                                                   ^
-rpc_server_registration.cpp:20:131: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-rpc_server_registration.cpp:22:129: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-     rpc_server_register_method("Grove_Example1", "compass", METHOD_READ, __grove_example_read_compass, Grove_Example1, arg_types);
-                                                                                                                                 ^
-rpc_server_registration.cpp:22:129: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-rpc_server_registration.cpp:24:121: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-     rpc_server_register_method("Grove_Example1", "acc", METHOD_READ, __grove_example_read_acc, Grove_Example1, arg_types);
-                                                                                                                         ^
-rpc_server_registration.cpp:24:121: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-rpc_server_registration.cpp:26:131: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-     rpc_server_register_method("Grove_Example1", "humidity", METHOD_READ, __grove_example_read_humidity, Grove_Example1, arg_types);
-                                                                                                                                   ^
-rpc_server_registration.cpp:26:131: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-rpc_server_registration.cpp:32:139: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-     rpc_server_register_method("Grove_Example1", "multi_value", METHOD_WRITE, __grove_example_write_multi_value, Grove_Example1, arg_types);
-                                                                                                                                           ^
-rpc_server_registration.cpp:32:139: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-rpc_server_registration.cpp:35:133: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-     rpc_server_register_method("Grove_Example1", "acc_mode", METHOD_WRITE, __grove_example_write_acc_mode, Grove_Example1, arg_types);
-                                                                                                                                     ^
-rpc_server_registration.cpp:35:133: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-rpc_server_registration.cpp:38:139: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-     rpc_server_register_method("Grove_Example1", "float_value", METHOD_WRITE, __grove_example_write_float_value, Grove_Example1, arg_types);
-                                                                                                                                           ^
-rpc_server_registration.cpp:38:139: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
 ../../node_main/eeprom.cpp:34:0: warning: "CONFIG_START_SECTOR" redefined [enabled by default]
  #define CONFIG_START_SECTOR (((uint32_t)&_SPIFFS_end - 0x40200000) / 4096)
  ^
 In file included from ../../node_main/eeprom.cpp:23:0:
-../../node_main/EEPROM.h:29:0: note: this is the location of the previous definition
+../../node_main/eeprom.h:29:0: note: this is the location of the previous definition
  #define CONFIG_START_SECTOR (((uint32_t)_SPIFFS_end - 0x40200000) / 4096)
  ^
 ../../node_main/ota.cpp: In function 'void ota_response(void*)':
@@ -275,10 +225,24 @@ In file included from ../../node_main/esp8266.h:13:0,
 ../../esp8266_sdk/include/ets_sys.h:110:5: warning:   initializing argument 1 of 'int ets_sprintf(char*, const char*, ...)' [-fpermissive]
  int ets_sprintf(char *str, const char *format, ...)  __attribute__ ((format (printf, 2, 3)));
      ^
-../../grove_drivers/grove_example/grove_example.cpp: In function 'void _trigger()':
-../../grove_drivers/grove_example/grove_example.cpp:91:44: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-     suli_event_trigger(&event1, "fire", 250);
-                                            ^
+Demo.cpp: In function 'void at_upDate_rsp(void*)':
+Demo.cpp:33:42: warning: invalid conversion from 'void*' to 'upgrade_server_info*' [-fpermissive]
+     struct upgrade_server_info *server = arg;
+                                          ^
+Demo.cpp: In function 'void at_exeCmdCiupdate(uint8_t)':
+Demo.cpp:88:50: warning: invalid conversion from 'uint8* {aka unsigned char*}' to 'char*' [-fpermissive]
+                user_bin, IP2STR(upServer->ip), 80);
+                                                  ^
+In file included from ../../node_main/esp8266.h:13:0,
+                 from Demo.cpp:16:
+../../esp8266_sdk/include/ets_sys.h:110:5: warning:   initializing argument 1 of 'int ets_sprintf(char*, const char*, ...)' [-fpermissive]
+ int ets_sprintf(char *str, const char *format, ...)  __attribute__ ((format (printf, 2, 3)));
+     ^
+rpc_server_registration.cpp: In function 'void rpc_server_register_resources()':
+rpc_server_registration.cpp:18:121: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     rpc_server_register_method("GroveRelay", "onoff", METHOD_WRITE, __grove_relay_write_onoff, GroveRelay_ins, arg_types);
+                                                                                                                         ^
+rpc_server_registration.cpp:18:121: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
 ../../node_main/network.cpp: In function 'void user_devicefind_recv(void*, char*, short unsigned int)':
 ../../node_main/network.cpp:91:43: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
          wifi_get_macaddr(SOFTAP_IF, hwaddr);
@@ -381,28 +345,28 @@ In file included from ../../node_main/network.cpp:8:0:
 ../../node_main/network.cpp:227:32: warning: invalid conversion from 'void*' to 'espconn*' [-fpermissive]
      struct espconn *pespconn = arg;
                                 ^
-../../node_main/network.cpp:239:82: warning: invalid conversion from 'int*' to 'size_t* {aka unsigned int*}' [-fpermissive]
+../../node_main/network.cpp:240:82: warning: invalid conversion from 'int*' to 'size_t* {aka unsigned int*}' [-fpermissive]
          aes_crypt_cfb128(&aes_ctx, AES_ENCRYPT, size2, &iv_offset, iv, data, data);
                                                                                   ^
 In file included from ../../node_main/network.cpp:8:0:
 ../../node_main/polarssl/aes.h:183:5: warning:   initializing argument 4 of 'int aes_crypt_cfb128(aes_context*, int, size_t, size_t*, unsigned char*, const unsigned char*, unsigned char*)' [-fpermissive]
  int aes_crypt_cfb128( aes_context *ctx,
      ^
-../../node_main/network.cpp:239:82: warning: invalid conversion from 'char*' to 'const unsigned char*' [-fpermissive]
+../../node_main/network.cpp:240:82: warning: invalid conversion from 'char*' to 'const unsigned char*' [-fpermissive]
          aes_crypt_cfb128(&aes_ctx, AES_ENCRYPT, size2, &iv_offset, iv, data, data);
                                                                                   ^
 In file included from ../../node_main/network.cpp:8:0:
 ../../node_main/polarssl/aes.h:183:5: warning:   initializing argument 6 of 'int aes_crypt_cfb128(aes_context*, int, size_t, size_t*, unsigned char*, const unsigned char*, unsigned char*)' [-fpermissive]
  int aes_crypt_cfb128( aes_context *ctx,
      ^
-../../node_main/network.cpp:239:82: warning: invalid conversion from 'char*' to 'unsigned char*' [-fpermissive]
+../../node_main/network.cpp:240:82: warning: invalid conversion from 'char*' to 'unsigned char*' [-fpermissive]
          aes_crypt_cfb128(&aes_ctx, AES_ENCRYPT, size2, &iv_offset, iv, data, data);
                                                                                   ^
 In file included from ../../node_main/network.cpp:8:0:
 ../../node_main/polarssl/aes.h:183:5: warning:   initializing argument 7 of 'int aes_crypt_cfb128(aes_context*, int, size_t, size_t*, unsigned char*, const unsigned char*, unsigned char*)' [-fpermissive]
  int aes_crypt_cfb128( aes_context *ctx,
      ^
-../../node_main/network.cpp:240:43: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+../../node_main/network.cpp:241:43: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
          espconn_sent(pespconn, data, size2);
                                            ^
 In file included from ../../node_main/esp8266.h:12:0,
@@ -411,11 +375,11 @@ In file included from ../../node_main/esp8266.h:12:0,
  sint8 espconn_sent(struct espconn *espconn, uint8 *psent, uint16 length);
        ^
 ../../node_main/network.cpp: In function 'void main_connection_send_hello(void*)':
-../../node_main/network.cpp:314:42: warning: invalid conversion from 'void*' to 'uint8_t* {aka unsigned char*}' [-fpermissive]
+../../node_main/network.cpp:317:42: warning: invalid conversion from 'void*' to 'uint8_t* {aka unsigned char*}' [-fpermissive]
      uint8_t *buff = os_malloc(SN_LEN + 32);
                                           ^
 ../../node_main/network.cpp: In function 'void main_connection_reconnect_callback(void*, sint8)':
-../../node_main/network.cpp:366:64: warning: invalid conversion from 'void (*)()' to 'void (*)(void*)' [-fpermissive]
+../../node_main/network.cpp:369:64: warning: invalid conversion from 'void (*)()' to 'void (*)(void*)' [-fpermissive]
      os_timer_setfn(&timer_main_conn, main_connection_init, NULL);
                                                                 ^
 In file included from ../../node_main/esp8266.h:13:0,
@@ -424,7 +388,7 @@ In file included from ../../node_main/esp8266.h:13:0,
  void ets_timer_setfn(ETSTimer *t, ETSTimerFunc *fn, void *parg);
       ^
 ../../node_main/network.cpp: In function 'void main_connection_init()':
-../../node_main/network.cpp:436:76: warning: invalid conversion from 'void (*)()' to 'void (*)(void*)' [-fpermissive]
+../../node_main/network.cpp:439:76: warning: invalid conversion from 'void (*)()' to 'void (*)(void*)' [-fpermissive]
      os_timer_setfn(&timer_network_check, network_check_timer_callback, NULL);
                                                                             ^
 In file included from ../../node_main/esp8266.h:13:0,
@@ -433,16 +397,16 @@ In file included from ../../node_main/esp8266.h:13:0,
  void ets_timer_setfn(ETSTimer *t, ETSTimerFunc *fn, void *parg);
       ^
 ../../rpc_server/rpc_server.cpp: In function 'void rpc_server_loop()':
-../../rpc_server/rpc_server.cpp:177:34: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+../../rpc_server/rpc_server.cpp:179:34: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
          response_msg_open("event");
                                   ^
-../../rpc_server/rpc_server.cpp:222:53: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+../../rpc_server/rpc_server.cpp:224:53: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
                          response_msg_open("resp_get");
                                                      ^
-../../rpc_server/rpc_server.cpp:230:54: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+../../rpc_server/rpc_server.cpp:232:54: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
                          response_msg_open("resp_post");
                                                       ^
-../../rpc_server/rpc_server.cpp:238:57: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+../../rpc_server/rpc_server.cpp:240:57: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
                          response_msg_open("ota_trig_ack");
                                                          ^
 ../../rpc_server/rpc_stream.cpp: In function 'char stream_read()':
@@ -480,61 +444,11 @@ In file included from ../../esp8266_arduino/pgmspace.h:9:0,
 ../../esp8266_sdk/include/ets_sys.h:117:6: warning:   initializing argument 2 of 'void ets_isr_attach(int, int_handler_t, void*)' [-fpermissive]
  void ets_isr_attach(int intr, int_handler_t handler, void *arg);
       ^
-Demo.cpp: In function 'void at_upDate_rsp(void*)':
-Demo.cpp:33:42: warning: invalid conversion from 'void*' to 'upgrade_server_info*' [-fpermissive]
-     struct upgrade_server_info *server = arg;
-                                          ^
-Demo.cpp: In function 'void at_exeCmdCiupdate(uint8_t)':
-Demo.cpp:88:50: warning: invalid conversion from 'uint8* {aka unsigned char*}' to 'char*' [-fpermissive]
-                user_bin, IP2STR(upServer->ip), 80);
-                                                  ^
-In file included from ../../node_main/esp8266.h:13:0,
-                 from Demo.cpp:16:
-../../esp8266_sdk/include/ets_sys.h:110:5: warning:   initializing argument 1 of 'int ets_sprintf(char*, const char*, ...)' [-fpermissive]
- int ets_sprintf(char *str, const char *format, ...)  __attribute__ ((format (printf, 2, 3)));
-     ^
-rpc_server_registration.cpp: In function 'void rpc_server_register_resources()':
-rpc_server_registration.cpp:15:123: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-     rpc_server_register_method("Grove_Example1", "temp", METHOD_READ, __grove_example_read_temp, Grove_Example1, arg_types);
-                                                                                                                           ^
-rpc_server_registration.cpp:15:123: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-rpc_server_registration.cpp:17:137: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-     rpc_server_register_method("Grove_Example1", "uint8_value", METHOD_READ, __grove_example_read_uint8_value, Grove_Example1, arg_types);
-                                                                                                                                         ^
-rpc_server_registration.cpp:17:137: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-rpc_server_registration.cpp:20:131: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-     rpc_server_register_method("Grove_Example1", "with_arg", METHOD_READ, __grove_example_read_with_arg, Grove_Example1, arg_types);
-                                                                                                                                   ^
-rpc_server_registration.cpp:20:131: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-rpc_server_registration.cpp:22:129: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-     rpc_server_register_method("Grove_Example1", "compass", METHOD_READ, __grove_example_read_compass, Grove_Example1, arg_types);
-                                                                                                                                 ^
-rpc_server_registration.cpp:22:129: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-rpc_server_registration.cpp:24:121: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-     rpc_server_register_method("Grove_Example1", "acc", METHOD_READ, __grove_example_read_acc, Grove_Example1, arg_types);
-                                                                                                                         ^
-rpc_server_registration.cpp:24:121: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-rpc_server_registration.cpp:26:131: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-     rpc_server_register_method("Grove_Example1", "humidity", METHOD_READ, __grove_example_read_humidity, Grove_Example1, arg_types);
-                                                                                                                                   ^
-rpc_server_registration.cpp:26:131: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-rpc_server_registration.cpp:32:139: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-     rpc_server_register_method("Grove_Example1", "multi_value", METHOD_WRITE, __grove_example_write_multi_value, Grove_Example1, arg_types);
-                                                                                                                                           ^
-rpc_server_registration.cpp:32:139: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-rpc_server_registration.cpp:35:133: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-     rpc_server_register_method("Grove_Example1", "acc_mode", METHOD_WRITE, __grove_example_write_acc_mode, Grove_Example1, arg_types);
-                                                                                                                                     ^
-rpc_server_registration.cpp:35:133: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-rpc_server_registration.cpp:38:139: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-     rpc_server_register_method("Grove_Example1", "float_value", METHOD_WRITE, __grove_example_write_float_value, Grove_Example1, arg_types);
-                                                                                                                                           ^
-rpc_server_registration.cpp:38:139: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
 ../../node_main/eeprom.cpp:34:0: warning: "CONFIG_START_SECTOR" redefined [enabled by default]
  #define CONFIG_START_SECTOR (((uint32_t)&_SPIFFS_end - 0x40200000) / 4096)
  ^
 In file included from ../../node_main/eeprom.cpp:23:0:
-../../node_main/EEPROM.h:29:0: note: this is the location of the previous definition
+../../node_main/eeprom.h:29:0: note: this is the location of the previous definition
  #define CONFIG_START_SECTOR (((uint32_t)_SPIFFS_end - 0x40200000) / 4096)
  ^
 ../../node_main/ota.cpp: In function 'void ota_response(void*)':
@@ -556,7 +470,21 @@ In file included from ../../node_main/esp8266.h:13:0,
 ../../esp8266_sdk/include/ets_sys.h:110:5: warning:   initializing argument 1 of 'int ets_sprintf(char*, const char*, ...)' [-fpermissive]
  int ets_sprintf(char *str, const char *format, ...)  __attribute__ ((format (printf, 2, 3)));
      ^
-../../grove_drivers/grove_example/grove_example.cpp: In function 'void _trigger()':
-../../grove_drivers/grove_example/grove_example.cpp:91:44: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-     suli_event_trigger(&event1, "fire", 250);
-                                            ^
+Demo.cpp: In function 'void at_upDate_rsp(void*)':
+Demo.cpp:33:42: warning: invalid conversion from 'void*' to 'upgrade_server_info*' [-fpermissive]
+     struct upgrade_server_info *server = arg;
+                                          ^
+Demo.cpp: In function 'void at_exeCmdCiupdate(uint8_t)':
+Demo.cpp:88:50: warning: invalid conversion from 'uint8* {aka unsigned char*}' to 'char*' [-fpermissive]
+                user_bin, IP2STR(upServer->ip), 80);
+                                                  ^
+In file included from ../../node_main/esp8266.h:13:0,
+                 from Demo.cpp:16:
+../../esp8266_sdk/include/ets_sys.h:110:5: warning:   initializing argument 1 of 'int ets_sprintf(char*, const char*, ...)' [-fpermissive]
+ int ets_sprintf(char *str, const char *format, ...)  __attribute__ ((format (printf, 2, 3)));
+     ^
+rpc_server_registration.cpp: In function 'void rpc_server_register_resources()':
+rpc_server_registration.cpp:18:121: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     rpc_server_register_method("GroveRelay", "onoff", METHOD_WRITE, __grove_relay_write_onoff, GroveRelay_ins, arg_types);
+                                                                                                                         ^
+rpc_server_registration.cpp:18:121: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]

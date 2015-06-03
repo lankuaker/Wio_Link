@@ -210,7 +210,7 @@ static void main_connection_recv_cb(void *arg, char *pusrdata, unsigned short le
         if (!rx_stream_buffer) return;
 
         //Serial1.printf("recv %d data\n", length);
-        room = rx_stream_buffer->capacity();
+        room = rx_stream_buffer->capacity()-rx_stream_buffer->size();
         length = os_strlen(pusrdata);  //filter out the padding 0s
         if ( room > 0 )
         {
@@ -229,6 +229,7 @@ static void main_connection_sent_cb(void *arg)
     if (!tx_stream_buffer) return;
 
     size_t size = tx_stream_buffer->size();
+
     size_t size2 = size;
     if (size > 0)
     {
@@ -263,11 +264,13 @@ void network_puts(char *data, int len)
         noInterrupts();
         tx_stream_buffer->write(data, len);
         interrupts();
-        if ((strchr(data, '\r') || strchr(data, '\n') || tx_stream_buffer->capacity() < 10) && main_conn.state != ESPCONN_WRITE)
+
+        if ((strchr(data, '\r') || strchr(data, '\n') || tx_stream_buffer->size() > 512)/* && main_conn.state != ESPCONN_WRITE*/)
         {
-            os_timer_disarm(&timer_tx);
-            os_timer_setfn(&timer_tx, main_connection_sent_cb, &main_conn);
-            os_timer_arm(&timer_tx, 1, 0);
+            //os_timer_disarm(&timer_tx);
+            //os_timer_setfn(&timer_tx, main_connection_sent_cb, &main_conn);
+            //os_timer_arm(&timer_tx, 1, 0);
+            main_connection_sent_cb(&main_conn);
         }
     }
 }
@@ -466,7 +469,7 @@ void establish_network()
     return;
 #endif
     if (!rx_stream_buffer) rx_stream_buffer = new CircularBuffer(256);
-    if (!tx_stream_buffer) tx_stream_buffer = new CircularBuffer(128);
+    if (!tx_stream_buffer) tx_stream_buffer = new CircularBuffer(1024);
 
     Serial1.printf("Node name: %s\n", NODE_NAME);
     /* get key and name */

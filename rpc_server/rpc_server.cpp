@@ -16,6 +16,8 @@ event_t *p_event_queue_tail;
 
 static int parse_stage;
 
+extern void print_well_known();
+
 void rpc_server_init()
 {
     //init rpc stream
@@ -267,7 +269,8 @@ void rpc_server_loop()
                         buff[offset] = '\0';
                         if (strcmp(buff, ".well-known") == 0)
                         {
-                            writer_print(TYPE_STRING, "\"/.well-known is not implemented\"");
+                            //writer_print(TYPE_STRING, "\"/.well-known is not implemented\"");
+                            print_well_known();
                             response_msg_close();
                             parse_stage = PARSE_REQ_TYPE;
                         } else

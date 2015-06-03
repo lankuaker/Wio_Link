@@ -172,9 +172,10 @@ C_SRC += $(notdir $(call rwildcard,$(MAIN_DIR),*.c))
 C_SRC += $(notdir $(wildcard,$(BASE_DIR)/*.c))
 
 CPP_SRC = $(notdir $(call rwildcard,$(ARDUINO_DIR),*.cpp))
-CPP_SRC += $(notdir $(call rwildcard,./,*.cpp))
 CPP_SRC += $(notdir $(call rwildcard,$(MAIN_DIR),*.cpp))
 CPP_SRC += $(notdir $(wildcard,$(BASE_DIR)/*.cpp))
+CPP_USER_SRC = $(patsubst %_gen.cpp,,$(notdir $(call rwildcard,./,*.cpp)))
+CPP_SRC += $(CPP_USER_SRC)
 
 s_SRC = $(notdir $(call rwildcard,$(ARDUINO_DIR),*.s))
 s_SRC += $(notdir $(call rwildcard,./,*.s))
@@ -302,7 +303,7 @@ $(OUTPUT).bin: $(OUTPUT).elf
 	@echo " Gen Sections' Binary"
 	@echo "**********************"
 ifeq ($(boot), new)
-	@python $(SDK_DIR)/tools/gen_appbin.py $< 2 $(mode) $(freqdiv) $(size_map)
+	@export COMPILE=$(COMPILE) && python $(SDK_DIR)/tools/gen_appbin.py $< 2 $(mode) $(freqdiv) $(size_map)
 
     ifeq ($(size_map), 6)
 	@echo "Support boot_v1.4 and +"
@@ -314,7 +315,7 @@ ifeq ($(boot), new)
         endif
     endif
 else
-	@python $(SDK_DIR)/tools/gen_appbin.py $< 1 $(mode) $(freqdiv) $(size_map)
+	@export COMPILE=$(COMPILE) && python $(SDK_DIR)/tools/gen_appbin.py $< 1 $(mode) $(freqdiv) $(size_map)
 	@echo "Support boot_v1.1 and +"
 endif
 	@mv eagle.app.flash.bin $(OUTPUT).bin

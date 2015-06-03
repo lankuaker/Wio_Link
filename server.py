@@ -171,6 +171,7 @@ class DeviceConnection(object):
                 self.idle_time = 0 #reset the idle time counter
 
                 line += msg
+
                 while line.find('\r\n') > -1:
                     index = line.find('\r\n')
                     piece = line[:index+2]
@@ -303,16 +304,16 @@ class myApplication(web.Application):
 
     def __init__(self,db_conn,cursor):
         handlers = [
-        (r"/", IndexHandler),
-        (r"/user/create[/]?", UserCreateHandler),
-        (r"/user/changepassword[/]?", UserChangePasswordHandler),
-        (r"/user/login[/]?", UserLoginHandler),
-        (r"/scan/drivers[/]?", DriversHandler),
-        (r"/scan/status[/]?", DriversStatusHandler),
-        (r"/nodes/create[/]?", NodeCreateHandler),
-        (r"/nodes/list[/]?", NodeListHandler),
-        (r"/node/(.+)", NodeReadWriteHandler, dict(conns=DeviceServer.accepted_conns)),
-        (r"/user/download[/]?", UserDownloadHandler),
+        (r"/v1[/]?", IndexHandler),
+        (r"/v1/user/create[/]?", UserCreateHandler),
+        (r"/v1/user/changepassword[/]?", UserChangePasswordHandler),
+        (r"/v1/user/login[/]?", UserLoginHandler),
+        (r"/v1/scan/drivers[/]?", DriversHandler),
+        (r"/v1/scan/status[/]?", DriversStatusHandler),
+        (r"/v1/nodes/create[/]?", NodeCreateHandler),
+        (r"/v1/nodes/list[/]?", NodeListHandler),
+        (r"/v1/node/(.+)", NodeReadWriteHandler, dict(conns=DeviceServer.accepted_conns)),
+        (r"/v1/user/download[/]?", UserDownloadHandler),
         ]
         self.conn = db_conn
         self.cur = cursor

@@ -309,7 +309,6 @@ class NodeReadWriteHandler(BaseHandler):
         return node
 
 
-
     @gen.coroutine
     def get(self, uri):
 
@@ -420,14 +419,14 @@ class UserDownloadHandler(BaseHandler):
         # create user dir and project subdir
         projectDir = 'users_build' + '/' + email
         if not os.path.exists(projectDir):
-            os.makedirs(projectDir) 
+            os.makedirs(projectDir)
 
         # create yaml file on user dir
         configYaml = open(projectDir + '/' + filename, 'wb')
         configYaml.write(uploadFile['body'])
 
         # add required file, such as Makefile
-        
+
         # go make
 
         self.resp(200, "User download",{"node_sn": node_sn})

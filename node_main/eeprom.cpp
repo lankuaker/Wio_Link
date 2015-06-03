@@ -20,7 +20,7 @@
 */
 
 #include "Arduino.h"
-#include "EEPROM.h"
+#include "eeprom.h"
 
  extern "C" {
 #include "c_types.h"
