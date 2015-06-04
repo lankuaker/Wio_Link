@@ -478,3 +478,102 @@ class UserDownloadHandler(BaseHandler):
 
         self.resp(200, "User download",{"node_sn": node_sn})
 
+
+
+
+class OTAHandler(BaseHandler):
+
+    def initialize (self, conns):
+        self.conns = conns
+
+    def get_node (self):
+        node = None
+        sn = self.get_argument("sn","")
+        if not sn:
+            gen_log.error("ota bin request has no sn provided")
+            return
+
+
+        sn = sn[:-4]
+        try:
+            sn = base64.b64decode(sn)
+        except:
+            sn = ""
+
+        if len(sn) != 32:
+            gen_log.error("ota bin request has no valid sn provided")
+            return
+
+        if sn:
+            try:
+                cur = self.application.cur
+                cur.execute('select * from nodes where node_sn="%s"'%sn)
+                rows = cur.fetchall()
+                if len(rows) > 0:
+                    node = rows[0]
+            except:
+                node = None
+        else:
+            node = None
+
+        print "get current node:", str(node)
+        if not node:
+            gen_log.error("can not find the specified node for ota bin request")
+        return node
+
+
+    @gen.coroutine
+    def get(self):
+        app = self.get_argument("app","")
+        if not app or app not in [1,2,"1","2"]:
+            gen_log.error("ota bin request has no app number provided")
+            return
+
+        node = self.get_node()
+        if not node:
+            return
+
+        #get the user dir
+        user_dir = "users_build/local_user"
+
+        #put user*.bin out
+        self.write(open(os.path.join(user_dir, "user%s.bin"%str(app))).read())
+
+
+    def post (self, uri):
+        self.resp(404, "Please get this url.")
+
+
+'''
+for test
+'''
+class OTATrigHandler(BaseHandler):
+
+    def initialize (self, conns):
+        self.conns = conns
+
+
+    @gen.coroutine
+    def get (self):
+
+        sn = self.get_argument("sn","")
+        if not sn:
+            gen_log.error("ota bin request has no sn provided")
+            return
+        print sn
+
+        for conn in self.conns:
+            if conn.sn == sn and not conn.killed:
+                try:
+                    cmd = "OTA\r\n"
+                    cmd = cmd.encode("ascii")
+                    ok, resp = yield conn.submit_and_wait_resp (cmd, "ota_trig_ack")
+                    self.resp(200,resp)
+                except Exception,e:
+                    print e
+                return
+        self.resp(404, "Node is offline")
+
+
+
+
