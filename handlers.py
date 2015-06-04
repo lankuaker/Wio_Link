@@ -49,6 +49,7 @@ from tornado import iostream
 from tornado import web
 from tornado.options import define, options
 from tornado.log import *
+from tornado.concurrent import Future
 
 TOKEN_SECRET = "!@#$%^&*RG)))))))JM<==TTTT==>((((((&^HVFT767JJH"
 
@@ -112,6 +113,11 @@ class IndexHandler(BaseHandler):
     def get(self):
         #DeviceServer.accepted_conns[0].submit_cmd("OTA\r\n")
         self.resp(400,msg = "Please specify the url as this format: /node_id/grove_name/property")
+
+class TestHandler(web.RequestHandler):
+    def get(self):
+        args = dict(username = 'visitor')
+        self.render("test.html", **args)
 
 
 
@@ -433,7 +439,6 @@ class UserDownloadHandler(BaseHandler):
 
     def post(self):
         node_sn = self.get_argument("node_sn","")
-        node_sn = "fe569fe5856b2bf93898b4efbd3e168f"
         if not node_sn:
             self.resp(400, "Missing node_sn information\n")
             return
@@ -573,6 +578,56 @@ class OTATrigHandler(BaseHandler):
                     print e
                 return
         self.resp(404, "Node is offline")
+
+
+
+class OTAUpdatesHandler(BaseHandler):
+    
+    def get (self):
+        self.resp(404, "Please post to this url\n")
+
+    @gen.coroutine
+    def post(self):
+        node_sn = self.get_argument("node_sn","")
+        if not node_sn:
+            self.resp(400, "Missing node_sn information\n")
+            return
+
+        try:
+            cur = self.application.cur
+            cur.execute("select user_id, name, private_key from nodes where node_sn='%s'"%(node_sn))
+            rows = cur.fetchall()
+            nodes = []
+            if len(rows) > 0:
+                nodes = rows[0]
+        except:
+            nodes = None
+
+        pass # check node_sn correct?
+
+        user_id = nodes["user_id"]
+        node_name = nodes["name"]
+
+        self.future = yield self.wait_ota()
+        if self.request.connection.stream.closed():
+            return
+
+        self.write(dict(messages=self.future))
+
+    def on_connection_close(self):
+        # global_message_buffer.cancel_wait(self.future)
+        print "on_connection_close"
+
+    def wait_ota(self):
+        result_future = Future()
+
+        # get OTA status
+        pass
+        status = {u'msg': u'success', u'msg_type': u'ota_result'}
+
+        result_future.set_result(status)
+
+        return result_future
 
 
 
