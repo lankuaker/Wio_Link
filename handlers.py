@@ -443,11 +443,9 @@ class UserDownloadHandler(BaseHandler):
             self.resp(400, "Missing node_sn information\n")
             return
 
-        if self.request.files.get('yaml', None):
-            uploadFile = self.request.files['yaml'][0]
-            fileName = uploadFile['filename']
-        else:
-            self.resp(400, "Missing Yaml file information\n")
+        yaml = self.get_argument("yaml","")
+        if not yaml:
+            self.resp(400, "Missing yaml information\n")
             return
 
         try:
@@ -466,12 +464,24 @@ class UserDownloadHandler(BaseHandler):
 
         pass # test node id is valid?
 
+        try:
+            yaml = base64.b64decode(yaml)
+        except:
+            yaml = ""
+
+        print yaml
+        if not yaml:
+            gen_log.error("ota bin request has no valid sn provided")
+            return
+
         cur_dir = os.path.split(os.path.realpath(__file__))[0]
         user_build_dir = cur_dir + '/users_build/' + str(user_id)
         if not os.path.exists(user_build_dir):
             os.makedirs(user_build_dir) 
-        yamlFile = open(user_build_dir + '/' + fileName, 'wr')
-        yamlFile.write(uploadFile['body'])
+
+        yamlFile = open("%s/connection_config.yaml"%user_build_dir, 'wr')
+        yamlFile.write(yaml)
+
         yamlFile.close()
 
         copy('%s/users_build/local_user/Makefile'%cur_dir, user_build_dir)
