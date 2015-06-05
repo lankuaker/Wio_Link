@@ -64,10 +64,10 @@ xtensa-lx106-elf-gcc -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-s
      Link Done
 
    text	   data	    bss	    dec	    hex	filename
- 252980	   5892	  55280	 314152	  4cb28	user1.elf
+ 253868	   6208	  55272	 315348	  4cfd4	user1.elf
 **********************
-.irom0.text size: 221860
-.text size: 31120
+.irom0.text size: 221988
+.text size: 31880
 
 **********************
  Gen Sections' Binary
@@ -142,10 +142,10 @@ xtensa-lx106-elf-gcc -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-s
      Link Done
 
    text	   data	    bss	    dec	    hex	filename
- 252980	   5892	  55280	 314152	  4cb28	user2.elf
+ 253868	   6208	  55272	 315348	  4cfd4	user2.elf
 **********************
-.irom0.text size: 221860
-.text size: 31120
+.irom0.text size: 221988
+.text size: 31880
 
 **********************
  Gen Sections' Binary

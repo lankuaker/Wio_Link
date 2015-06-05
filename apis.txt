@@ -36,6 +36,7 @@ curl -H "Authorization: token aKleqQebIsjmQMSCokemtgNXMD4Y7OTe3uyzEL1iwwA" -d na
 curl -H "Authorization: token aKleqQebIsjmQMSCokemtgNXMD4Y7OTe3uyzEL1iwwA" localhost:8080/nodes/list
 {"status": 200, "msg": "", "nodes": [{"node_key": "d6d68b4b6b43f213569f5832dd8277b2", "name": "node_1", "node_sn": "f70fd643b73f0c721b007ce453bafddd"}, {"node_key": "85a7c2b2fd97c357137414733e65d516", "name": "node_2", "node_sn": "200d8a94ac5f0905e1fbf9acdfcaba78"}]}
 
+curl -H "Authorization: token StiLU1g5SNfQYWQLKpB7uMuE4l2uQuamKMBsIW1RGgA" localhost:8080/v1/nodes/delete -d "node_sn=bac0df2d1b01b32c8ad3a0efbfc31c5f"
 
 curl -H "Authorization: token d6d68b4b6b43f213569f5832dd8277b2" localhost:8080/v1/node/.well-known
 
@@ -53,6 +54,7 @@ curl -H "Authorization: token d6d68b4b6b43f213569f5832dd8277b2" -d "a=10&b=10.5&
 curl -H "Authorization: token d6d68b4b6b43f213569f5832dd8277b2" -d "onoff=1" localhost:8080/v1/node/GroveRelay/onoff/
 
 
+curl localhost:8080/v1/ota/trig?sn=f70fd643b73f0c721b007ce453bafddd
 
 
 

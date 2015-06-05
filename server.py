@@ -72,6 +72,9 @@ class DeviceConnection(object):
         self.iv = None
         self.cipher = None
 
+        self.state_waiters = []
+        self.state_happened = []
+
     def secure_write (self, data):
         if self.cipher:
             cipher_text = self.cipher.encrypt(pad(data))
@@ -183,7 +186,31 @@ class DeviceConnection(object):
                     json_obj = json.loads(piece)
                     print 'recv json:', json_obj
 
-                    self.recv_msg_queue.append(json_obj)
+                    try:
+                        state = None
+                        if json_obj['msg_type'] == 'ota_trig_ack':
+                            state = ('going', 'Node has been notified...')
+                        elif json_obj['msg_type'] == 'ota_status':
+                            if json_obj['msg'] == 'started':
+                                state = ('going', 'Node is downloading the binary...')
+                            else:
+                                state = ('error', 'Node failed to start the downloading.')
+                        elif json_obj['msg_type'] == 'ota_result':
+                            if json_obj['msg'] == 'success':
+                                state = ('done', 'Upgrade done')
+                                self.kill_myself()
+                            else:
+                                state = ('error', 'Upgrade failed, please reboot the node and retry')
+                        print state
+                        if state:
+                            if len(self.state_waiters) == 0:
+                                self.state_happened.append(state)
+                            else:
+                                self.state_waiters.pop(0).set_result(state)
+                        else:
+                            self.recv_msg_queue.append(json_obj)
+                    except Exception,e:
+                        print e
 
             except iostream.StreamClosedError:
                 self.kill_myself()
@@ -198,7 +225,7 @@ class DeviceConnection(object):
         while not self.killed:
             if len(self.send_msg_queue) > 0:
                 try:
-                    cmd = self.send_msg_queue.pop()
+                    cmd = self.send_msg_queue.pop(0)
                     self.secure_write(cmd)
                 except Exception, e:
                     yield gen.moment
@@ -336,15 +363,15 @@ class myApplication(web.Application):
         (r"/v1/nodes/list[/]?", NodeListHandler),
         (r"/v1/nodes/delete[/]?", NodeDeleteHandler),
         (r"/v1/node/(.+)", NodeReadWriteHandler, dict(conns=DeviceServer.accepted_conns)),
-        (r"/v1/user/download[/]?", UserDownloadHandler),
+        (r"/v1/user/download[/]?", UserDownloadHandler, dict(conns=DeviceServer.accepted_conns)),
         (r"/v1/ota/bin", OTAHandler, dict(conns=DeviceServer.accepted_conns)),
-        (r"/v1/ota/trig", OTATrigHandler, dict(conns=DeviceServer.accepted_conns)),  #just for test, should be triggered in /user/download
-        (r"/v1/ota/status[/]?", OTAUpdatesHandler),
+        (r"/v1/ota/trig", UserDownloadHandler, dict(conns=DeviceServer.accepted_conns)),  #just for test, should be triggered in /user/download
+        (r"/v1/ota/status[/]?", OTAUpdatesHandler, dict(conns=DeviceServer.accepted_conns)),
         ]
         self.conn = db_conn
         self.cur = cursor
 
-        web.Application.__init__(self, handlers, debug=True, login_url="/user/login", 
+        web.Application.__init__(self, handlers, debug=True, login_url="/user/login",
             template_path = 'templates',)
 
 def main():

@@ -79,7 +79,7 @@ def parse_class_header_file (file):
     arg_list = re.findall(r'%s\((.*)\);'%class_name[0], content, re.M)
     print arg_list
     if arg_list:
-        patterns["ConstructArgList"] = arg_list[0].split(',')
+        patterns["ConstructArgList"] = [x.strip(" ") for x in arg_list[0].split(',')]
     else:
         return ("can not find construct arg list in %s"%file,{})
 

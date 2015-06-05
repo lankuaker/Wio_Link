@@ -227,7 +227,7 @@ def gen_wrapper_registration (instance_name, info, arg_list):
 
     # event attachment
     if info['HasEvent']:
-        str_reg_method += '\r\n    %s->attach_event_handler(rpc_server_event_report);\r\n' % instance_name
+        str_reg_method += '\r\n    %s->attach_event_handler(rpc_server_event_report);\r\n' % (instance_name+"_ins")
 
     fp_wrapper_h.close()
     fp_wrapper_cpp.close()
@@ -253,7 +253,6 @@ def gen_and_build (user_id, node_name):
         return False
 
     user_build_dir = cur_dir + '/users_build/' + user_id
-    os.chdir(user_build_dir)
 
     try:
         f_config = open('%s/connection_config.yaml'%user_build_dir,'r')
@@ -323,7 +322,7 @@ def gen_and_build (user_id, node_name):
     find_cpp = False
     find_makefile = False
     for f in os.listdir(user_build_dir):
-        if f.find(".cpp") > -1:
+        if f.find("Demo.cpp") > -1:
             find_cpp = True
             break
     for f in os.listdir(user_build_dir):
@@ -364,6 +363,8 @@ def gen_and_build (user_id, node_name):
             return False
 
     os.system('cd %s;rm -rf *.S;rm -rf *.dump;rm -rf *.d;rm -rf *.o'%user_build_dir)
+
+    return True
 
 
 

@@ -37,9 +37,8 @@ import base64
 import httplib
 import uuid
 from shutil import copy
-from build_firmware import gen_and_build
+from build_firmware import *
 import yaml
-from server import DeviceServer
 
 from tornado.httpserver import HTTPServer
 from tornado.tcpserver import TCPServer
@@ -314,7 +313,7 @@ class NodeDeleteHandler(BaseHandler):
         finally:
             self.application.conn.commit()
 
-class NodeReadWriteHandler(BaseHandler):
+class NodeBaseHandler(BaseHandler):
 
     def initialize (self, conns):
         self.conns = conns
@@ -328,7 +327,7 @@ class NodeReadWriteHandler(BaseHandler):
                 token = token_str.replace("token ","")
             except:
                 token = None
-
+        print token
         if token:
             try:
                 cur = self.application.cur
@@ -346,6 +345,9 @@ class NodeReadWriteHandler(BaseHandler):
             self.resp(403,"Please attach the valid node token (not the user token)")
         return node
 
+
+
+class NodeReadWriteHandler(NodeBaseHandler):
 
     @gen.coroutine
     def get(self, uri):
@@ -429,38 +431,41 @@ class NodeReadWriteHandler(BaseHandler):
         self.resp(404, "Node is offline")
 
 
-class UserDownloadHandler(BaseHandler):
+class UserDownloadHandler(NodeBaseHandler):
     """
-    post two para, node_sn and yaml file
+    post two para, node_token and yaml file
 
     """
+
     def get (self):
         self.resp(404, "Please post to this url\n")
 
+    @gen.coroutine
     def post(self):
-        node_sn = self.get_argument("node_sn","")
-        if not node_sn:
-            self.resp(400, "Missing node_sn information\n")
+        node = self.get_node()
+        if not node:
             return
+
+        cur_conn = None
+
+        for conn in self.conns:
+            if conn.private_key == node['private_key'] and not conn.killed:
+                cur_conn = conn
+                break
+
+        if not cur_conn:
+            self.resp(404, "Node is offline")
+            return
+
+        self.cur_conn = cur_conn
 
         yaml = self.get_argument("yaml","")
         if not yaml:
             self.resp(400, "Missing yaml information\n")
             return
 
-        try:
-            cur = self.application.cur
-            cur.execute("select user_id, name, private_key from nodes where node_sn='%s'"%(node_sn))
-            rows = cur.fetchall()
-            nodes = []
-            if len(rows) > 0:
-                nodes = rows[0]
-        except:
-            nodes = None
-
-        print nodes
-        user_id = nodes["user_id"]
-        node_name = nodes["name"]
+        user_id = node["user_id"]
+        node_name = node["name"]
 
         pass # test node id is valid?
 
@@ -471,13 +476,14 @@ class UserDownloadHandler(BaseHandler):
 
         print yaml
         if not yaml:
-            gen_log.error("ota bin request has no valid sn provided")
+            gen_log.error("no valid yaml provided")
+            self.resp(400, "no valid yaml provided")
             return
 
         cur_dir = os.path.split(os.path.realpath(__file__))[0]
         user_build_dir = cur_dir + '/users_build/' + str(user_id)
         if not os.path.exists(user_build_dir):
-            os.makedirs(user_build_dir) 
+            os.makedirs(user_build_dir)
 
         yamlFile = open("%s/connection_config.yaml"%user_build_dir, 'wr')
         yamlFile.write(yaml)
@@ -486,12 +492,106 @@ class UserDownloadHandler(BaseHandler):
 
         copy('%s/users_build/local_user/Makefile'%cur_dir, user_build_dir)
 
-        gen_and_build(str(user_id), node_name)
+        self.request.connection.stream.io_loop.add_callback(self.ota_process, user_id, node_name, node['node_sn'])
+
+        self.resp(200,"",meta={'ota_status': "going", "ota_msg": "Building firmware.."})
+
+
+    @gen.coroutine
+    def ota_process (self, user_id, node_name, node_sn):
+
+        if not self.cur_conn:
+            self.resp(404, "Node is offline")
+            return
+
+        if not gen_and_build(str(user_id), node_name):
+            error_msg = get_error_msg()
+            gen_log.error(error_msg)
+            print error_msg
+            #save state
+            state = ("error", "build error: "+error_msg)
+            if len(self.cur_conn.state_waiters) == 0:
+                self.cur_conn.state_happened.append(state)
+            else:
+                self.cur_conn.state_waiters.pop().set_result(state)
+
+            return
+
+        #save state
+        state = ("going", "Notifing the node...")
+        print state
+        if len(self.cur_conn.state_waiters) == 0:
+            self.cur_conn.state_happened.append(state)
+        else:
+            self.cur_conn.state_waiters.pop().set_result(state)
 
         # go OTA
-        DeviceServer.accepted_conns[0].submit_cmd("OTA\r\n")
+        try:
+            cmd = "OTA\r\n"
+            cmd = cmd.encode("ascii")
+            self.cur_conn.submit_cmd (cmd)
+        except Exception,e:
+            print e
+            #save state
+            state = ("error", "notify error: "+str(e))
+            if len(self.cur_conn.state_waiters) == 0:
+                self.cur_conn.state_happened.append(state)
+            else:
+                self.cur_conn.state_waiters.pop().set_result(state)
+        return
 
-        self.resp(200, "User download",{"node_sn": node_sn})
+
+
+class OTAUpdatesHandler(NodeBaseHandler):
+
+    def get (self):
+        self.resp(404, "Please post to this url\n")
+
+    @gen.coroutine
+    def post(self):
+        print "request ota status"
+
+        node = self.get_node()
+        if not node:
+            return
+
+        cur_conn = None
+
+        for conn in self.conns:
+            if conn.private_key == node['private_key'] and not conn.killed:
+                cur_conn = conn
+                break
+
+        if not cur_conn:
+            self.resp(404, "Node is offline")
+            return
+
+        self.cur_conn = cur_conn
+
+        state = yield self.wait_ota_status_change()
+        print "+++post state to app:", state
+
+        if self.request.connection.stream.closed():
+            return
+
+        self.resp(200,"",{'ota_status': state[0], 'ota_msg': state[1]})
+
+    def on_connection_close(self):
+        # global_message_buffer.cancel_wait(self.future)
+        print "on_connection_close"
+
+    def wait_ota_status_change(self):
+        result_future = Future()
+
+        # get OTA status
+        if len(self.cur_conn.state_happened) > 0:
+            result_future.set_result(self.cur_conn.state_happened.pop(0))
+        else:
+            self.cur_conn.state_waiters.append(result_future)
+
+        return result_future
+
+
 
 
 
@@ -549,7 +649,7 @@ class OTAHandler(BaseHandler):
             return
 
         #get the user dir
-        user_dir = "users_build/local_user"
+        user_dir = os.path.join("users_build/",str(node['user_id']))
 
         #put user*.bin out
         self.write(open(os.path.join(user_dir, "user%s.bin"%str(app))).read())
@@ -590,54 +690,6 @@ class OTATrigHandler(BaseHandler):
         self.resp(404, "Node is offline")
 
 
-
-class OTAUpdatesHandler(BaseHandler):
-    
-    def get (self):
-        self.resp(404, "Please post to this url\n")
-
-    @gen.coroutine
-    def post(self):
-        node_sn = self.get_argument("node_sn","")
-        if not node_sn:
-            self.resp(400, "Missing node_sn information\n")
-            return
-
-        try:
-            cur = self.application.cur
-            cur.execute("select user_id, name, private_key from nodes where node_sn='%s'"%(node_sn))
-            rows = cur.fetchall()
-            nodes = []
-            if len(rows) > 0:
-                nodes = rows[0]
-        except:
-            nodes = None
-
-        pass # check node_sn correct?
-
-        user_id = nodes["user_id"]
-        node_name = nodes["name"]
-
-        self.future = yield self.wait_ota()
-        if self.request.connection.stream.closed():
-            return
-
-        self.write(dict(messages=self.future))
-
-    def on_connection_close(self):
-        # global_message_buffer.cancel_wait(self.future)
-        print "on_connection_close"
-
-    def wait_ota(self):
-        result_future = Future()
-
-        # get OTA status
-        pass
-        status = {u'msg': u'success', u'msg_type': u'ota_result'}
-
-        result_future.set_result(status)
-
-        return result_future
 
 
 
