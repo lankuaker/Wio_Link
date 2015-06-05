@@ -51,7 +51,7 @@ def parse_class_header_file (file):
     grove_name = re.findall(r'^//GROVE_NAME\s+"(.+)"', content, re.M)
     print grove_name
     if grove_name:
-        patterns["GroveName"] = grove_name[0]
+        patterns["GroveName"] = grove_name[0].rstrip('\r')
     else:
         return ("can not find GROVE_NAME in %s"%file, {})
     ##interface type
@@ -61,6 +61,13 @@ def parse_class_header_file (file):
         patterns["InterfaceType"] = if_type[0]
     else:
         return ("can not find IF_TYPE in %s"%file,{})
+    ##image url
+    image_url = re.findall(r'^//IMAGE_URL\s+(.+)', content, re.M)
+    print image_url
+    if image_url:
+        patterns["ImageURL"] = image_url[0].rstrip('\r')
+    else:
+        return ("can not find IMAGE_URL in %s"%file,{})
     ##class name
     class_name = re.findall(r'^class\s+([a-zA-z0-9_]+)', content, re.M)
     print class_name

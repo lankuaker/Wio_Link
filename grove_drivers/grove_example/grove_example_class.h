@@ -8,6 +8,7 @@
 
 //GROVE_NAME        "Grove_Example"
 //IF_TYPE           I2C
+//IMAGE_URL         http://www.seeedstudio.com/depot/includes/templates/bootstrap/images/ico/grove.png
 
 class GroveExample
 {

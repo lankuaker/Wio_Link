@@ -136,6 +136,8 @@ def build_reg_write_arg_type (arg_list):
 
 def gen_wrapper_registration (instance_name, info, arg_list):
     global error_msg
+
+    instance_name = instance_name.replace(" ","_");
     grove_name = info['GroveName'].lower()
     gen_header_file_name = grove_name+"_gen.h"
     gen_cpp_file_name = grove_name+"_gen.cpp"

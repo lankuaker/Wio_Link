@@ -81,7 +81,6 @@ static void smartconfig_done_callback(sc_status status, void *pdata)
 static void user_devicefind_recv(void *arg, char *pusrdata, unsigned short length)
 {
     struct espconn *conn = (struct espconn *)arg;
-    char Device_mac_buffer[60] = {0};
     char hwaddr[6];
 
     struct ip_info ipconfig;
@@ -115,11 +114,14 @@ static void user_devicefind_recv(void *arg, char *pusrdata, unsigned short lengt
     if (length == os_strlen(device_find_request) &&
             os_strncmp(pusrdata, device_find_request, os_strlen(device_find_request)) == 0)
     {
-        os_sprintf(Device_mac_buffer, "Node: %s," MACSTR "," IPSTR "\r\n", NODE_NAME, MAC2STR(hwaddr), IP2STR(&ipconfig.ip));
+        char *device_desc = new char[128];
+        os_sprintf(device_desc, "Node: %s," MACSTR "," IPSTR "\r\n",
+                   EEPROM.getDataPtr() + EEP_OFFSET_SN, MAC2STR(hwaddr), IP2STR(&ipconfig.ip));
 
-        Serial1.printf("%s", Device_mac_buffer);
-        length = os_strlen(Device_mac_buffer);
-        espconn_sent(conn, Device_mac_buffer, length);
+        Serial1.printf("%s", device_desc);
+        length = os_strlen(device_desc);
+        espconn_sent(conn, device_desc, length);
+        delete[] device_desc;
     } else if ((pkey=os_strstr(pusrdata, device_key_write_req)) != NULL)
     {
         if ((pusrdata + length - pkey - os_strlen(device_key_write_req)) >= KEY_LEN)
@@ -334,7 +336,7 @@ void main_connection_send_hello(void *arg)
     get_hello = 0;
     os_timer_disarm(&timer_confirm_hello);
     os_timer_setfn(&timer_confirm_hello, confirm_hello, arg);
-    os_timer_arm(&timer_confirm_hello, 1000, 0);
+    os_timer_arm(&timer_confirm_hello, 100, 0);
     confirm_hello_retry_cnt = 0;
     main_conn_status = WAIT_HELLO_DONE;
 }
@@ -445,8 +447,8 @@ void establish_network()
 {
 #if ENABLE_DEBUG_ON_UART1
     Serial1.begin(74880);
+    Serial1.println("\n\n"); //clear the garbage in uart when boot up
 #endif
-    Serial1.printf("start to establish network connection.\r\n");
 
 #if 0
     //uint8_t key[32] = { 0x60, 0x3d, 0xeb, 0x10, 0x15, 0xca, 0x71, 0xbe, 0x2b, 0x73, 0xae, 0xf0, 0x85, 0x7d, 0x77, 0x81, 0x1f
@@ -472,6 +474,7 @@ void establish_network()
     if (!tx_stream_buffer) tx_stream_buffer = new CircularBuffer(1024);
 
     Serial1.printf("Node name: %s\n", NODE_NAME);
+    Serial1.printf("Chip id: 0x%08x\n", system_get_chip_id());
     /* get key and name */
     EEPROM.begin(4096);
     Serial1.printf("Device key in flash: %s\n", EEPROM.getDataPtr() + EEP_OFFSET_KEY);
@@ -479,6 +482,8 @@ void establish_network()
 
     pinMode(SMARTCONFIG_KEY, INPUT_PULLUP);
     pinMode(STATUS_LED, OUTPUT);
+
+    Serial1.printf("start to establish network connection.\r\n");
 
     if (digitalRead(SMARTCONFIG_KEY) == 0)
     {

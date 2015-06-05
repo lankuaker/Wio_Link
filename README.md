@@ -56,6 +56,7 @@ And also we need more grove drivers commit from community if you know Arduino an
   * class封装层文件名中必须包含class字样, 建议例如 grove_3axis_acc_class.h
   * 必须在class.h中填加//GROVE_NAME注释行
   * 必须在class.h中填加//IF_TYPE注释行, 接口类型可以是{GPIO, PWM, ANALOG, I2C, UART}
+  * 必须在class.h中填加//IMAGE_URL注释行
   * 第一层驱动实现中所有函数必须以grove_grovename_ 打头
   * 第一层驱动实现中所有对外开放的读函数必须以grove_grovename_read_ 打头
   * class封装中所有对外开放的读函数必须以read_打头

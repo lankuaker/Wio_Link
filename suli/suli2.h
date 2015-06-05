@@ -75,7 +75,7 @@ typedef gpio_t IO_T;
 /**
  * int suli_pin_read(IO_T *)
  */
-#define suli_pin_read(pio) {gpio_read(pio);}
+#define suli_pin_read(pio) gpio_read(pio)
 
 /**
  * uint32_t suli_pin_pulse_in(IO_T *, what_state, timeout)
