@@ -36,6 +36,10 @@ import md5
 import base64
 import httplib
 import uuid
+from shutil import copy
+from build_firmware import gen_and_build
+import yaml
+from server import DeviceServer
 
 from tornado.httpserver import HTTPServer
 from tornado.tcpserver import TCPServer
@@ -45,6 +49,7 @@ from tornado import iostream
 from tornado import web
 from tornado.options import define, options
 from tornado.log import *
+from tornado.concurrent import Future
 
 TOKEN_SECRET = "!@#$%^&*RG)))))))JM<==TTTT==>((((((&^HVFT767JJH"
 
@@ -108,6 +113,11 @@ class IndexHandler(BaseHandler):
     def get(self):
         #DeviceServer.accepted_conns[0].submit_cmd("OTA\r\n")
         self.resp(400,msg = "Please specify the url as this format: /node_id/grove_name/property")
+
+class TestHandler(web.RequestHandler):
+    def get(self):
+        args = dict(username = 'visitor')
+        self.render("test.html", **args)
 
 
 
@@ -421,41 +431,65 @@ class NodeReadWriteHandler(BaseHandler):
 
 class UserDownloadHandler(BaseHandler):
     """
-    post two para, project name  and  yaml file
+    post two para, node_sn and yaml file
 
     """
     def get (self):
         self.resp(404, "Please post to this url\n")
 
-    @web.authenticated
     def post(self):
         node_sn = self.get_argument("node_sn","")
         if not node_sn:
             self.resp(400, "Missing node_sn information\n")
             return
 
-        if self.request.files.get('yaml', None):
-            uploadFile = self.request.files['yaml'][0]
-            filename = uploadFile['filename']
-        else:
-            self.resp(400, "Missing Yaml file information\n")
+        yaml = self.get_argument("yaml","")
+        if not yaml:
+            self.resp(400, "Missing yaml information\n")
             return
 
-        user = self.current_user
-        email = user["email"]
+        try:
+            cur = self.application.cur
+            cur.execute("select user_id, name, private_key from nodes where node_sn='%s'"%(node_sn))
+            rows = cur.fetchall()
+            nodes = []
+            if len(rows) > 0:
+                nodes = rows[0]
+        except:
+            nodes = None
 
-        # create user dir and project subdir
-        projectDir = 'users_build' + '/' + email
-        if not os.path.exists(projectDir):
-            os.makedirs(projectDir)
+        print nodes
+        user_id = nodes["user_id"]
+        node_name = nodes["name"]
 
-        # create yaml file on user dir
-        configYaml = open(projectDir + '/' + filename, 'wb')
-        configYaml.write(uploadFile['body'])
+        pass # test node id is valid?
 
-        # add required file, such as Makefile
+        try:
+            yaml = base64.b64decode(yaml)
+        except:
+            yaml = ""
 
-        # go make
+        print yaml
+        if not yaml:
+            gen_log.error("ota bin request has no valid sn provided")
+            return
+
+        cur_dir = os.path.split(os.path.realpath(__file__))[0]
+        user_build_dir = cur_dir + '/users_build/' + str(user_id)
+        if not os.path.exists(user_build_dir):
+            os.makedirs(user_build_dir) 
+
+        yamlFile = open("%s/connection_config.yaml"%user_build_dir, 'wr')
+        yamlFile.write(yaml)
+
+        yamlFile.close()
+
+        copy('%s/users_build/local_user/Makefile'%cur_dir, user_build_dir)
+
+        gen_and_build(str(user_id), node_name)
+
+        # go OTA
+        DeviceServer.accepted_conns[0].submit_cmd("OTA\r\n")
 
         self.resp(200, "User download",{"node_sn": node_sn})
 
@@ -554,6 +588,56 @@ class OTATrigHandler(BaseHandler):
                     print e
                 return
         self.resp(404, "Node is offline")
+
+
+
+class OTAUpdatesHandler(BaseHandler):
+    
+    def get (self):
+        self.resp(404, "Please post to this url\n")
+
+    @gen.coroutine
+    def post(self):
+        node_sn = self.get_argument("node_sn","")
+        if not node_sn:
+            self.resp(400, "Missing node_sn information\n")
+            return
+
+        try:
+            cur = self.application.cur
+            cur.execute("select user_id, name, private_key from nodes where node_sn='%s'"%(node_sn))
+            rows = cur.fetchall()
+            nodes = []
+            if len(rows) > 0:
+                nodes = rows[0]
+        except:
+            nodes = None
+
+        pass # check node_sn correct?
+
+        user_id = nodes["user_id"]
+        node_name = nodes["name"]
+
+        self.future = yield self.wait_ota()
+        if self.request.connection.stream.closed():
+            return
+
+        self.write(dict(messages=self.future))
+
+    def on_connection_close(self):
+        # global_message_buffer.cancel_wait(self.future)
+        print "on_connection_close"
+
+    def wait_ota(self):
+        result_future = Future()
+
+        # get OTA status
+        pass
+        status = {u'msg': u'success', u'msg_type': u'ota_result'}
+
+        result_future.set_result(status)
+
+        return result_future
 
 
 

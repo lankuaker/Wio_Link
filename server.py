@@ -326,6 +326,7 @@ class myApplication(web.Application):
     def __init__(self,db_conn,cursor):
         handlers = [
         (r"/v1[/]?", IndexHandler),
+        (r"/v1/test[/]?", TestHandler),
         (r"/v1/user/create[/]?", UserCreateHandler),
         (r"/v1/user/changepassword[/]?", UserChangePasswordHandler),
         (r"/v1/user/login[/]?", UserLoginHandler),
@@ -338,11 +339,13 @@ class myApplication(web.Application):
         (r"/v1/user/download[/]?", UserDownloadHandler),
         (r"/v1/ota/bin", OTAHandler, dict(conns=DeviceServer.accepted_conns)),
         (r"/v1/ota/trig", OTATrigHandler, dict(conns=DeviceServer.accepted_conns)),  #just for test, should be triggered in /user/download
+        (r"/v1/ota/status[/]?", OTAUpdatesHandler),
         ]
         self.conn = db_conn
         self.cur = cursor
 
-        web.Application.__init__(self, handlers, debug=True, login_url="/user/login")
+        web.Application.__init__(self, handlers, debug=True, login_url="/user/login", 
+            template_path = 'templates',)
 
 def main():
 
