@@ -39,6 +39,7 @@ import uuid
 from shutil import copy
 from build_firmware import *
 import yaml
+import threading
 
 from tornado.httpserver import HTTPServer
 from tornado.tcpserver import TCPServer
@@ -433,7 +434,7 @@ class NodeReadWriteHandler(NodeBaseHandler):
 
 class UserDownloadHandler(NodeBaseHandler):
     """
-    post two para, node_token and yaml file
+    post two para, node_token and yaml
 
     """
 
@@ -485,10 +486,10 @@ class UserDownloadHandler(NodeBaseHandler):
         if not os.path.exists(user_build_dir):
             os.makedirs(user_build_dir)
 
-        yamlFile = open("%s/connection_config.yaml"%user_build_dir, 'wr')
-        yamlFile.write(yaml)
+        yaml_file = open("%s/connection_config.yaml"%user_build_dir, 'wr')
+        yaml_file.write(yaml)
 
-        yamlFile.close()
+        yaml_file.close()
 
         copy('%s/users_build/local_user/Makefile'%cur_dir, user_build_dir)
 
@@ -497,9 +498,20 @@ class UserDownloadHandler(NodeBaseHandler):
         self.resp(200,"",meta={'ota_status': "going", "ota_msg": "Building firmware.."})
 
 
-    @gen.coroutine
     def ota_process (self, user_id, node_name, node_sn):
+        thread_name = "build_thread-" + str(user_id)
+        li = threading.enumerate()
+        for l in li:
+            if l.getName() == thread_name:
+                print 'INFO: Skip same request!'
+                return
 
+        threading.Thread(target=self.build_thread, name=thread_name, 
+            args=(user_id, node_name, node_sn)).start()
+        
+
+    # @gen.coroutine
+    def build_thread (self, user_id, node_name, node_sn):
         if not self.cur_conn:
             self.resp(404, "Node is offline")
             return
