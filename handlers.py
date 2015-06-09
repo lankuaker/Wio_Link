@@ -525,7 +525,7 @@ class UserDownloadHandler(NodeBaseHandler):
             if len(self.cur_conn.state_waiters) == 0:
                 self.cur_conn.state_happened.append(state)
             else:
-                self.cur_conn.state_waiters.pop().set_result(state)
+                self.cur_conn.state_waiters.pop(0).set_result(state)
 
             return
 
@@ -535,7 +535,7 @@ class UserDownloadHandler(NodeBaseHandler):
         if len(self.cur_conn.state_waiters) == 0:
             self.cur_conn.state_happened.append(state)
         else:
-            self.cur_conn.state_waiters.pop().set_result(state)
+            self.cur_conn.state_waiters.pop(0).set_result(state)
 
         # go OTA
         try:
@@ -549,7 +549,7 @@ class UserDownloadHandler(NodeBaseHandler):
             if len(self.cur_conn.state_waiters) == 0:
                 self.cur_conn.state_happened.append(state)
             else:
-                self.cur_conn.state_waiters.pop().set_result(state)
+                self.cur_conn.state_waiters.pop(0).set_result(state)
         return
 
 

@@ -337,7 +337,7 @@ def gen_and_build (user_id, node_name):
     os.putenv("APP","1")
     os.putenv("SPI_SPEED","40")
     os.putenv("SPI_MODE","QIO")
-    os.putenv("SPI_SIZE_MAP","4")
+    os.putenv("SPI_SIZE_MAP","5")
     os.putenv("GROVES",grove_list)
     os.putenv("NODE_NAME",node_name)
     cmd = 'cd %s;make clean;make > build.log 2>error.log' % (user_build_dir)
