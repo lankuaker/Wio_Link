@@ -5,7 +5,7 @@ MEMORY
   dport0_0_seg :                        org = 0x3FF00000, len = 0x10
   dram0_0_seg :                         org = 0x3FFE8000, len = 0x14000
   iram1_0_seg :                         org = 0x40100000, len = 0x8000
-  irom0_0_seg :                         org = 0x40201010, len = 0xE0000
+  irom0_0_seg :                         org = 0x40201010, len = 0x6B000
 }
 
 PHDRS
@@ -157,6 +157,8 @@ SECTIONS
     _irom0_text_start = ABSOLUTE(.);
     *core_esp8266_*.o(.literal*, .text*)
     *spiffs*.o(.literal*, .text*)
+    *sha256.o(.literal*, .text*)
+    *aes.o(.literal*, .text*)
     *.cpp.o(.literal*, .text*)
     /**arduino_pack.a:(.literal .text .literal.* .text.*)*/
     *libm.a:(.literal .text .literal.* .text.*)

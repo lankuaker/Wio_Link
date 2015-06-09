@@ -26,47 +26,42 @@
 #include <stdint.h>
 #include <string.h>
 
-#define CONFIG_START_SECTOR (((uint32_t)_SPIFFS_end - 0x40200000) / 4096)
-#define CONFIG_SECTOR (CONFIG_START_SECTOR + 0)
-#define CONFIG_ADDR (SPI_FLASH_SEC_SIZE * CONFIG_SECTOR)
+class EEPROMClass {
+public:
+  EEPROMClass(uint32_t sector);
 
-class EEPROMClass
-{
-  public:
-    EEPROMClass();
-    void begin(size_t size);
-    uint8_t read(int address);
-    void write(int address, uint8_t val);
-    bool commit();
-    void end();
+  void begin(size_t size);
+  uint8_t read(int address);
+  void write(int address, uint8_t val);
+  bool commit();
+  void end();
 
-    uint8_t * getDataPtr();
+  uint8_t * getDataPtr();
 
-    template<typename T> T &get(int address, T &t)
-    {
-        if (address < 0 || address + sizeof(T) > _size)
-            return t;
+  template<typename T>
+  T &get(int address, T &t) {
+    if (address < 0 || address + sizeof(T) > _size)
+      return t;
 
-        uint8_t *ptr = (uint8_t*) &t;
-        memcpy(ptr, _data + address, sizeof(T));
-        return t;
-    }
+    memcpy((uint8_t*) &t, _data + address, sizeof(T));
+    return t;
+  }
 
-    template<typename T> const T &put(int address, const T &t)
-    {
-        if (address < 0 || address + sizeof(T) > _size)
-            return t;
+  template<typename T>
+  const T &put(int address, const T &t) {
+    if (address < 0 || address + sizeof(T) > _size)
+      return t;
 
-        const uint8_t *ptr = (const uint8_t*) &t;
-        memcpy(_data + address, ptr, sizeof(T));
-        _dirty = true;
-        return t;
-    }
+    memcpy(_data + address, (const uint8_t*) &t, sizeof(T));
+    _dirty = true;
+    return t;
+  }
 
-  protected:
-    uint8_t* _data;
-    size_t _size;
-    bool _dirty;
+protected:
+  uint32_t _sector;
+  uint8_t* _data;
+  size_t _size;
+  bool _dirty;
 };
 
 extern EEPROMClass EEPROM;
