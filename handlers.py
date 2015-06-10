@@ -455,6 +455,18 @@ class NodeReadWriteHandler(NodeBaseHandler):
 
         self.resp(404, "Node is offline")
 
+class NodeEventHandler(tornado.websocket.WebSocketHandler)
+    clients = dict()
+
+    def open(self):
+        pass
+
+    def on_close(self):
+        pass
+
+    def on_message(self, message):
+        pass
+
 
 class UserDownloadHandler(NodeBaseHandler):
     """

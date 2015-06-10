@@ -364,6 +364,7 @@ class myApplication(web.Application):
         (r"/v1/nodes/rename[/]?", NodeRenameHandler),
         (r"/v1/nodes/delete[/]?", NodeDeleteHandler),
         (r"/v1/node/(.+)", NodeReadWriteHandler, dict(conns=DeviceServer.accepted_conns)),
+        (r"/v1/nodes/event[/]?", NodeEventHandler),
         (r"/v1/user/download[/]?", UserDownloadHandler, dict(conns=DeviceServer.accepted_conns)),
         (r"/v1/ota/bin", OTAHandler, dict(conns=DeviceServer.accepted_conns)),
         (r"/v1/ota/trig", UserDownloadHandler, dict(conns=DeviceServer.accepted_conns)),  #just for test, should be triggered in /user/download
