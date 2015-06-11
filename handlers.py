@@ -1,4 +1,4 @@
-#!/usr/bin/python
+ #!/usr/bin/python
 
 #   Copyright (C) 2015 by seeedstudio
 #   Author: Jack Shao (jacky.shaoxg@gmail.com)
@@ -47,6 +47,7 @@ from tornado import ioloop
 from tornado import gen
 from tornado import iostream
 from tornado import web
+from tornado import websocket
 from tornado.options import define, options
 from tornado.log import *
 from tornado.concurrent import Future
@@ -455,17 +456,35 @@ class NodeReadWriteHandler(NodeBaseHandler):
 
         self.resp(404, "Node is offline")
 
-class NodeEventHandler(tornado.websocket.WebSocketHandler)
+class NodeEventHandler(websocket.WebSocketHandler):
     clients = dict()
 
+    @staticmethod
+    def send_event(self, meesage):
+        c = NodeEventHandler.clients.get(self.node_key)
+        c.write_message("11231")
+        # for c in NodeEventHandler.clients:
+        #     # c.write_message(message)
+        #     c.write_message("123sdf")
+
     def open(self):
+        print "open websocket"
         pass
 
     def on_close(self):
-        pass
+        NodeEventHandler.clients.pop(self.node_key)
+        # print "on_close"
+        # print NodeEventHandler.clients
+
 
     def on_message(self, message):
-        pass
+        self.node_key = message
+        pass # get node_sn from sqlite
+        NodeEventHandler.clients.setdefault(self.node_key, self)
+        # print NodeEventHandler.clients
+        # self.write_message("WebSocket back")
+        NodeEventHandler.send_event(self, message)
+
 
 
 class UserDownloadHandler(NodeBaseHandler):
