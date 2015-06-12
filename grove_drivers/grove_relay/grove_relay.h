@@ -6,8 +6,19 @@
 
 #include "suli2.h"
 
-void grove_relay_init(IO_T *io, int pin);
+//GROVE_NAME        "Grove_Relay"
+//IF_TYPE           GPIO
+//IMAGE_URL         http://www.seeedstudio.com/depot/bmz_cache/d/df3ef3f9ba7f58333235895c0d3c4fb2.image.530x397.jpg
 
-bool grove_relay_write_onoff(IO_T *io, int onoff);
+
+class GroveRelay
+{
+public:
+    GroveRelay(int pin);
+    bool write_onoff(int onoff);
+private:
+    IO_T *io;
+};
+
 
 #endif

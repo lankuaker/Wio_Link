@@ -423,6 +423,18 @@ void network_check_timer_callback()
     last_main_conn_status = main_conn_status;
 }
 
+bool check_ascii_char(uint8_t *data, int len)
+{
+    for (int i = 0; i < len;i++)
+    {
+        if (*(data+i) > 127)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 void main_connection_init()
 {
     Serial1.printf("main_connection_init.\r\n");
@@ -450,35 +462,24 @@ void establish_network()
     Serial1.println("\n\n"); //clear the garbage in uart when boot up
 #endif
 
-#if 0
-    //uint8_t key[32] = { 0x60, 0x3d, 0xeb, 0x10, 0x15, 0xca, 0x71, 0xbe, 0x2b, 0x73, 0xae, 0xf0, 0x85, 0x7d, 0x77, 0x81, 0x1f
-    //                , 0x35, 0x2c, 0x07, 0x3b, 0x61, 0x08, 0xd7, 0x2d, 0x98, 0x10, 0xa3, 0x09, 0x14, 0xdf, 0xf4 };
-    uint8_t key[32] = "d6d68b4b6b43f213569f5832dd8277b2";
-    uint8_t iv0[16] = { 0xfb, 0x01, 0x95, 0x37, 0xf3, 0x97, 0xf9, 0xf9, 0x88, 0xba, 0xcf, 0x6b, 0x5e, 0x22, 0xf9, 0x06 };
-    //uint8_t input[16] = { 0x6b, 0xc1, 0xbe, 0xe2, 0x2e, 0x40, 0x9f, 0x96, 0xe9, 0x3d, 0x7e, 0x11, 0x73, 0x93, 0x17, 0x2a };
-    uint8_t input[16] = "1234567890123456";
-    uint8_t output[16] = { 0x26, 0x91, 0xdc, 0x96, 0xcb, 0x2b, 0x8f, 0xcf, 0xbc, 0x19, 0x63, 0x3e, 0x2f, 0xcc, 0x43, 0x8f };
-    size_t ivoffset=0;
-
-    aes_init(&aes_ctx);
-    aes_setkey_enc(&aes_ctx, key, 256);
-    aes_crypt_cfb128(&aes_ctx, AES_ENCRYPT, 16, &ivoffset, iv0, input, output);
-    for (int i = 0; i < 16;i++)
-    {
-        Serial1.printf("%02x", output[i]);
-    }
-    //Serial1.println(input);
-    return;
-#endif
     if (!rx_stream_buffer) rx_stream_buffer = new CircularBuffer(256);
     if (!tx_stream_buffer) tx_stream_buffer = new CircularBuffer(1024);
 
     Serial1.printf("Node name: %s\n", NODE_NAME);
     Serial1.printf("Chip id: 0x%08x\n", system_get_chip_id());
+
     /* get key and name */
     EEPROM.begin(4096);
-    Serial1.printf("Device key in flash: %s\n", EEPROM.getDataPtr() + EEP_OFFSET_KEY);
-    Serial1.printf("Node SN in flash: %s\n", EEPROM.getDataPtr() + EEP_OFFSET_SN);
+
+    if (check_ascii_char(EEPROM.getDataPtr() + EEP_OFFSET_KEY, KEY_LEN))
+    {
+        Serial1.printf("Device key in flash: %s\n", EEPROM.getDataPtr() + EEP_OFFSET_KEY);
+    }
+
+    if (check_ascii_char(EEPROM.getDataPtr() + EEP_OFFSET_SN, SN_LEN))
+    {
+        Serial1.printf("Node SN in flash: %s\n", EEPROM.getDataPtr() + EEP_OFFSET_SN);
+    }
 
     pinMode(SMARTCONFIG_KEY, INPUT_PULLUP);
     pinMode(STATUS_LED, OUTPUT);

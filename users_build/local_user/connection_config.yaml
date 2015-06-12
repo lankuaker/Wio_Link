@@ -1,9 +1,20 @@
-#Grove_Example1:
-#    name: Grove_Example
-#    construct_arg_list:
-#        pinsda: 2
-#        pinscl: 4
+Grove_Example1:
+    name: Grove_Example
+    construct_arg_list:
+        pinsda: 4
+        pinscl: 5
 GroveRelay:
     name: Grove_Relay
     construct_arg_list:
-        pin: 4
+        pin: 14
+GroveAccMMA76601:
+    name: Grove-3Axis Digital Acc(\u00b11.5g)
+    construct_arg_list:
+        pinsda: 4
+        pinscl: 5   
+#Grove_DigitalLight1:
+#    name: Grove_DigitalLight
+#    construct_arg_list:
+#        pinsda: 4
+#        pinscl: 5
+

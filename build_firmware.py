@@ -53,7 +53,8 @@ error_msg = ""
 
 def find_grove_in_database (grove_name, json_obj):
     for grove in json_obj:
-        if grove['GroveName'] == grove_name:
+        print grove['GroveName']," -- ", grove_name
+        if grove['GroveName'] == grove_name.decode( 'unicode-escape' ):
             return grove
     return {}
 
@@ -138,7 +139,7 @@ def gen_wrapper_registration (instance_name, info, arg_list):
     global error_msg
 
     instance_name = instance_name.replace(" ","_");
-    grove_name = info['GroveName'].lower()
+    grove_name = info["IncludePath"].replace("./grove_drivers/", "").lower()
     gen_header_file_name = grove_name+"_gen.h"
     gen_cpp_file_name = grove_name+"_gen.cpp"
     fp_wrapper_h = open(os.path.join(GEN_DIR, gen_header_file_name),'w')
@@ -162,12 +163,14 @@ def gen_wrapper_registration (instance_name, info, arg_list):
             error_msg = "ERR: no construct arg name in config file matchs %s" % arg_name
             #sys.exit()
             return (False, "", "", "")
+
+    str_reg_method += '\r\n'
+    str_reg_method += '    //%s\r\n'%instance_name
     str_reg_method += '    %s *%s = new %s(%s);\r\n' % (info['ClassName'], instance_name+"_ins", info['ClassName'], args_in_string.lstrip(","))
 
 
     #loop part
     #read functions
-    str_reg_method += '    memset(arg_types, TYPE_NONE, MAX_INPUT_ARG_LEN);\r\n'
 
     for fun in info['Outputs'].items():
         fp_wrapper_h.write('void __%s_%s(void *class_ptr, void *input);\r\n' % (grove_name, fun[0]))
@@ -223,11 +226,10 @@ def gen_wrapper_registration (instance_name, info, arg_list):
         str_wellknown += '    writer_print(TYPE_STRING, "\\"POST " OTA_SERVER_URL_PREFIX "/%s/%s%s\\",");\r\n' % \
                             (instance_name, fun[0].replace('write_',''), build_read_with_arg(fun[1]))
 
-    str_wellknown = str_wellknown[:-6]+'");\r\n'
 
     # event attachment
     if info['HasEvent']:
-        str_reg_method += '\r\n    %s->attach_event_handler(rpc_server_event_report);\r\n' % (instance_name+"_ins")
+        str_reg_method += '\r\n    %s->attach_event_reporter(rpc_server_event_report);\r\n' % (instance_name+"_ins")
 
     fp_wrapper_h.close()
     fp_wrapper_cpp.close()
@@ -273,20 +275,23 @@ def gen_and_build (user_id, node_name):
     str_well_known = ""
     grove_list = ""
 
-    for grove_instance_name in config.keys():
-        grove = find_grove_in_database(config[grove_instance_name]['name'], js)
-        if grove:
-            ret, inc, method, wellknown = \
-            gen_wrapper_registration(grove_instance_name, grove, config[grove_instance_name]['construct_arg_list'])
-            if(ret == False):
+    if config:
+        for grove_instance_name in config.keys():
+            grove = find_grove_in_database(config[grove_instance_name]['name'], js)
+            if grove:
+                ret, inc, method, wellknown = \
+                gen_wrapper_registration(grove_instance_name, grove, config[grove_instance_name]['construct_arg_list'])
+                if(ret == False):
+                    return False
+                str_reg_include += inc
+                str_reg_method  += method
+                str_well_known  += wellknown
+                grove_list += (grove["IncludePath"].replace("./grove_drivers/", " "))
+            else:
+                error_msg = "can not find %s in database"%grove_instance_name
                 return False
-            str_reg_include += inc
-            str_reg_method  += method
-            str_well_known  += wellknown
-            grove_list += (grove["IncludePath"].replace("./grove_drivers/", " "))
-        else:
-            error_msg = "can not find %s in database"%grove_instance_name
-            return False
+
+        str_well_known = str_well_known[:-6]+'");\r\n'
 
     fp_reg_cpp.write('#include "suli2.h"\r\n')
     fp_reg_cpp.write('#include "rpc_server.h"\r\n')
@@ -299,7 +304,6 @@ def gen_and_build (user_id, node_name):
     fp_reg_cpp.write('{\r\n')
     fp_reg_cpp.write('    uint8_t arg_types[MAX_INPUT_ARG_LEN];\r\n')
     fp_reg_cpp.write('    \r\n')
-    fp_reg_cpp.write('    //%s\r\n'%grove_instance_name)
     fp_reg_cpp.write(str_reg_method)
     fp_reg_cpp.write('}\r\n')
     fp_reg_cpp.write('\r\n')
@@ -349,6 +353,17 @@ def gen_and_build (user_id, node_name):
         if line.find("error:") > -1 or line.find("make:") > -1:
             error_msg = line
             return False
+
+    developing = False
+    try:
+        d = os.getenv("DEV")
+        if d=="1":
+            developing = True
+    except:
+        pass
+
+    if developing:
+        return True
 
     os.putenv("APP","2")
 

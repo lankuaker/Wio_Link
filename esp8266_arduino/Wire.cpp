@@ -201,7 +201,7 @@ void TwoWire::onReceiveService(uint8_t* inBytes, int numBytes)
   // // copy twi rx buffer into local read buffer
   // // this enables new reads to happen in parallel
   // for(uint8_t i = 0; i < numBytes; ++i){
-  //   rxBuffer[i] = inBytes[i];
+  //   rxBuffer[i] = inBytes[i];    
   // }
   // // set rx iterator vars
   // rxBufferIndex = 0;
@@ -233,5 +233,5 @@ void TwoWire::onRequest( void (*function)(void) ){
 
 // Preinstantiate Objects //////////////////////////////////////////////////////
 
-//TwoWire Wire = TwoWire();
+TwoWire Wire = TwoWire();
 

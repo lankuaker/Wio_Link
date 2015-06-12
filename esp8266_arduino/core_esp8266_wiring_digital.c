@@ -1,9 +1,9 @@
-/* 
+/*
   digital.c - wiring digital implementation for esp8266
 
   Copyright (c) 2015 Hristo Gochkov. All rights reserved.
   This file is part of the esp8266 core for Arduino environment.
- 
+
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
   License as published by the Free Software Foundation; either
@@ -92,9 +92,14 @@ extern int ICACHE_RAM_ATTR __digitalRead(uint8_t pin) {
 
 typedef void (*voidFuncPtr)(void);
 
+typedef void (*interrupt_handler_func)(void *para);  //add by Jack
+
+
 typedef struct {
   uint8_t mode;
   void (*fn)(void);
+  void *para;  //add by jack
+  void (*fn_ex)(void *);  //add by jack
 } interrupt_handler_t;
 
 static interrupt_handler_t interrupt_handlers[16];
@@ -112,6 +117,7 @@ void interrupt_handler(void *arg) {
     changedbits &= ~(1 << i);
     interrupt_handler_t *handler = &interrupt_handlers[i];
     if(((handler->mode & 1) == digitalRead(i)) && handler->fn) handler->fn();
+    if(((handler->mode & 1) == digitalRead(i)) && handler->fn_ex) handler->fn_ex(handler->para);
   }
   ETS_GPIO_INTR_ENABLE();
 }
@@ -128,6 +134,24 @@ extern void __attachInterrupt(uint8_t pin, voidFuncPtr userFunc, int mode) {
   }
 }
 
+
+/**
+ * Add by Jack
+ */
+extern void attachInterruptEx(uint8_t pin, interrupt_handler_func userFunc, int mode, void *para) {
+  if(pin < 16) {
+    interrupt_handler_t *handler = &interrupt_handlers[pin];
+    handler->mode = mode;
+    handler->fn_ex = userFunc;
+    handler->para = para;
+    interrupt_reg |= (1 << pin);
+    GPC(pin) &= ~(0xF << GPCI); //INT mode disabled
+    GPIEC = (1 << pin); //Clear Interrupt for this pin
+    GPC(pin) |= ((mode & 0xF) << GPCI); //INT mode "mode"
+  }
+}
+
+
 extern void __detachInterrupt(uint8_t pin) {
   if(pin < 16) {
     GPC(pin) &= ~(0xF << GPCI);//INT mode disabled
@@ -138,6 +162,8 @@ extern void __detachInterrupt(uint8_t pin) {
     handler->fn = 0;
   }
 }
+
+
 
 // stored state for the noInterrupts/interrupts methods
 uint32_t interruptsState = 0;
@@ -155,7 +181,7 @@ void initPins() {
   for (int i = 12; i <= 16; ++i) {
     pinMode(i, INPUT);
   }
-  
+
   ETS_GPIO_INTR_ATTACH(interrupt_handler, &interrupt_reg);
   ETS_GPIO_INTR_ENABLE();
 }
