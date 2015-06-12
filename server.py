@@ -75,6 +75,8 @@ class DeviceConnection(object):
         self.state_waiters = []
         self.state_happened = []
 
+        self.event_queue = []
+
     def secure_write (self, data):
         if self.cipher:
             cipher_text = self.cipher.encrypt(pad(data))
@@ -188,6 +190,7 @@ class DeviceConnection(object):
 
                     try:
                         state = None
+                        event = None
                         if json_obj['msg_type'] == 'ota_trig_ack':
                             state = ('going', 'Node has been notified...')
                         elif json_obj['msg_type'] == 'ota_status':
@@ -201,14 +204,26 @@ class DeviceConnection(object):
                                 self.kill_myself()
                             else:
                                 state = ('error', 'Upgrade failed, please reboot the node and retry')
+                        elif json_obj['msg_type'] == 'event':
+                            event = json_obj
+                            del event("msg_type")
+                            # for key in json_obj.keys():
+                            #     if json_obj[key] == "event":
+                            #         pass
+                            #     else:
+                            #         event = (key, json_obj[k])
                         print state
+                        print event
                         if state:
                             if len(self.state_waiters) == 0:
                                 self.state_happened.append(state)
                             else:
                                 self.state_waiters.pop(0).set_result(state)
+                        elif event:
+                            self.event_queue.append(event)
                         else:
                             self.recv_msg_queue.append(json_obj)
+
                     except Exception,e:
                         print e
 

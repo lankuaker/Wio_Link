@@ -457,34 +457,40 @@ class NodeReadWriteHandler(NodeBaseHandler):
         self.resp(404, "Node is offline")
 
 class NodeEventHandler(websocket.WebSocketHandler):
-    clients = dict()
-
-    @staticmethod
-    def send_event(self, meesage):
-        c = NodeEventHandler.clients.get(self.node_key)
-        c.write_message("11231")
-        # for c in NodeEventHandler.clients:
-        #     # c.write_message(message)
-        #     c.write_message("123sdf")
+    def __init__(self):
+        self.cur_conn = None
+        self.node_key = None
+        self.connected = False
 
     def open(self):
+        self.connected = True
         print "open websocket"
+
         pass
 
     def on_close(self):
-        NodeEventHandler.clients.pop(self.node_key)
-        # print "on_close"
-        # print NodeEventHandler.clients
+        self.connected = False
 
-
+    @gen.coroutine
     def on_message(self, message):
         self.node_key = message
-        pass # get node_sn from sqlite
-        NodeEventHandler.clients.setdefault(self.node_key, self)
-        # print NodeEventHandler.clients
-        # self.write_message("WebSocket back")
-        NodeEventHandler.send_event(self, message)
+        for conn in self.conns:
+            if conn.private_key == self.node_key and not conn.killed:
+                cur_conn = conn
+                break
 
+        while self.connected
+            event = yield self.wait_event_post()
+            print "enent:", event
+            self.write_message(event)
+            yield gen.moment
+
+    def wait_event_post(self):
+        result_future = Future()
+        if len(self.cur_conn.event_queue) > 0:
+            result_future.set_result(self.cur_conn.event_queue.pop(0))
+
+        return result_future
 
 
 class UserDownloadHandler(NodeBaseHandler):
