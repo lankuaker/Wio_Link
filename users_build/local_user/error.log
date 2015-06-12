@@ -1,36 +1,36 @@
 ../../rpc_server/rpc_server.cpp: In function 'void rpc_server_loop()':
-../../rpc_server/rpc_server.cpp:179:34: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+../../rpc_server/rpc_server.cpp:205:34: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
          response_msg_open("event");
                                   ^
-../../rpc_server/rpc_server.cpp:224:53: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+../../rpc_server/rpc_server.cpp:250:53: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
                          response_msg_open("resp_get");
                                                      ^
-../../rpc_server/rpc_server.cpp:232:54: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+../../rpc_server/rpc_server.cpp:258:54: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
                          response_msg_open("resp_post");
                                                       ^
-../../rpc_server/rpc_server.cpp:240:57: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+../../rpc_server/rpc_server.cpp:266:57: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
                          response_msg_open("ota_trig_ack");
                                                          ^
 ../../rpc_server/rpc_stream.cpp: In function 'char stream_read()':
-../../rpc_server/rpc_stream.cpp:22:19: warning: converting to non-pointer type 'char' from NULL [-Wconversion-null]
+../../rpc_server/rpc_stream.cpp:48:19: warning: converting to non-pointer type 'char' from NULL [-Wconversion-null]
      } else return NULL;
                    ^
 ../../rpc_server/rpc_stream.cpp: In function 'void writer_print(type_t, const void*, bool)':
-../../rpc_server/rpc_stream.cpp:78:52: warning: passing NULL to non-pointer argument 2 of 'char* dtostrf(double, signed char, unsigned char, char*)' [-Wconversion-null]
+../../rpc_server/rpc_stream.cpp:104:52: warning: passing NULL to non-pointer argument 2 of 'char* dtostrf(double, signed char, unsigned char, char*)' [-Wconversion-null]
              dtostrf((*(float *)data), NULL, 2, buff);
                                                     ^
-../../rpc_server/rpc_stream.cpp:81:58: warning: invalid conversion from 'const void*' to 'const char*' [-fpermissive]
+../../rpc_server/rpc_stream.cpp:107:58: warning: invalid conversion from 'const void*' to 'const char*' [-fpermissive]
              stream_write_string((char *)data, strlen(data));
                                                           ^
 ../../rpc_server/rpc_stream.cpp: In function 'void response_msg_open(char*)':
-../../rpc_server/rpc_stream.cpp:92:18: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+../../rpc_server/rpc_stream.cpp:118:18: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
      char *msg1 = "{\"msg_type\":\"";
                   ^
-../../rpc_server/rpc_stream.cpp:93:18: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+../../rpc_server/rpc_stream.cpp:119:18: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
      char *msg2 = "\", \"msg\":";
                   ^
 ../../rpc_server/rpc_stream.cpp: In function 'void response_msg_close()':
-../../rpc_server/rpc_stream.cpp:103:18: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+../../rpc_server/rpc_stream.cpp:129:18: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
      char *msg3 = "}\r\n";
                   ^
 In file included from ../../esp8266_arduino/pgmspace.h:9:0,
@@ -47,247 +47,263 @@ In file included from ../../esp8266_arduino/pgmspace.h:9:0,
  void ets_isr_attach(int intr, int_handler_t handler, void *arg);
       ^
 ../../node_main/network.cpp: In function 'void user_devicefind_recv(void*, char*, short unsigned int)':
-../../node_main/network.cpp:90:43: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+../../node_main/network.cpp:118:43: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
          wifi_get_macaddr(SOFTAP_IF, hwaddr);
                                            ^
-In file included from ../../node_main/esp8266.h:23:0,
-                 from ../../node_main/network.cpp:2:
+In file included from ../../node_main/esp8266.h:49:0,
+                 from ../../node_main/network.cpp:30:
 ../../esp8266_sdk/include/user_interface.h:250:6: warning:   initializing argument 2 of 'bool wifi_get_macaddr(uint8, uint8*)' [-fpermissive]
  bool wifi_get_macaddr(uint8 if_index, uint8 *macaddr);
       ^
-../../node_main/network.cpp:95:48: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+../../node_main/network.cpp:123:48: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
              wifi_get_macaddr(STATION_IF, hwaddr);
                                                 ^
-In file included from ../../node_main/esp8266.h:23:0,
-                 from ../../node_main/network.cpp:2:
+In file included from ../../node_main/esp8266.h:49:0,
+                 from ../../node_main/network.cpp:30:
 ../../esp8266_sdk/include/user_interface.h:250:6: warning:   initializing argument 2 of 'bool wifi_get_macaddr(uint8, uint8*)' [-fpermissive]
  bool wifi_get_macaddr(uint8 if_index, uint8 *macaddr);
       ^
-../../node_main/network.cpp:99:44: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+../../node_main/network.cpp:127:44: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
          wifi_get_macaddr(STATION_IF, hwaddr);
                                             ^
-In file included from ../../node_main/esp8266.h:23:0,
-                 from ../../node_main/network.cpp:2:
+In file included from ../../node_main/esp8266.h:49:0,
+                 from ../../node_main/network.cpp:30:
 ../../esp8266_sdk/include/user_interface.h:250:6: warning:   initializing argument 2 of 'bool wifi_get_macaddr(uint8, uint8*)' [-fpermissive]
  bool wifi_get_macaddr(uint8 if_index, uint8 *macaddr);
       ^
-../../node_main/network.cpp:123:47: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+../../node_main/network.cpp:151:47: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
          espconn_sent(conn, device_desc, length);
                                                ^
-In file included from ../../node_main/esp8266.h:12:0,
-                 from ../../node_main/network.cpp:2:
+In file included from ../../node_main/esp8266.h:38:0,
+                 from ../../node_main/network.cpp:30:
 ../../esp8266_sdk/include/espconn.h:276:7: warning:   initializing argument 2 of 'sint8 espconn_sent(espconn*, uint8*, uint16)' [-fpermissive]
  sint8 espconn_sent(struct espconn *espconn, uint8 *psent, uint16 length);
        ^
-../../node_main/network.cpp:137:43: warning: invalid conversion from 'const char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+../../node_main/network.cpp:165:43: warning: invalid conversion from 'const char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
              espconn_sent(conn, "ok\r\n", 4);
                                            ^
-In file included from ../../node_main/esp8266.h:12:0,
-                 from ../../node_main/network.cpp:2:
+In file included from ../../node_main/esp8266.h:38:0,
+                 from ../../node_main/network.cpp:30:
 ../../esp8266_sdk/include/espconn.h:276:7: warning:   initializing argument 2 of 'sint8 espconn_sent(espconn*, uint8*, uint16)' [-fpermissive]
  sint8 espconn_sent(struct espconn *espconn, uint8 *psent, uint16 length);
        ^
-../../node_main/network.cpp:153:43: warning: invalid conversion from 'const char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+../../node_main/network.cpp:181:43: warning: invalid conversion from 'const char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
              espconn_sent(conn, "ok\r\n", 4);
                                            ^
-In file included from ../../node_main/esp8266.h:12:0,
-                 from ../../node_main/network.cpp:2:
+In file included from ../../node_main/esp8266.h:38:0,
+                 from ../../node_main/network.cpp:30:
 ../../esp8266_sdk/include/espconn.h:276:7: warning:   initializing argument 2 of 'sint8 espconn_sent(espconn*, uint8*, uint16)' [-fpermissive]
  sint8 espconn_sent(struct espconn *espconn, uint8 *psent, uint16 length);
        ^
 ../../node_main/network.cpp: In function 'void main_connection_recv_cb(void*, char*, short unsigned int)':
-../../node_main/network.cpp:169:32: warning: invalid conversion from 'void*' to 'espconn*' [-fpermissive]
+../../node_main/network.cpp:197:32: warning: invalid conversion from 'void*' to 'espconn*' [-fpermissive]
      struct espconn *pespconn = arg;
                                 ^
-../../node_main/network.cpp:193:105: warning: invalid conversion from 'int*' to 'size_t* {aka unsigned int*}' [-fpermissive]
+../../node_main/network.cpp:221:105: warning: invalid conversion from 'int*' to 'size_t* {aka unsigned int*}' [-fpermissive]
              aes_crypt_cfb128(&aes_ctx, AES_DECRYPT, length - 16, &iv_offset, iv, pusrdata + 16, pusrdata);
                                                                                                          ^
-In file included from ../../node_main/network.cpp:8:0:
+In file included from ../../node_main/network.cpp:36:0:
 ../../node_main/polarssl/aes.h:183:5: warning:   initializing argument 4 of 'int aes_crypt_cfb128(aes_context*, int, size_t, size_t*, unsigned char*, const unsigned char*, unsigned char*)' [-fpermissive]
  int aes_crypt_cfb128( aes_context *ctx,
      ^
-../../node_main/network.cpp:193:91: warning: invalid conversion from 'char*' to 'const unsigned char*' [-fpermissive]
+../../node_main/network.cpp:221:91: warning: invalid conversion from 'char*' to 'const unsigned char*' [-fpermissive]
              aes_crypt_cfb128(&aes_ctx, AES_DECRYPT, length - 16, &iv_offset, iv, pusrdata + 16, pusrdata);
                                                                                            ^
-In file included from ../../node_main/network.cpp:8:0:
+In file included from ../../node_main/network.cpp:36:0:
 ../../node_main/polarssl/aes.h:183:5: warning:   initializing argument 6 of 'int aes_crypt_cfb128(aes_context*, int, size_t, size_t*, unsigned char*, const unsigned char*, unsigned char*)' [-fpermissive]
  int aes_crypt_cfb128( aes_context *ctx,
      ^
-../../node_main/network.cpp:193:105: warning: invalid conversion from 'char*' to 'unsigned char*' [-fpermissive]
+../../node_main/network.cpp:221:105: warning: invalid conversion from 'char*' to 'unsigned char*' [-fpermissive]
              aes_crypt_cfb128(&aes_ctx, AES_DECRYPT, length - 16, &iv_offset, iv, pusrdata + 16, pusrdata);
                                                                                                          ^
-In file included from ../../node_main/network.cpp:8:0:
+In file included from ../../node_main/network.cpp:36:0:
 ../../node_main/polarssl/aes.h:183:5: warning:   initializing argument 7 of 'int aes_crypt_cfb128(aes_context*, int, size_t, size_t*, unsigned char*, const unsigned char*, unsigned char*)' [-fpermissive]
  int aes_crypt_cfb128( aes_context *ctx,
      ^
-../../node_main/network.cpp:202:91: warning: invalid conversion from 'int*' to 'size_t* {aka unsigned int*}' [-fpermissive]
+../../node_main/network.cpp:230:91: warning: invalid conversion from 'int*' to 'size_t* {aka unsigned int*}' [-fpermissive]
          aes_crypt_cfb128(&aes_ctx, AES_DECRYPT, length, &iv_offset, iv, pusrdata, pusrdata);
                                                                                            ^
-In file included from ../../node_main/network.cpp:8:0:
+In file included from ../../node_main/network.cpp:36:0:
 ../../node_main/polarssl/aes.h:183:5: warning:   initializing argument 4 of 'int aes_crypt_cfb128(aes_context*, int, size_t, size_t*, unsigned char*, const unsigned char*, unsigned char*)' [-fpermissive]
  int aes_crypt_cfb128( aes_context *ctx,
      ^
-../../node_main/network.cpp:202:91: warning: invalid conversion from 'char*' to 'const unsigned char*' [-fpermissive]
+../../node_main/network.cpp:230:91: warning: invalid conversion from 'char*' to 'const unsigned char*' [-fpermissive]
          aes_crypt_cfb128(&aes_ctx, AES_DECRYPT, length, &iv_offset, iv, pusrdata, pusrdata);
                                                                                            ^
-In file included from ../../node_main/network.cpp:8:0:
+In file included from ../../node_main/network.cpp:36:0:
 ../../node_main/polarssl/aes.h:183:5: warning:   initializing argument 6 of 'int aes_crypt_cfb128(aes_context*, int, size_t, size_t*, unsigned char*, const unsigned char*, unsigned char*)' [-fpermissive]
  int aes_crypt_cfb128( aes_context *ctx,
      ^
-../../node_main/network.cpp:202:91: warning: invalid conversion from 'char*' to 'unsigned char*' [-fpermissive]
+../../node_main/network.cpp:230:91: warning: invalid conversion from 'char*' to 'unsigned char*' [-fpermissive]
          aes_crypt_cfb128(&aes_ctx, AES_DECRYPT, length, &iv_offset, iv, pusrdata, pusrdata);
                                                                                            ^
-In file included from ../../node_main/network.cpp:8:0:
+In file included from ../../node_main/network.cpp:36:0:
 ../../node_main/polarssl/aes.h:183:5: warning:   initializing argument 7 of 'int aes_crypt_cfb128(aes_context*, int, size_t, size_t*, unsigned char*, const unsigned char*, unsigned char*)' [-fpermissive]
  int aes_crypt_cfb128( aes_context *ctx,
      ^
-../../node_main/network.cpp:208:45: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+../../node_main/network.cpp:236:45: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
              network_puts("##ALIVE##\r\n", 11);
                                              ^
 ../../node_main/network.cpp: In function 'void main_connection_sent_cb(void*)':
-../../node_main/network.cpp:229:32: warning: invalid conversion from 'void*' to 'espconn*' [-fpermissive]
+../../node_main/network.cpp:257:32: warning: invalid conversion from 'void*' to 'espconn*' [-fpermissive]
      struct espconn *pespconn = arg;
                                 ^
-../../node_main/network.cpp:242:82: warning: invalid conversion from 'int*' to 'size_t* {aka unsigned int*}' [-fpermissive]
+../../node_main/network.cpp:270:82: warning: invalid conversion from 'int*' to 'size_t* {aka unsigned int*}' [-fpermissive]
          aes_crypt_cfb128(&aes_ctx, AES_ENCRYPT, size2, &iv_offset, iv, data, data);
                                                                                   ^
-In file included from ../../node_main/network.cpp:8:0:
+In file included from ../../node_main/network.cpp:36:0:
 ../../node_main/polarssl/aes.h:183:5: warning:   initializing argument 4 of 'int aes_crypt_cfb128(aes_context*, int, size_t, size_t*, unsigned char*, const unsigned char*, unsigned char*)' [-fpermissive]
  int aes_crypt_cfb128( aes_context *ctx,
      ^
-../../node_main/network.cpp:242:82: warning: invalid conversion from 'char*' to 'const unsigned char*' [-fpermissive]
+../../node_main/network.cpp:270:82: warning: invalid conversion from 'char*' to 'const unsigned char*' [-fpermissive]
          aes_crypt_cfb128(&aes_ctx, AES_ENCRYPT, size2, &iv_offset, iv, data, data);
                                                                                   ^
-In file included from ../../node_main/network.cpp:8:0:
+In file included from ../../node_main/network.cpp:36:0:
 ../../node_main/polarssl/aes.h:183:5: warning:   initializing argument 6 of 'int aes_crypt_cfb128(aes_context*, int, size_t, size_t*, unsigned char*, const unsigned char*, unsigned char*)' [-fpermissive]
  int aes_crypt_cfb128( aes_context *ctx,
      ^
-../../node_main/network.cpp:242:82: warning: invalid conversion from 'char*' to 'unsigned char*' [-fpermissive]
+../../node_main/network.cpp:270:82: warning: invalid conversion from 'char*' to 'unsigned char*' [-fpermissive]
          aes_crypt_cfb128(&aes_ctx, AES_ENCRYPT, size2, &iv_offset, iv, data, data);
                                                                                   ^
-In file included from ../../node_main/network.cpp:8:0:
+In file included from ../../node_main/network.cpp:36:0:
 ../../node_main/polarssl/aes.h:183:5: warning:   initializing argument 7 of 'int aes_crypt_cfb128(aes_context*, int, size_t, size_t*, unsigned char*, const unsigned char*, unsigned char*)' [-fpermissive]
  int aes_crypt_cfb128( aes_context *ctx,
      ^
-../../node_main/network.cpp:243:43: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
+../../node_main/network.cpp:271:43: warning: invalid conversion from 'char*' to 'uint8* {aka unsigned char*}' [-fpermissive]
          espconn_sent(pespconn, data, size2);
                                            ^
-In file included from ../../node_main/esp8266.h:12:0,
-                 from ../../node_main/network.cpp:2:
+In file included from ../../node_main/esp8266.h:38:0,
+                 from ../../node_main/network.cpp:30:
 ../../esp8266_sdk/include/espconn.h:276:7: warning:   initializing argument 2 of 'sint8 espconn_sent(espconn*, uint8*, uint16)' [-fpermissive]
  sint8 espconn_sent(struct espconn *espconn, uint8 *psent, uint16 length);
        ^
 ../../node_main/network.cpp: In function 'void main_connection_send_hello(void*)':
-../../node_main/network.cpp:319:42: warning: invalid conversion from 'void*' to 'uint8_t* {aka unsigned char*}' [-fpermissive]
+../../node_main/network.cpp:347:42: warning: invalid conversion from 'void*' to 'uint8_t* {aka unsigned char*}' [-fpermissive]
      uint8_t *buff = os_malloc(SN_LEN + 32);
                                           ^
 ../../node_main/network.cpp: In function 'void main_connection_reconnect_callback(void*, sint8)':
-../../node_main/network.cpp:371:64: warning: invalid conversion from 'void (*)()' to 'void (*)(void*)' [-fpermissive]
+../../node_main/network.cpp:399:64: warning: invalid conversion from 'void (*)()' to 'void (*)(void*)' [-fpermissive]
      os_timer_setfn(&timer_main_conn, main_connection_init, NULL);
                                                                 ^
-In file included from ../../node_main/esp8266.h:13:0,
-                 from ../../node_main/network.cpp:2:
+In file included from ../../node_main/esp8266.h:39:0,
+                 from ../../node_main/network.cpp:30:
 ../../esp8266_sdk/include/ets_sys.h:101:6: warning:   initializing argument 2 of 'void ets_timer_setfn(ETSTimer*, void (*)(void*), void*)' [-fpermissive]
  void ets_timer_setfn(ETSTimer *t, ETSTimerFunc *fn, void *parg);
       ^
 ../../node_main/network.cpp: In function 'void main_connection_init()':
-../../node_main/network.cpp:453:76: warning: invalid conversion from 'void (*)()' to 'void (*)(void*)' [-fpermissive]
+../../node_main/network.cpp:481:76: warning: invalid conversion from 'void (*)()' to 'void (*)(void*)' [-fpermissive]
      os_timer_setfn(&timer_network_check, network_check_timer_callback, NULL);
                                                                             ^
-In file included from ../../node_main/esp8266.h:13:0,
-                 from ../../node_main/network.cpp:2:
+In file included from ../../node_main/esp8266.h:39:0,
+                 from ../../node_main/network.cpp:30:
 ../../esp8266_sdk/include/ets_sys.h:101:6: warning:   initializing argument 2 of 'void ets_timer_setfn(ETSTimer*, void (*)(void*), void*)' [-fpermissive]
  void ets_timer_setfn(ETSTimer *t, ETSTimerFunc *fn, void *parg);
       ^
 ../../node_main/ota.cpp: In function 'void ota_response(void*)':
-../../node_main/ota.cpp:30:42: warning: invalid conversion from 'void*' to 'upgrade_server_info*' [-fpermissive]
+../../node_main/ota.cpp:56:42: warning: invalid conversion from 'void*' to 'upgrade_server_info*' [-fpermissive]
      struct upgrade_server_info *server = arg;
                                           ^
-../../node_main/ota.cpp:38:39: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+../../node_main/ota.cpp:64:39: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
          response_msg_open("ota_result");
                                        ^
-../../node_main/ota.cpp:46:39: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+../../node_main/ota.cpp:72:39: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
          response_msg_open("ota_result");
                                        ^
 ../../node_main/ota.cpp: In function 'void ota_start()':
-../../node_main/ota.cpp:96:69: warning: invalid conversion from 'char*' to 'unsigned char*' [-fpermissive]
+../../node_main/ota.cpp:122:69: warning: invalid conversion from 'char*' to 'unsigned char*' [-fpermissive]
      if(base64_encode(sn, &len, EEPROM.getDataPtr()+EEP_OFFSET_SN, 32) != 0)
                                                                      ^
-In file included from ../../node_main/ota.cpp:7:0:
+In file included from ../../node_main/ota.cpp:33:0:
 ../../node_main/polarssl/base64.h:51:5: warning:   initializing argument 1 of 'int base64_encode(unsigned char*, size_t*, const unsigned char*, size_t)' [-fpermissive]
  int base64_encode( unsigned char *dst, size_t *dlen,
      ^
-../../node_main/ota.cpp:96:69: warning: invalid conversion from 'int*' to 'size_t* {aka unsigned int*}' [-fpermissive]
+../../node_main/ota.cpp:122:69: warning: invalid conversion from 'int*' to 'size_t* {aka unsigned int*}' [-fpermissive]
      if(base64_encode(sn, &len, EEPROM.getDataPtr()+EEP_OFFSET_SN, 32) != 0)
                                                                      ^
-In file included from ../../node_main/ota.cpp:7:0:
+In file included from ../../node_main/ota.cpp:33:0:
 ../../node_main/polarssl/base64.h:51:5: warning:   initializing argument 2 of 'int base64_encode(unsigned char*, size_t*, const unsigned char*, size_t)' [-fpermissive]
  int base64_encode( unsigned char *dst, size_t *dlen,
      ^
-../../node_main/ota.cpp:105:89: warning: invalid conversion from 'uint8* {aka unsigned char*}' to 'char*' [-fpermissive]
+../../node_main/ota.cpp:131:89: warning: invalid conversion from 'uint8* {aka unsigned char*}' to 'char*' [-fpermissive]
                 OTA_SERVER_URL_PREFIX, bin_num, sn, IP2STR(upServer->ip), OTA_SERVER_PORT);
                                                                                          ^
-In file included from ../../node_main/esp8266.h:13:0,
-                 from ../../node_main/ota.cpp:4:
+In file included from ../../node_main/esp8266.h:39:0,
+                 from ../../node_main/ota.cpp:30:
 ../../esp8266_sdk/include/ets_sys.h:110:5: warning:   initializing argument 1 of 'int ets_sprintf(char*, const char*, ...)' [-fpermissive]
  int ets_sprintf(char *str, const char *format, ...)  __attribute__ ((format (printf, 2, 3)));
      ^
-../../node_main/ota.cpp:111:39: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+../../node_main/ota.cpp:137:39: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
          response_msg_open("ota_status");
                                        ^
-../../node_main/ota.cpp:117:39: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+../../node_main/ota.cpp:143:39: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
          response_msg_open("ota_status");
                                        ^
 rpc_server_registration.cpp: In function 'void rpc_server_register_resources()':
-rpc_server_registration.cpp:20:127: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:24:127: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
      rpc_server_register_method("Grove_Example1", "temp", METHOD_READ, __grove_example_read_temp, Grove_Example1_ins, arg_types);
                                                                                                                                ^
-rpc_server_registration.cpp:20:127: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-rpc_server_registration.cpp:22:141: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:24:127: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:26:141: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
      rpc_server_register_method("Grove_Example1", "uint8_value", METHOD_READ, __grove_example_read_uint8_value, Grove_Example1_ins, arg_types);
                                                                                                                                              ^
-rpc_server_registration.cpp:22:141: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-rpc_server_registration.cpp:25:135: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:26:141: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:29:135: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
      rpc_server_register_method("Grove_Example1", "with_arg", METHOD_READ, __grove_example_read_with_arg, Grove_Example1_ins, arg_types);
                                                                                                                                        ^
-rpc_server_registration.cpp:25:135: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-rpc_server_registration.cpp:27:133: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:29:135: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:31:133: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
      rpc_server_register_method("Grove_Example1", "compass", METHOD_READ, __grove_example_read_compass, Grove_Example1_ins, arg_types);
                                                                                                                                      ^
-rpc_server_registration.cpp:27:133: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-rpc_server_registration.cpp:29:125: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:31:133: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:33:125: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
      rpc_server_register_method("Grove_Example1", "acc", METHOD_READ, __grove_example_read_acc, Grove_Example1_ins, arg_types);
                                                                                                                              ^
-rpc_server_registration.cpp:29:125: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-rpc_server_registration.cpp:31:135: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:33:125: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:35:135: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
      rpc_server_register_method("Grove_Example1", "humidity", METHOD_READ, __grove_example_read_humidity, Grove_Example1_ins, arg_types);
                                                                                                                                        ^
-rpc_server_registration.cpp:31:135: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-rpc_server_registration.cpp:37:143: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:35:135: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:41:143: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
      rpc_server_register_method("Grove_Example1", "multi_value", METHOD_WRITE, __grove_example_write_multi_value, Grove_Example1_ins, arg_types);
                                                                                                                                                ^
-rpc_server_registration.cpp:37:143: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-rpc_server_registration.cpp:40:137: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:41:143: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:44:137: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
      rpc_server_register_method("Grove_Example1", "acc_mode", METHOD_WRITE, __grove_example_write_acc_mode, Grove_Example1_ins, arg_types);
                                                                                                                                          ^
-rpc_server_registration.cpp:40:137: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-rpc_server_registration.cpp:43:143: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:44:137: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:47:143: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
      rpc_server_register_method("Grove_Example1", "float_value", METHOD_WRITE, __grove_example_write_float_value, Grove_Example1_ins, arg_types);
                                                                                                                                                ^
-rpc_server_registration.cpp:43:143: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-rpc_server_registration.cpp:52:121: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:47:143: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:54:147: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     rpc_server_register_method("GroveBaroBMP085", "temperature", METHOD_READ, __grove_baro_bmp085_read_temperature, GroveBaroBMP085_ins, arg_types);
+                                                                                                                                                   ^
+rpc_server_registration.cpp:54:147: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:56:141: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     rpc_server_register_method("GroveBaroBMP085", "altitude", METHOD_READ, __grove_baro_bmp085_read_altitude, GroveBaroBMP085_ins, arg_types);
+                                                                                                                                             ^
+rpc_server_registration.cpp:56:141: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:58:141: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     rpc_server_register_method("GroveBaroBMP085", "pressure", METHOD_READ, __grove_baro_bmp085_read_pressure, GroveBaroBMP085_ins, arg_types);
+                                                                                                                                             ^
+rpc_server_registration.cpp:58:141: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:64:151: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     rpc_server_register_method("GroveAccMMA7660", "accelerometer", METHOD_READ, __grove_acc_mma7660_read_accelerometer, GroveAccMMA7660_ins, arg_types);
+                                                                                                                                                       ^
+rpc_server_registration.cpp:64:151: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:66:139: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     rpc_server_register_method("GroveAccMMA7660", "shacked", METHOD_READ, __grove_acc_mma7660_read_shacked, GroveAccMMA7660_ins, arg_types);
+                                                                                                                                           ^
+rpc_server_registration.cpp:66:139: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:74:121: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
      rpc_server_register_method("GroveRelay", "onoff", METHOD_WRITE, __grove_relay_write_onoff, GroveRelay_ins, arg_types);
                                                                                                                          ^
-rpc_server_registration.cpp:52:121: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-rpc_server_registration.cpp:57:153: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-     rpc_server_register_method("GroveAccMMA76601", "accelerometer", METHOD_READ, __grove_acc_mma7660_read_accelerometer, GroveAccMMA76601_ins, arg_types);
-                                                                                                                                                         ^
-rpc_server_registration.cpp:57:153: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-rpc_server_registration.cpp:59:141: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
-     rpc_server_register_method("GroveAccMMA76601", "shacked", METHOD_READ, __grove_acc_mma7660_read_shacked, GroveAccMMA76601_ins, arg_types);
-                                                                                                                                             ^
-rpc_server_registration.cpp:59:141: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:74:121: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+rpc_server_registration.cpp:79:134: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+     rpc_server_register_method("GroveMoisture", "moisture", METHOD_READ, __grove_moisture_read_moisture, GroveMoisture_ins, arg_types);
+                                                                                                                                      ^
+rpc_server_registration.cpp:79:134: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
 ../../grove_drivers/grove_example/grove_example.cpp: In function 'void pin_interrupt_handler(void*)':
-../../grove_drivers/grove_example/grove_example.cpp:95:52: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+../../grove_drivers/grove_example/grove_example.cpp:121:52: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
      suli_event_trigger(g->event1, "fire", *(g->pin));
                                                     ^

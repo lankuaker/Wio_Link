@@ -1,9 +1,9 @@
 /*
- * esp8266.h
+ * grove_moisture_class.h
  *
  * Copyright (c) 2012 seeed technology inc.
  * Website    : www.seeed.cc
- * Author     : Jack Shao (jacky.shaoxg@gmail.com)
+ * Author     : Jacky Zhang
  *
  * The MIT License (MIT)
  *
@@ -26,30 +26,25 @@
  * THE SOFTWARE.
  */
 
-#ifdef __cplusplus
-extern "C"{
-#endif
 
-#include <stdlib.h>
-#include <stddef.h>
-#include "c_types.h"
-#include "ip_addr.h"
-#include "eagle_soc.h"
-#include "espconn.h"
-#include "ets_sys.h"
-#include "gpio.h"
-#include "mem.h"
-#include "os_type.h"
-#include "osapi.h"
-#include "ping.h"
-#include "queue.h"
-#include "smartconfig.h"
-#include "spi_flash.h"
-#include "upgrade.h"
-#include "user_interface.h"
-#include "at_custom.h"
+#ifndef __GROVE_MOISTURE_CLASS_H__
+#define __GROVE_MOISTURE_CLASS_H__
 
+#include "grove_moisture.h"
 
-#ifdef __cplusplus
-}
+//GROVE_NAME        "Grove-Moisture"
+//IF_TYPE           ANALOG
+//IMAGE_URL         http://www.seeedstudio.com/wiki/images/c/ce/Moisture_sensor_.jpg
+
+class GroveMoisture
+{
+public:
+    GroveMoisture(int pin);
+    bool read_moisture(uint16_t *moisture);
+
+private:
+    ANALOG_T *analog;
+    bool _write_setup(void);
+};
+
 #endif
