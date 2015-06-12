@@ -286,6 +286,30 @@ class NodeListHandler(BaseHandler):
     def post(self):
         self.resp(404, "Please get this url\n")
 
+class NodeRenameHandler(BaseHandler):
+    def get (self):
+        self.resp(404, "Please post to this url\n")
+
+    @web.authenticated
+    def post(self):
+        new_node_name = self.get_argument("name","").strip()
+        if not new_node_name:
+            self.resp(400, "Missing node name information\n")
+            return
+
+        user = self.current_user
+        user_id = user["user_id"]
+
+        cur = self.application.cur
+        try:
+            cur.execute("UPDATE nodes set name='%s' WHERE user_id='%s'" %(new_node_name, user_id))
+            self.resp(200, "Node renamed",{"name": new_node_name})
+        except Exception,e:
+            self.resp(500,str(e))
+            return
+        finally:
+            self.application.conn.commit()
+
 class NodeDeleteHandler(BaseHandler):
     @web.authenticated
     def get (self):
