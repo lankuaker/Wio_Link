@@ -86,15 +86,15 @@ void yield(void);
 #define EXTERNAL 0
 
 //timer dividers
-#define TIM_DIV1 	0 //80MHz (80 ticks/us - 104857.588 us max)
-#define TIM_DIV16	1 //5MHz (5 ticks/us - 1677721.4 us max)
-#define TIM_DIV265	3 //312.5Khz (1 tick = 3.2us - 26843542.4 us max)
+#define TIM_DIV1    0 //80MHz (80 ticks/us - 104857.588 us max)
+#define TIM_DIV16   1 //5MHz (5 ticks/us - 1677721.4 us max)
+#define TIM_DIV265  3 //312.5Khz (1 tick = 3.2us - 26843542.4 us max)
 //timer int_types
-#define TIM_EDGE	0
-#define TIM_LEVEL	1
+#define TIM_EDGE    0
+#define TIM_LEVEL   1
 //timer reload values
-#define TIM_SINGLE	0 //on interrupt routine you need to write a new value to start the timer again
-#define TIM_LOOP	1 //on interrupt the counter will start with the same value again
+#define TIM_SINGLE  0 //on interrupt routine you need to write a new value to start the timer again
+#define TIM_LOOP    1 //on interrupt the counter will start with the same value again
 
 #define timer1_read()           (T1V)
 #define timer1_enabled()        ((T1C & (1 << TCTE)) != 0)
@@ -122,8 +122,8 @@ void timer1_write(uint32_t ticks); //maximum ticks 8388607
 void ets_intr_lock();
 void ets_intr_unlock();
 
-// level (0-15), 
-// level 15 will disable ALL interrupts, 
+// level (0-15),
+// level 15 will disable ALL interrupts,
 // level 0 will disable most software interrupts
 //
 #define xt_disable_interrupts(state, level) __asm__ __volatile__("rsil %0," __STRINGIFY(level) "; esync; isync; dsync" : "=a" (state))
@@ -209,7 +209,7 @@ void loop(void);
 #include "WString.h"
 
 #include "HardwareSerial.h"
-#include "FileSystem.h"
+//#include "FileSystem.h"
 #include "Esp.h"
 #include "debug.h"
 

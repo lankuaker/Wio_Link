@@ -201,7 +201,7 @@ class DeviceConnection(object):
                                 self.kill_myself()
                             else:
                                 state = ('error', 'Upgrade failed, please reboot the node and retry')
-                        print state
+                        print "ota state:", state
                         if state:
                             if len(self.state_waiters) == 0:
                                 self.state_happened.append(state)

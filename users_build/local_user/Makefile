@@ -6,7 +6,7 @@ BOOT?=new
 APP?=1
 SPI_SPEED?=40
 SPI_MODE?=QIO
-SPI_SIZE_MAP?=4
+SPI_SIZE_MAP?=5
 NODE_NAME?=esp8266_node
 
 #GROVES ?=  #it's a list of grove driver directions, passed in by caller
@@ -186,10 +186,10 @@ s_SRC += $(notdir $(call rwildcard,./,*.s))
 OBJECTS_NONCPP = 
 OBJECTS_NONCPP += $(C_SRC:%.c=%.o) $(s_SRC:%.s=%.o) $(S_SRC:%.S=%.o) 
 
-OBJECTS_CPP = suli2.cpp.o network.cpp.o rpc_server.cpp.o rpc_stream.cpp.o
+OBJECTS_CPP = suli2.cpp.o rpc_server.cpp.o rpc_stream.cpp.o
 OBJECTS_CPP += $(CPP_SRC:%.cpp=%.cpp.o) 
 ## for each grove driver to be compiled
-OBJECTS_CPP += $(foreach g,$(GROVES),$(g).cpp.o $(g)_class.cpp.o $(g)_gen.cpp.o)
+OBJECTS_CPP += $(foreach g,$(GROVES),$(g).cpp.o $(g)_gen.cpp.o)
 
 OBJECTS = $(OBJECTS_NONCPP) $(OBJECTS_CPP)
 
@@ -242,7 +242,7 @@ S_FLAGS = -c -g -x assembler-with-cpp -MMD
 
 LD_FLAGS = -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static
 
-DEFINES = -DICACHE_FLASH -DF_CPU=80000000 -D__ets__ -U__STRICT_ANSI__ -DARDUINO=10604 -DARDUINO_ESP8266_ESP12 -DARDUINO_ARCH_ESP8266 -DESP8266 -D'NODE_NAME="$(NODE_NAME)"'
+DEFINES = -DICACHE_FLASH -DF_CPU=80000000 -D__ets__ -U__STRICT_ANSI__ -DARDUINO=10604 -DARDUINO_ESP8266_ESP12 -DARDUINO_ARCH_ESP8266 -DESP8266 -DESP8266_SEEED_NODE -D'NODE_NAME="$(NODE_NAME)"'
 
 GET_FILESIZE ?= stat -f%z
 

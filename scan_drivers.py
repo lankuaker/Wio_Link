@@ -39,7 +39,7 @@ def parse_one_driver_dir (driver_dir):
 
 def get_class_header_file (files):
     for f in files:
-        if f.endswith(".h") and f.find("class") > -1:
+        if f.endswith(".h"): # and f.find("class") > -1:
             return f
     return ""
 
@@ -47,6 +47,29 @@ def parse_class_header_file (file):
     patterns = {}
     print file
     content = open(file, 'r').read()
+
+    json_dump = ""
+    try:
+        json_dump = json.dumps(content);
+    except Exception,e:
+        print e
+
+    if not json_dump:
+        try:
+            content = unicode(content,"ISO-8859-1")
+            json_dump = json.dumps(content)
+        except Exception,e:
+            print e
+    if not json_dump:
+        try:
+            content = unicode(content,"GB2312")
+            json_dump = json.dumps(content)
+        except Exception,e:
+            print e
+
+    if not json_dump:
+        return ("Encoding of source file is not one of: utf8,iso-8859-1,gb2312", {})
+
     ##grove name
     grove_name = re.findall(r'^//GROVE_NAME\s+"(.+)"', content, re.M)
     print grove_name
@@ -84,7 +107,7 @@ def parse_class_header_file (file):
         return ("can not find construct arg list in %s"%file,{})
 
     ## read functions
-    read_functions = re.findall(r'bool\s+(read_[a-zA-z0-9_]+)\((.*)\);', content, re.M)
+    read_functions = re.findall(r'^\s+bool\s+(read_[a-zA-z0-9_]+)\((.*)\);', content, re.M)
     print read_functions
     reads = {}
     for func in read_functions:
@@ -94,7 +117,7 @@ def parse_class_header_file (file):
     patterns["Outputs"] = reads
 
     ## write functions
-    write_functions = re.findall(r'bool\s+(write_[a-zA-z0-9_]+)\((.*)\);', content, re.M)
+    write_functions = re.findall(r'^\s+bool\s+(write_[a-zA-z0-9_]+)\((.*)\);', content, re.M)
     print write_functions
     writes = {}
     for func in write_functions:
@@ -104,8 +127,8 @@ def parse_class_header_file (file):
     patterns["Inputs"] = writes
 
     ## event
-    # bool attach_event_handler(CALLBACK_T handler);
-    event_attachments = re.findall(r'bool\s+(attach_event_handler)\((.*)\);', content, re.M)
+    # bool attach_event_reporter(CALLBACK_T handler);
+    event_attachments = re.findall(r'^\s+bool\s+(attach_event_reporter)\((.*)\);', content, re.M)
     print event_attachments
     if len(event_attachments) > 0:
         patterns["HasEvent"] = True
@@ -149,9 +172,13 @@ if __name__ == '__main__':
                 failed_msg = "ERR: can not find class file of %s" % full_dir
                 failed = True
                 break
+
+    print grove_database
+
     if not failed:
         open("%s/database.json"%cur_dir,"w").write(json.dumps(grove_database))
         open("%s/scan_status.json"%cur_dir,"w").write('{"status":"OK", "msg":"scanned %d grove drivers at %s"}' % (len(grove_database), str(datetime.now())))
     else:
+        print failed_msg
         open("%s/scan_status.json"%cur_dir,"w").write('{"status":"Failed", "msg":"%s"}' % (failed_msg))
 

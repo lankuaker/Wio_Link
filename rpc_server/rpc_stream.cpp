@@ -53,7 +53,7 @@ void writer_print(type_t type, const void *data, bool append_comma)
     {
         case TYPE_BOOL:
         case TYPE_UINT8:
-            sprintf(buff, "%hhu", *(uint8_t *)data);
+            sprintf(buff, "%u", *(uint8_t *)data);
             break;
         case TYPE_UINT16:
             sprintf(buff, "%u", *(uint16_t *)data);
@@ -62,7 +62,7 @@ void writer_print(type_t type, const void *data, bool append_comma)
             sprintf(buff, "%lu", *(uint32_t *)data);
             break;
         case TYPE_INT8:
-            sprintf(buff, "%hhd", *(int8_t *)data);
+            sprintf(buff, "%d", *(int8_t *)data);
             break;
         case TYPE_INT:
             sprintf(buff, "%d", *(int *)data);

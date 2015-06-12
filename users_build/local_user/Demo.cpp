@@ -17,7 +17,48 @@
 #include "Arduino.h"
 #include "suli2.h"
 
+void setup()
+{
+}
 
+void loop()
+{
+}
+
+#if 0
+
+GroveAccMMA7660 *acc;
+
+void setup()
+{
+    //Serial.begin(9600);
+    //Serial.println("Demo\r\n");
+    acc = new GroveAccMMA7660(4, 5);
+}
+void loop()
+{
+    float ax,ay,az;
+    acc->read_accelerometer(&ax,&ay,&az);
+    Serial1.println("accleration of X/Y/Z: ");
+    Serial1.print(ax);
+    Serial1.println(" g");
+    Serial1.print(ay);
+    Serial1.println(" g");
+    Serial1.print(az);
+    Serial1.println(" g");
+
+    uint8_t sk;
+    acc->read_shacked(&sk);
+    Serial1.println(sk, HEX);
+    Serial1.println("*************");
+
+    delay(1000);
+}
+
+
+#endif
+
+#if 0
 #define pheadbuffer "Connection: keep-alive\r\n\
 Cache-Control: no-cache\r\n\
 User-Agent: Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36 \r\n\
@@ -173,3 +214,5 @@ void loop()
     os_printf("test print from loop 3333\r\n");
 }
 
+
+#endif

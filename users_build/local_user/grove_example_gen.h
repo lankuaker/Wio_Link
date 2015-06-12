@@ -1,4 +1,4 @@
-#include "grove_example_class.h"
+#include "grove_example.h"
 
 void __grove_example_read_temp(void *class_ptr, void *input);
 void __grove_example_read_uint8_value(void *class_ptr, void *input);

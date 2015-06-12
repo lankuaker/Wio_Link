@@ -6,7 +6,7 @@ BOOT?=new
 APP?=1
 SPI_SPEED?=40
 SPI_MODE?=QIO
-SPI_SIZE_MAP?=4
+SPI_SIZE_MAP?=5
 NODE_NAME?=esp8266_node
 
 #GROVES ?=  #it's a list of grove driver directions, passed in by caller

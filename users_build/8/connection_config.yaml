@@ -2,8 +2,3 @@ Grove_Relay:
   name: Grove_Relay
   construct_arg_list:
     pin: 14
-Grove_Example:
-  name: Grove_Example
-  construct_arg_list:
-    pinsda: 4
-    pinscl: 5
