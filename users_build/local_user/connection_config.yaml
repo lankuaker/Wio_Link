@@ -7,8 +7,13 @@ GroveRelay:
     name: Grove_Relay
     construct_arg_list:
         pin: 14
-GroveAccMMA76601:
+GroveAccMMA7660:
     name: Grove-3Axis Digital Acc(\u00b11.5g)
+    construct_arg_list:
+        pinsda: 4
+        pinscl: 5   
+GroveBaroBMP085:
+    name: Grove-Barometer(BMP085)
     construct_arg_list:
         pinsda: 4
         pinscl: 5   
@@ -17,4 +22,9 @@ GroveAccMMA76601:
 #    construct_arg_list:
 #        pinsda: 4
 #        pinscl: 5
+GroveMoisture:
+    name: Grove-Moisture
+    construct_arg_list:
+        pin: 17
+
 

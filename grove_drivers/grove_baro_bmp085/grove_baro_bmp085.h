@@ -1,9 +1,9 @@
 /*
- * esp8266.h
+ * grove_baro_bmp085.h
  *
  * Copyright (c) 2012 seeed technology inc.
  * Website    : www.seeed.cc
- * Author     : Jack Shao (jacky.shaoxg@gmail.com)
+ * Author     : Jacky Zhang
  *
  * The MIT License (MIT)
  *
@@ -26,30 +26,43 @@
  * THE SOFTWARE.
  */
 
-#ifdef __cplusplus
-extern "C"{
-#endif
 
-#include <stdlib.h>
-#include <stddef.h>
-#include "c_types.h"
-#include "ip_addr.h"
-#include "eagle_soc.h"
-#include "espconn.h"
-#include "ets_sys.h"
-#include "gpio.h"
-#include "mem.h"
-#include "os_type.h"
-#include "osapi.h"
-#include "ping.h"
-#include "queue.h"
-#include "smartconfig.h"
-#include "spi_flash.h"
-#include "upgrade.h"
-#include "user_interface.h"
-#include "at_custom.h"
+#ifndef __H__
+#define __H__
+
+#include "suli2.h"
+
+//GROVE_NAME        "Grove-Barometer(BMP085)"
+//IF_TYPE           I2C
+//IMAGE_URL         http://www.seeedstudio.com/wiki/images/thumb/e/e7/Grove-Barometer.jpg/621px-Grove-Barometer.jpg
 
 
-#ifdef __cplusplus
-}
+
+#define BMP085_ADDRESS (0x77<<1)
+
+class GroveBaroBMP085
+{
+public:
+    GroveBaroBMP085(int pinsda, int pinscl);
+    bool read_temperature(float *temperature);
+    bool read_pressure(int32_t *pressure);
+    bool read_altitude(float *altitude);
+private:
+    I2C_T *i2c;
+    uint8_t cmdbuf[2];
+    uint8_t databuf[2];
+    const uint8_t OSS = 0;  //0: lowpower 1: standard 2: high 3: ultrahigh accuration
+    int16_t ac1, ac2, ac3;
+    uint16_t ac4, ac5, ac6;
+    int16_t b1, b2;
+    int16_t mb, mc, md;
+    int32_t PressureCompensate;
+
+    uint8_t _read_char(unsigned char addr);
+    uint16_t _read_int(unsigned char addr);
+    int32_t _readut(I2C_T *i2c);
+    int32_t _readup(I2C_T *i2c);
+
+};
+
 #endif

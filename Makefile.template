@@ -176,6 +176,10 @@ CPP_SRC += $(notdir $(call rwildcard,$(MAIN_DIR),*.cpp))
 CPP_SRC += $(notdir $(wildcard,$(BASE_DIR)/*.cpp))
 CPP_USER_SRC = $(patsubst %_gen.cpp,,$(notdir $(call rwildcard,./,*.cpp)))
 CPP_SRC += $(CPP_USER_SRC)
+## for each grove driver to be compiled
+CPP_GROVE_SRC = $(foreach g,$(GROVES), $(notdir $(call wildcard,$(GROVES_DIR)/$(g)/*.cpp)))
+CPP_GROVE_SRC += $(foreach g,$(GROVES), $g_gen.cpp)
+CPP_SRC += $(CPP_GROVE_SRC)
 
 s_SRC = $(notdir $(call rwildcard,$(ARDUINO_DIR),*.s))
 s_SRC += $(notdir $(call rwildcard,./,*.s))
@@ -188,8 +192,6 @@ OBJECTS_NONCPP += $(C_SRC:%.c=%.o) $(s_SRC:%.s=%.o) $(S_SRC:%.S=%.o)
 
 OBJECTS_CPP = suli2.cpp.o rpc_server.cpp.o rpc_stream.cpp.o
 OBJECTS_CPP += $(CPP_SRC:%.cpp=%.cpp.o) 
-## for each grove driver to be compiled
-OBJECTS_CPP += $(foreach g,$(GROVES),$(g).cpp.o $(g)_gen.cpp.o)
 
 OBJECTS = $(OBJECTS_NONCPP) $(OBJECTS_CPP)
 

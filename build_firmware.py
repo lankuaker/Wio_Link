@@ -196,7 +196,7 @@ def gen_wrapper_registration (instance_name, info, arg_list):
         str_reg_method += '    rpc_server_register_method("%s", "%s", METHOD_READ, %s, %s, arg_types);\r\n' % \
                           (instance_name, fun[0].replace('read_',''), '__'+grove_name+'_'+fun[0], instance_name+"_ins")
 
-        str_wellknown += '    writer_print(TYPE_STRING, "\\"GET " OTA_SERVER_URL_PREFIX "/%s/%s%s -> %s\\",");\r\n' % \
+        str_wellknown += '    writer_print(TYPE_STRING, "\\"GET " OTA_SERVER_URL_PREFIX "/node/%s/%s%s -> %s\\",");\r\n' % \
                             (instance_name, fun[0].replace('read_',''), build_read_with_arg(fun[1]), build_return_values(fun[1]))
 
     str_reg_method += '\r\n'
@@ -223,7 +223,7 @@ def gen_wrapper_registration (instance_name, info, arg_list):
         str_reg_method += '    rpc_server_register_method("%s", "%s", METHOD_WRITE, %s, %s, arg_types);\r\n' % \
                           (instance_name, fun[0].replace('write_',''), '__'+grove_name+'_'+fun[0], instance_name+"_ins")
 
-        str_wellknown += '    writer_print(TYPE_STRING, "\\"POST " OTA_SERVER_URL_PREFIX "/%s/%s%s\\",");\r\n' % \
+        str_wellknown += '    writer_print(TYPE_STRING, "\\"POST " OTA_SERVER_URL_PREFIX "/node/%s/%s%s\\",");\r\n' % \
                             (instance_name, fun[0].replace('write_',''), build_read_with_arg(fun[1]))
 
 
@@ -234,7 +234,7 @@ def gen_wrapper_registration (instance_name, info, arg_list):
     fp_wrapper_h.close()
     fp_wrapper_cpp.close()
     if error_msg:
-        return (False, "","")
+        return (False, "","","")
 
     return (True, str_reg_include, str_reg_method, str_wellknown)
 
@@ -279,8 +279,7 @@ def gen_and_build (user_id, node_name):
         for grove_instance_name in config.keys():
             grove = find_grove_in_database(config[grove_instance_name]['name'], js)
             if grove:
-                ret, inc, method, wellknown = \
-                gen_wrapper_registration(grove_instance_name, grove, config[grove_instance_name]['construct_arg_list'])
+                ret, inc, method, wellknown = gen_wrapper_registration(grove_instance_name, grove, config[grove_instance_name]['construct_arg_list'])
                 if(ret == False):
                     return False
                 str_reg_include += inc

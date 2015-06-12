@@ -39,8 +39,12 @@ def parse_one_driver_dir (driver_dir):
 
 def get_class_header_file (files):
     for f in files:
-        if f.endswith(".h"): # and f.find("class") > -1:
+        if f.endswith(".h") and f.find("class") > -1:
             return f
+    for f in files:
+        if f.endswith(".h"):
+            return f
+
     return ""
 
 def parse_class_header_file (file):
@@ -143,6 +147,7 @@ def parse_class_header_file (file):
 
 if __name__ == '__main__':
 
+    print __file__
     cur_dir = os.path.split(os.path.realpath(__file__))[0]
     grove_drivers_abs_dir = os.path.abspath(cur_dir + "/grove_drivers")
     grove_database = []
