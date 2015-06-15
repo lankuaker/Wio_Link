@@ -49,8 +49,7 @@ static uint8_t confirm_hello_retry_cnt = 0;
 static os_event_t update_network_task_q;
 
 const char *device_find_request = "Node?";
-const char *device_key_write_req = "Key: ";
-const char *device_sn_write_req = "SN: ";
+const char *device_keysn_write_req = "KeySN: ";
 #define KEY_LEN             32
 #define SN_LEN              32
 static struct espconn udp_conn;
@@ -143,41 +142,36 @@ static void user_devicefind_recv(void *arg, char *pusrdata, unsigned short lengt
             os_strncmp(pusrdata, device_find_request, os_strlen(device_find_request)) == 0)
     {
         char *device_desc = new char[128];
-        os_sprintf(device_desc, "Node: %s," MACSTR "," IPSTR "\r\n",
-                   EEPROM.getDataPtr() + EEP_OFFSET_SN, MAC2STR(hwaddr), IP2STR(&ipconfig.ip));
+        os_sprintf(device_desc, "Node: 0x%08x," MACSTR "," IPSTR "\r\n",
+                   system_get_chip_id(), MAC2STR(hwaddr), IP2STR(&ipconfig.ip));
 
         Serial1.printf("%s", device_desc);
         length = os_strlen(device_desc);
         espconn_sent(conn, device_desc, length);
         delete[] device_desc;
-    } else if ((pkey=os_strstr(pusrdata, device_key_write_req)) != NULL)
+    } else if ((pkey=os_strstr(pusrdata, device_keysn_write_req)) != NULL)
     {
-        if ((pusrdata + length - pkey - os_strlen(device_key_write_req)) >= KEY_LEN)
+        if ((pusrdata + length - pkey - os_strlen(device_keysn_write_req)) >= (KEY_LEN+SN_LEN))
         {
-            pkey += os_strlen(device_key_write_req);
-            char *keybuf = new char[KEY_LEN + 1];
+            pkey += os_strlen(device_keysn_write_req);
+
+            char *keybuf = new char[KEY_LEN *2];
+
             os_memcpy(keybuf, pkey, KEY_LEN);
             keybuf[KEY_LEN] = 0;
             os_memcpy(EEPROM.getDataPtr() + EEP_OFFSET_KEY, keybuf, KEY_LEN + 1);
-            EEPROM.commit();
             Serial1.printf("write key: %s\n", keybuf);
-            delete [] keybuf;
-            espconn_sent(conn, "ok\r\n", 4);
-        }
-    }
-    else if ((pkey = os_strstr(pusrdata, device_sn_write_req)) != NULL)
-    {
-        int len = pusrdata + length - pkey - os_strlen(device_sn_write_req);
-        if (len >= SN_LEN)
-        {
-            pkey += os_strlen(device_sn_write_req);
-            char *buff = new char[SN_LEN+1];
-            os_memcpy(buff, pkey, SN_LEN);
-            buff[SN_LEN] = 0;
-            os_memcpy(EEPROM.getDataPtr() + EEP_OFFSET_SN, buff, SN_LEN + 1);
+
+            pkey += (KEY_LEN + 1);
+
+            os_memcpy(keybuf, pkey, SN_LEN);
+            keybuf[SN_LEN] = 0;
+            os_memcpy(EEPROM.getDataPtr() + EEP_OFFSET_SN, keybuf, SN_LEN + 1);
+            Serial1.printf("write sn: %s\n", keybuf);
+
             EEPROM.commit();
-            Serial1.printf("write sn: %s\n", buff);
-            delete[] buff;
+
+            delete [] keybuf;
             espconn_sent(conn, "ok\r\n", 4);
         }
     }
