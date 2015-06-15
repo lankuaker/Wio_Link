@@ -30,15 +30,6 @@
 #include "grove_moisture.h"
 
 
-
-//local functions
-
-
-//local variables
-
-
-
-
 void grove_moisture_init(ANALOG_T *analog, int pin)
 {
     suli_analog_init(analog, pin);

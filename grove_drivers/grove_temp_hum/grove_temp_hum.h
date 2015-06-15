@@ -1,5 +1,5 @@
 /*
- * grove_baro_bmp085.h
+ * grove_temp_hum.h
  *
  * Copyright (c) 2012 seeed technology inc.
  * Website    : www.seeed.cc
@@ -27,42 +27,50 @@
  */
 
 
-#ifndef __GROVE_BARO_BMP085_H__
-#define __GROVE_BARO_BMP085_H__
+
+#ifndef __GROVE_TEMP_HUM_CLASS_H__
+#define __GROVE_TEMP_HUM_CLASS_H__
 
 #include "suli2.h"
 
-//GROVE_NAME        "Grove-Barometer(BMP085)"
-//IF_TYPE           I2C
-//IMAGE_URL         http://www.seeedstudio.com/wiki/images/thumb/e/e7/Grove-Barometer.jpg/621px-Grove-Barometer.jpg
+//GROVE_NAME        "Grove-Temperature&Humidity"
+//IF_TYPE           GPIO
+//IMAGE_URL         http://www.seeedstudio.com/wiki/images/3/36/Temp%26Humi.jpg
+
+#define MAXTIMINGS 85
+#define DHT11 11
+#define DHT22 22
+#define DHT21 21
+#define AM2301 21
+
+#ifdef ESP8266
+#define PULSE_COUNTER              20
+#elif defined(__MBED__)
+#define PULSE_COUNTER              20
+#else
+#define PULSE_COUNTER              6
+#endif
 
 
-
-#define BMP085_ADDRESS (0x77<<1)
-
-class GroveBaroBMP085
+class GroveTempHum
 {
 public:
-    GroveBaroBMP085(int pinsda, int pinscl);
+    GroveTempHum(int pin);
     bool read_temperature(float *temperature);
-    bool read_pressure(int32_t *pressure);
-    bool read_altitude(float *altitude);
-private:
-    I2C_T *i2c;
-    uint8_t cmdbuf[2];
-    uint8_t databuf[2];
-    const uint8_t OSS = 0;  //0: lowpower 1: standard 2: high 3: ultrahigh accuration
-    int16_t ac1, ac2, ac3;
-    uint16_t ac4, ac5, ac6;
-    int16_t b1, b2;
-    int16_t mb, mc, md;
-    int32_t PressureCompensate;
+    bool read_temperature_f(float *temperature);
+    bool read_humidity(float *humidity);
 
-    uint8_t _read_char(unsigned char addr);
-    uint16_t _read_int(unsigned char addr);
-    int32_t _readut(I2C_T *i2c);
-    int32_t _readup(I2C_T *i2c);
+private:
+    IO_T *io;
+    bool _read(IO_T *io);
+    float _convertCtoF(float c);
+    uint8_t _type;
+    uint8_t _count;
+    bool firstreading;
+    unsigned long _lastreadtime;
+    uint8_t data[6];
 
 };
 
 #endif
+

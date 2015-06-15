@@ -3,10 +3,10 @@ Grove_Example1:
     construct_arg_list:
         pinsda: 4
         pinscl: 5
-GroveRelay:
-    name: Grove_Relay
-    construct_arg_list:
-        pin: 14
+#GroveRelay:
+#    name: Grove_Relay
+#    construct_arg_list:
+#        pin: 14
 GroveAccMMA7660:
     name: Grove-3Axis Digital Acc(\u00b11.5g)
     construct_arg_list:
@@ -26,5 +26,9 @@ GroveMoisture:
     name: Grove-Moisture
     construct_arg_list:
         pin: 17
+GroveTempHum111:
+    name: Grove-Temperature&Humidity
+    construct_arg_list:
+        pin: 14
 
 
