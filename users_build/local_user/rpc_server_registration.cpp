@@ -2,21 +2,27 @@
 #include "rpc_server.h"
 #include "rpc_stream.h"
 
+#include "grove_moisture_gen.h"
+
 #include "grove_example_gen.h"
 
 #include "grove_baro_bmp085_gen.h"
 
 #include "grove_acc_mma7660_gen.h"
 
-#include "grove_relay_gen.h"
-
-#include "grove_moisture_gen.h"
+#include "grove_temp_hum_gen.h"
 
 
 void rpc_server_register_resources()
 {
     uint8_t arg_types[MAX_INPUT_ARG_LEN];
     
+
+    //GroveMoisture
+    GroveMoisture *GroveMoisture_ins = new GroveMoisture(17);
+    memset(arg_types, TYPE_NONE, MAX_INPUT_ARG_LEN);
+    rpc_server_register_method("GroveMoisture", "moisture", METHOD_READ, __grove_moisture_read_moisture, GroveMoisture_ins, arg_types);
+
 
     //Grove_Example1
     GroveExample *Grove_Example1_ins = new GroveExample(4,5);
@@ -66,23 +72,21 @@ void rpc_server_register_resources()
     rpc_server_register_method("GroveAccMMA7660", "shacked", METHOD_READ, __grove_acc_mma7660_read_shacked, GroveAccMMA7660_ins, arg_types);
 
 
-    //GroveRelay
-    GroveRelay *GroveRelay_ins = new GroveRelay(14);
-
+    //GroveTempHum111
+    GroveTempHum *GroveTempHum111_ins = new GroveTempHum(14);
     memset(arg_types, TYPE_NONE, MAX_INPUT_ARG_LEN);
-    arg_types[0] = TYPE_INT;
-    rpc_server_register_method("GroveRelay", "onoff", METHOD_WRITE, __grove_relay_write_onoff, GroveRelay_ins, arg_types);
-
-    //GroveMoisture
-    GroveMoisture *GroveMoisture_ins = new GroveMoisture(17);
+    rpc_server_register_method("GroveTempHum111", "humidity", METHOD_READ, __grove_temp_hum_read_humidity, GroveTempHum111_ins, arg_types);
     memset(arg_types, TYPE_NONE, MAX_INPUT_ARG_LEN);
-    rpc_server_register_method("GroveMoisture", "moisture", METHOD_READ, __grove_moisture_read_moisture, GroveMoisture_ins, arg_types);
+    rpc_server_register_method("GroveTempHum111", "temperature", METHOD_READ, __grove_temp_hum_read_temperature, GroveTempHum111_ins, arg_types);
+    memset(arg_types, TYPE_NONE, MAX_INPUT_ARG_LEN);
+    rpc_server_register_method("GroveTempHum111", "temperature_f", METHOD_READ, __grove_temp_hum_read_temperature_f, GroveTempHum111_ins, arg_types);
 
 }
 
 void print_well_known()
 {
     writer_print(TYPE_STRING, "[");
+    writer_print(TYPE_STRING, "\"GET " OTA_SERVER_URL_PREFIX "/node/GroveMoisture/moisture -> uint16_t : moisture\",");
     writer_print(TYPE_STRING, "\"GET " OTA_SERVER_URL_PREFIX "/node/Grove_Example1/temp -> int : temp\",");
     writer_print(TYPE_STRING, "\"GET " OTA_SERVER_URL_PREFIX "/node/Grove_Example1/uint8_value -> uint8_t : value\",");
     writer_print(TYPE_STRING, "\"GET " OTA_SERVER_URL_PREFIX "/node/Grove_Example1/with_arg/int_arg -> float : cx, float : cy, float : cz, int : degree\",");
@@ -97,7 +101,8 @@ void print_well_known()
     writer_print(TYPE_STRING, "\"GET " OTA_SERVER_URL_PREFIX "/node/GroveBaroBMP085/pressure -> int32_t : pressure\",");
     writer_print(TYPE_STRING, "\"GET " OTA_SERVER_URL_PREFIX "/node/GroveAccMMA7660/accelerometer -> float : ax, float : ay, float : az\",");
     writer_print(TYPE_STRING, "\"GET " OTA_SERVER_URL_PREFIX "/node/GroveAccMMA7660/shacked -> uint8_t : shacked\",");
-    writer_print(TYPE_STRING, "\"POST " OTA_SERVER_URL_PREFIX "/node/GroveRelay/onoff/int_onoff\",");
-    writer_print(TYPE_STRING, "\"GET " OTA_SERVER_URL_PREFIX "/node/GroveMoisture/moisture -> uint16_t : moisture\"");
+    writer_print(TYPE_STRING, "\"GET " OTA_SERVER_URL_PREFIX "/node/GroveTempHum111/humidity -> float : humidity\",");
+    writer_print(TYPE_STRING, "\"GET " OTA_SERVER_URL_PREFIX "/node/GroveTempHum111/temperature -> float : temperature\",");
+    writer_print(TYPE_STRING, "\"GET " OTA_SERVER_URL_PREFIX "/node/GroveTempHum111/temperature_f -> float : temperature\"");
     writer_print(TYPE_STRING, "]");
 }
