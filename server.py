@@ -75,6 +75,9 @@ class DeviceConnection(object):
         self.state_waiters = []
         self.state_happened = []
 
+        self.event_waiters = []
+        self.event_happened = []
+
     def secure_write (self, data):
         if self.cipher:
             cipher_text = self.cipher.encrypt(pad(data))
@@ -188,6 +191,7 @@ class DeviceConnection(object):
 
                     try:
                         state = None
+                        event = None
                         if json_obj['msg_type'] == 'ota_trig_ack':
                             state = ('going', 'Node has been notified...')
                         elif json_obj['msg_type'] == 'ota_status':
@@ -201,12 +205,23 @@ class DeviceConnection(object):
                                 self.kill_myself()
                             else:
                                 state = ('error', 'Upgrade failed, please reboot the node and retry')
-                        print "ota state:", state
+                        elif json_obj['msg_type'] == 'event':
+                            event = json_obj
+                            event.pop('msg_type')
+                        print state
+                        print event
                         if state:
                             if len(self.state_waiters) == 0:
                                 self.state_happened.append(state)
                             else:
                                 self.state_waiters.pop(0).set_result(state)
+                        elif event:
+                            if len(self.event_waiters) == 0:
+                                self.event_happened.append(event)
+                            else:
+                                for future in self.event_waiters:
+                                    future.set_result(event)
+                                self.event_waiters = []
                         else:
                             self.recv_msg_queue.append(json_obj)
                     except Exception,e:
@@ -364,6 +379,7 @@ class myApplication(web.Application):
         (r"/v1/nodes/rename[/]?", NodeRenameHandler),
         (r"/v1/nodes/delete[/]?", NodeDeleteHandler),
         (r"/v1/node/(.+)", NodeReadWriteHandler, dict(conns=DeviceServer.accepted_conns)),
+        (r"/v1/nodes/event[/]?", NodeEventHandler,dict(conns=DeviceServer.accepted_conns)),
         (r"/v1/user/download[/]?", UserDownloadHandler, dict(conns=DeviceServer.accepted_conns)),
         (r"/v1/ota/bin", OTAHandler, dict(conns=DeviceServer.accepted_conns)),
         (r"/v1/ota/trig", UserDownloadHandler, dict(conns=DeviceServer.accepted_conns)),  #just for test, should be triggered in /user/download
