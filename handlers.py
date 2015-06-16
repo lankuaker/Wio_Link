@@ -47,6 +47,7 @@ from tornado import ioloop
 from tornado import gen
 from tornado import iostream
 from tornado import web
+from tornado import websocket
 from tornado.options import define, options
 from tornado.log import *
 from tornado.concurrent import Future
@@ -455,6 +456,58 @@ class NodeReadWriteHandler(NodeBaseHandler):
 
         self.resp(404, "Node is offline")
 
+class NodeEventHandler(websocket.WebSocketHandler):
+    def initialize (self, conns):
+        self.conns = conns
+        self.cur_conn = None
+        self.node_key = None
+        self.connected = False
+        self.future = None
+
+    def open(self):
+        self.connected = True
+
+    def on_close(self):
+        if self.connected:
+            cur_waiters = self.cur_conn.event_waiters
+            if self.future in cur_waiters:
+                cur_waiters.remove(self.future)
+                # cancel yield
+                pass
+
+        self.connected = False
+
+    @gen.coroutine
+    def on_message(self, message):
+        self.node_key = message
+        for conn in self.conns:
+            if conn.private_key == self.node_key and not conn.killed:
+                self.cur_conn = conn
+                break
+
+        if not self.cur_conn:
+            message = {"Node":"offline"}
+            self.write_message(message)
+            self.connected = False
+            self.close()
+            return
+
+        while self.connected:
+            self.future = self.wait_event_post()
+            event = yield self.future
+            self.write_message(event)
+            yield gen.moment
+
+    def wait_event_post(self):
+        result_future = Future()
+
+        if len(self.cur_conn.event_happened) > 0:
+            result_future.set_result(self.cur_conn.event_happened.pop(0))
+        else:
+            self.cur_conn.event_waiters.append(result_future)
+
+        return result_future
+
 
 class UserDownloadHandler(NodeBaseHandler):
     """
@@ -619,7 +672,6 @@ class OTAUpdatesHandler(NodeBaseHandler):
     def wait_ota_status_change(self):
         result_future = Future()
 
-        # get OTA status
         if len(self.cur_conn.state_happened) > 0:
             result_future.set_result(self.cur_conn.state_happened.pop(0))
         else:

@@ -1,13 +1,19 @@
-<!DOCTYPE HTML>
 <html>
-    <head>
-    <title>简单的JavaScript Hello World</title>
-        <script type="text/javascript">
-            document.write("Hello, world!");   // 在浏览器视窗内直接显示
-            alert("Hello, world!");            // 弹窗显示
-            console.log("Hello, world!");      // 在控制台(console)里显示，需要先开启开发工具控制台
-        </script>
-    </head>
-    <body>
-    </body>
+<head>
+
+</head>
+<body>
+    <h1>Web Socket Test</h1>
+    <script>
+    var ws = new WebSocket('ws://127.0.0.1:8080/v1/nodes/event');
+    // alert("Hello, world!");
+    ws.onopen = function() {
+        ws.send("d6d68b4b6b43f213569f5832dd8277b2");
+    };
+    ws.onmessage = function (evt) {
+        
+        alert(evt.data);
+    };
+    </script>
+</body>
 </html>
