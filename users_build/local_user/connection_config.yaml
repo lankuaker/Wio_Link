@@ -17,11 +17,11 @@ GroveBaroBMP085:
     construct_arg_list:
         pinsda: 4
         pinscl: 5   
-#Grove_DigitalLight1:
-#    name: Grove_DigitalLight
-#    construct_arg_list:
-#        pinsda: 4
-#        pinscl: 5
+Grove_DigitalLight1:
+    name: Grove-Digital Light
+    construct_arg_list:
+        pinsda: 4
+        pinscl: 5
 GroveMoisture:
     name: Grove-Moisture
     construct_arg_list:

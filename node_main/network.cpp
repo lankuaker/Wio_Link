@@ -248,8 +248,13 @@ static void main_connection_recv_cb(void *arg, char *pusrdata, unsigned short le
 
 static void main_connection_sent_cb(void *arg)
 {
+
+}
+
+static void main_connection_tx_write_finish_cb(void *arg)
+{
     struct espconn *pespconn = arg;
-    //Serial1.println("main_connection_sent_cb");
+
     if (!tx_stream_buffer) return;
 
     size_t size = tx_stream_buffer->size();
@@ -257,7 +262,7 @@ static void main_connection_sent_cb(void *arg)
     size_t size2 = size;
     if (size > 0)
     {
-        size2 = (((size % 16) == 0)? (size):(size + (16 - size % 16) ));  //damm, the python crypto library only supports 16*n block length
+        size2 = (((size % 16) == 0) ? (size) : (size + (16 - size % 16)));  //damn, the python crypto library only supports 16*n block length
         char *data = (char *)malloc(size2);
         os_memset(data, 0, size2);
         tx_stream_buffer->read(data, size);
@@ -266,7 +271,6 @@ static void main_connection_sent_cb(void *arg)
         free(data);
     }
 }
-
 
 void network_putc(char c)
 {
@@ -294,7 +298,7 @@ void network_puts(char *data, int len)
             //os_timer_disarm(&timer_tx);
             //os_timer_setfn(&timer_tx, main_connection_sent_cb, &main_conn);
             //os_timer_arm(&timer_tx, 1, 0);
-            main_connection_sent_cb(&main_conn);
+            main_connection_tx_write_finish_cb(&main_conn);
         }
     }
 }
@@ -373,7 +377,9 @@ void main_connection_connected_callback(void *arg)
     espconn_regist_recvcb(pespconn, main_connection_recv_cb);
     espconn_regist_sentcb(pespconn, main_connection_sent_cb);
 
-    espconn_set_opt(pespconn, 0xff);
+    espconn_set_opt(pespconn, 0x04);  //enable the 2920 write buffer
+
+    espconn_regist_write_finish(pespconn, main_connection_tx_write_finish_cb); // register write finish callback
 
     /* send hello */
     main_connection_send_hello(arg);
