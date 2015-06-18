@@ -22,6 +22,11 @@ Grove_DigitalLight1:
     construct_arg_list:
         pinsda: 4
         pinscl: 5
+Grove_Gyro_ITG3200:
+    name: Grove-3-Axis Digital Gyro
+    construct_arg_list:
+        pinsda: 4
+        pinscl: 5
 GroveMoisture:
     name: Grove-Moisture
     construct_arg_list:

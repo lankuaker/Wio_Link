@@ -61,6 +61,8 @@ def find_grove_in_database (grove_name, json_obj):
 def declare_vars (arg_list):
     result = ""
     for arg in arg_list:
+        if not arg:
+            continue
         result += arg.replace('*','')
         result += ';\r\n    '
     return result
@@ -68,6 +70,8 @@ def declare_vars (arg_list):
 def build_read_call_args (arg_list):
     result = ""
     for arg in arg_list:
+        if not arg:
+            continue
         result += arg.strip().split(' ')[1].replace('*', '&')
         result += ','
     return result.rstrip(',')
@@ -78,6 +82,8 @@ def build_read_print (arg_list):
     result = '        writer_print(TYPE_STRING, "{");\r\n'
     cnt = len(arg_list)
     for i in xrange(cnt):
+        if not arg_list[i]:
+            continue
         t = arg_list[i].strip().split(' ')[0]
         name = arg_list[i].strip().split(' ')[1]
         if t in TYPE_MAP.keys():
@@ -96,6 +102,8 @@ def build_unpack_vars (arg_list):
     result = ""
     arg_list = [arg for arg in arg_list if arg.find("*") < 0]  #find out the ones dont have "*"
     for arg in arg_list:
+        if not arg:
+            continue
         t = arg.strip().split(' ')[0]
         name = arg.strip().split(' ')[1]
         result += '    %s = *((%s *)arg_ptr); arg_ptr += sizeof(%s);\r\n' % (name, t, t)
@@ -106,6 +114,8 @@ def build_read_with_arg (arg_list):
     result = ""
     arg_list = [arg for arg in arg_list if arg.find("*") < 0]  #find out the ones dont have "*"
     for arg in arg_list:
+        if not arg:
+            continue
         t = arg.strip().split(' ')[0]
         name = arg.strip().split(' ')[1]
         result += '/%s_%s' % (t, name)
@@ -115,9 +125,24 @@ def build_return_values (arg_list):
     result = ""
     arg_list = [arg for arg in arg_list if arg.find("*")>-1]  #find out the ones have "*"
     for arg in arg_list:
-        result += arg.strip().replace('*', ': ')
+        if not arg:
+            continue
+        result += arg.strip().replace(' ', ': ')
         result += ', '
     return result.rstrip(', ')
+
+def build_write_args (arg_list):
+    result = ""
+    arg_list = [arg for arg in arg_list if arg.find("*")<0]  #find out the ones havent "*"
+    for arg in arg_list:
+        if not arg:
+            continue
+        result += arg.strip().replace('*', ': ')
+        result += ', '
+    result = result.rstrip(', ')
+    if result == "":
+        result = "void"
+    return result
 
 def build_reg_write_arg_type (arg_list):
     global error_msg
@@ -125,6 +150,8 @@ def build_reg_write_arg_type (arg_list):
     arg_list = [arg for arg in arg_list if arg.find("*") < 0]
     length = min(4, len(arg_list))
     for i in xrange(length):
+        if not arg_list[i]:
+            continue
         t = arg_list[i].strip().split(' ')[0]
         if t in TYPE_MAP.keys():
             result += "    arg_types[%d] = %s;\r\n" %(i, TYPE_MAP[t])
@@ -223,8 +250,8 @@ def gen_wrapper_registration (instance_name, info, arg_list):
         str_reg_method += '    rpc_server_register_method("%s", "%s", METHOD_WRITE, %s, %s, arg_types);\r\n' % \
                           (instance_name, fun[0].replace('write_',''), '__'+grove_name+'_'+fun[0], instance_name+"_ins")
 
-        str_wellknown += '    writer_print(TYPE_STRING, "\\"POST " OTA_SERVER_URL_PREFIX "/node/%s/%s%s\\",");\r\n' % \
-                            (instance_name, fun[0].replace('write_',''), build_read_with_arg(fun[1]))
+        str_wellknown += '    writer_print(TYPE_STRING, "\\"POST " OTA_SERVER_URL_PREFIX "/node/%s/%s <- %s\\",");\r\n' % \
+                            (instance_name, fun[0].replace('write_',''), build_write_args(fun[1]))
 
 
     # event attachment

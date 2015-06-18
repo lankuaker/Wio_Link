@@ -27,18 +27,18 @@ void __grove_acc_mma7660_read_accelerometer(void *class_ptr, void *input)
     }
 }
 
-void __grove_acc_mma7660_read_shacked(void *class_ptr, void *input)
+void __grove_acc_mma7660_read_shaked(void *class_ptr, void *input)
 {
     GroveAccMMA7660 *grove = (GroveAccMMA7660 *)class_ptr;
     uint8_t *arg_ptr = (uint8_t *)input;
-    uint8_t shacked;
+    uint8_t shaked;
     
 
-    if(grove->read_shacked(&shacked))
+    if(grove->read_shaked(&shaked))
     {
         writer_print(TYPE_STRING, "{");
-        writer_print(TYPE_STRING, "\"shacked\":");
-        writer_print(TYPE_UINT8, &shacked);
+        writer_print(TYPE_STRING, "\"shaked\":");
+        writer_print(TYPE_UINT8, &shaked);
         writer_print(TYPE_STRING, "}");
     }else
     {
