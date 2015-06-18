@@ -53,7 +53,7 @@ error_msg = ""
 
 def find_grove_in_database (grove_name, json_obj):
     for grove in json_obj:
-        print grove['GroveName']," -- ", grove_name
+        #print grove['GroveName']," -- ", grove_name
         if grove['GroveName'] == grove_name.decode( 'unicode-escape' ):
             return grove
     return {}
@@ -230,6 +230,7 @@ def gen_wrapper_registration (instance_name, info, arg_list):
     # event attachment
     if info['HasEvent']:
         str_reg_method += '\r\n    %s->attach_event_reporter(rpc_server_event_report);\r\n' % (instance_name+"_ins")
+        str_wellknown += '    writer_print(TYPE_STRING, "\\"HasEvent %s\\",");\r\n' % (instance_name)
 
     fp_wrapper_h.close()
     fp_wrapper_cpp.close()

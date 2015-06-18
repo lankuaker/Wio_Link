@@ -388,7 +388,7 @@ class myApplication(web.Application):
         self.conn = db_conn
         self.cur = cursor
 
-        web.Application.__init__(self, handlers, debug=True, login_url="/user/login",
+        web.Application.__init__(self, handlers, debug=True, login_url="/v1/user/login",
             template_path = 'templates',)
 
 def main():

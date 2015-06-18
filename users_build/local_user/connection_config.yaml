@@ -26,9 +26,12 @@ GroveMoisture:
     name: Grove-Moisture
     construct_arg_list:
         pin: 17
-GroveTempHum111:
-    name: Grove-Temperature&Humidity
+#GroveTempHum111:
+#    name: Grove-Temperature&Humidity
+#    construct_arg_list:
+#        pin: 14
+GroveIRDistanceInterrupter111:
+    name: Grove-IR Distance Interrupter
     construct_arg_list:
         pin: 14
-
 
