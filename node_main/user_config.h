@@ -3,8 +3,8 @@
 
 #define ACCESS_TOKEN                "123456"
 
-#define SMARTCONFIG_KEY             13
-#define STATUS_LED                  0
+#define SMARTCONFIG_KEY             0
+#define STATUS_LED                  15
 #ifndef NODE_NAME
 #define NODE_NAME                   "esp8266_node_1"
 #endif
@@ -21,3 +21,4 @@
 /* eeprom slots */
 #define EEP_OFFSET_KEY              0
 #define EEP_OFFSET_SN               100
+#define EEP_OFFSET_SMARTCFG         200

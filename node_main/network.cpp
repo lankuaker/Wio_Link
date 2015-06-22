@@ -105,6 +105,18 @@ static void smartconfig_done_callback(sc_status status, void *pdata)
     }
 }
 
+static void format_sn(uint8_t *input, uint8_t *output)
+{
+    for (int i = 0; i < 32;i++)
+    {
+        if (*(input + i) < 33 || *(input + i) > 126)
+        {
+            *(output + i) = '#';
+        } else *(output + i) = *(input + i);
+    }
+    *(output + 32) = '\0';
+}
+
 static void user_devicefind_recv(void *arg, char *pusrdata, unsigned short length)
 {
     struct espconn *conn = (struct espconn *)arg;
@@ -130,28 +142,36 @@ static void user_devicefind_recv(void *arg, char *pusrdata, unsigned short lengt
         return;
     }
 
-    /* prevent bad guy from flashing your node without your permission */
-    pinMode(SMARTCONFIG_KEY, INPUT_PULLUP);
-    if (digitalRead(SMARTCONFIG_KEY) != 0)
-    {
-        return;
-    }
 
     char *pkey;
     if (length == os_strlen(device_find_request) &&
             os_strncmp(pusrdata, device_find_request, os_strlen(device_find_request)) == 0)
     {
         char *device_desc = new char[128];
-        os_sprintf(device_desc, "Node: 0x%08x," MACSTR "," IPSTR "\r\n",
-                   system_get_chip_id(), MAC2STR(hwaddr), IP2STR(&ipconfig.ip));
+        char *buff_sn = new char[33];
+        format_sn(EEPROM.getDataPtr() + EEP_OFFSET_SN, (uint8_t *)buff_sn);
+        os_sprintf(device_desc, "Node: %s," MACSTR "," IPSTR "\r\n",
+                   buff_sn, MAC2STR(hwaddr), IP2STR(&ipconfig.ip));
 
         Serial1.printf("%s", device_desc);
         length = os_strlen(device_desc);
         espconn_sent(conn, device_desc, length);
         delete[] device_desc;
+        delete[] buff_sn;
     } else if ((pkey=os_strstr(pusrdata, device_keysn_write_req)) != NULL)
     {
-        if ((pusrdata + length - pkey - os_strlen(device_keysn_write_req)) >= (KEY_LEN+SN_LEN))
+        /* prevent bad guy from flashing your node without your permission */
+        #if 0
+        pinMode(SMARTCONFIG_KEY, INPUT_PULLUP);
+        if (digitalRead(SMARTCONFIG_KEY) != 0)
+        {
+            return;
+        }
+        #endif
+        uint8_t keywrite_flag = *(EEPROM.getDataPtr() + EEP_OFFSET_SMARTCFG+1);
+
+
+        if ((pusrdata + length - pkey - os_strlen(device_keysn_write_req)) >= (KEY_LEN+SN_LEN) && keywrite_flag > 0)
         {
             pkey += os_strlen(device_keysn_write_req);
 
@@ -173,6 +193,10 @@ static void user_devicefind_recv(void *arg, char *pusrdata, unsigned short lengt
 
             delete [] keybuf;
             espconn_sent(conn, "ok\r\n", 4);
+
+            memset(EEPROM.getDataPtr() + EEP_OFFSET_SMARTCFG+1, 0, 1);  //clear the key write flag
+            EEPROM.commit();
+
         }
     }
 }
@@ -410,7 +434,7 @@ void network_check_timer_callback()
     case DIED_IN_HELLO:
         Serial1.printf("No hello ack from server after 5 retry\n");
         Serial1.println("Please check server's ip and port, also check AccessToken\n");
-        digitalWrite(STATUS_LED, 0);
+        digitalWrite(STATUS_LED, 1);
         /*while (1)
         {
             delay(100);
@@ -420,7 +444,7 @@ void network_check_timer_callback()
     case DIED_IN_CONN:
         Serial1.printf("The main connection died after 5 retry\n");
         Serial1.println("Please check server's ip and port, also check AccessToken\n");
-        digitalWrite(STATUS_LED, 0);
+        digitalWrite(STATUS_LED, 1);
         /*while (1)
         {
             delay(100);
@@ -432,10 +456,10 @@ void network_check_timer_callback()
         if (main_conn_status != last_main_conn_status)
         {
             os_timer_arm(&timer_network_check, 50, false);
-            digitalWrite(STATUS_LED, 0);
+            digitalWrite(STATUS_LED, 1);
         }else
         {
-            os_timer_arm(&timer_network_check, (digitalRead(STATUS_LED) > 0 ? 50 : 1000), false);
+            os_timer_arm(&timer_network_check,(digitalRead(STATUS_LED) > 0 ? 1000 : 50), false);
             digitalWrite(STATUS_LED, ~digitalRead(STATUS_LED));
         }
         break;
@@ -496,9 +520,7 @@ void establish_network()
     Serial1.printf("Node name: %s\n", NODE_NAME);
     Serial1.printf("Chip id: 0x%08x\n", system_get_chip_id());
 
-    /* get key and name */
-    EEPROM.begin(4096);
-
+    /* get key and sn */
     if (check_ascii_char(EEPROM.getDataPtr() + EEP_OFFSET_KEY, KEY_LEN))
     {
         Serial1.printf("Device key in flash: %s\n", EEPROM.getDataPtr() + EEP_OFFSET_KEY);
@@ -509,13 +531,16 @@ void establish_network()
         Serial1.printf("Node SN in flash: %s\n", EEPROM.getDataPtr() + EEP_OFFSET_SN);
     }
 
-    pinMode(SMARTCONFIG_KEY, INPUT_PULLUP);
-    pinMode(STATUS_LED, OUTPUT);
 
     Serial1.printf("start to establish network connection.\r\n");
 
-    if (digitalRead(SMARTCONFIG_KEY) == 0)
+    /* get the smart config flag */
+    uint8_t smartcfg_flag = *(EEPROM.getDataPtr() + EEP_OFFSET_SMARTCFG);
+
+    if (smartcfg_flag > 0)
     {
+        Serial1.printf("smart config ... \r\n");
+
         wifi_set_opmode_current(0x01); //smartconfig only support station mode
         smartconfig_status = WAIT_SMARTCONFIG_DONE;
         smartconfig_start(SC_TYPE_ESPTOUCH, smartconfig_done_callback);
@@ -524,6 +549,10 @@ void establish_network()
             delay(100);
             digitalWrite(STATUS_LED, ~digitalRead(STATUS_LED));
         }
+
+        memset(EEPROM.getDataPtr() + EEP_OFFSET_SMARTCFG, 0, 1);  //clear the smart config flag
+        EEPROM.commit();
+
     } else
     {
         wifi_set_opmode(0x01); //we're now only using the station mode
@@ -537,18 +566,23 @@ void establish_network()
 
     /* check IP */
     uint8_t connect_status = wifi_station_get_connect_status();
+    int wait_sec = 0;
     while (connect_status != STATION_GOT_IP)
     {
         Serial1.printf("Wait getting ip, state: %d\n", connect_status);
         delay(1000);
         connect_status = wifi_station_get_connect_status();
-        digitalWrite(STATUS_LED, 0);
-        delay(50);
         digitalWrite(STATUS_LED, 1);
         delay(50);
         digitalWrite(STATUS_LED, 0);
         delay(50);
         digitalWrite(STATUS_LED, 1);
+        delay(50);
+        digitalWrite(STATUS_LED, 0);
+        if (++wait_sec > 30 || digitalRead(SMARTCONFIG_KEY) == 0)
+        {
+            return;
+        }
     }
 
     struct ip_info ip;

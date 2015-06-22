@@ -44,7 +44,6 @@ public:
     bool read_approach(uint8_t *approach);
     bool attach_event_reporter(CALLBACK_T reporter);
     EVENT_T *event;
-private:
     IO_T *io;
 };
 

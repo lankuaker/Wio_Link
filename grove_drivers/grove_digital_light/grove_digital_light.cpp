@@ -153,9 +153,16 @@ bool GroveDigitalLight::read_lux(uint32_t *lux)
     cmdbuf[0] = TSL2561_Control;
     cmdbuf[1] = 0x00;
     suli_i2c_write(i2c, TSL2561_Address, cmdbuf, 2);  // POWER Down
-    if(ch0/ch1 < 2 && ch0 > 4900)
+
+    if (ch0 == 0 && ch1 == 0)
     {
-        return -1;  //ch0 out of range, but ch1 not. the lux is not valid in this situation.
+        *lux = 0;
+        return true;
+    }
+
+    if(ch1 !=0 && ch0/ch1 < 2 && ch0 > 4900)
+    {
+        return false;  //ch0 out of range, but ch1 not. the lux is not valid in this situation.
     }
     *lux = _calculateLux(0, 0, 0);  //T package, no gain, 13ms
     return true;

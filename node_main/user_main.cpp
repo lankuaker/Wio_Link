@@ -20,6 +20,7 @@ void esp_schedule();
 #include "Arduino.h"
 #include "network.h"
 #include "rpc_server.h"
+#include "eeprom.h"
 
 extern void arduino_init(void);
 extern void do_global_ctors(void);
@@ -74,6 +75,10 @@ void user_init(void)
  */
 void pre_user_setup()
 {
+    EEPROM.begin(4096);
+    pinMode(SMARTCONFIG_KEY, INPUT_PULLUP);
+    pinMode(STATUS_LED, OUTPUT);
+
     establish_network();
     rpc_server_init();
 }
@@ -86,6 +91,36 @@ void pre_user_setup()
  */
 void pre_user_loop()
 {
+    static bool smartconfig_pressed = false;
+    static uint32_t smartconfig_pressed_time = 0;
+
+    uint8_t v = digitalRead(SMARTCONFIG_KEY);
+
+    if(v == 0 && !smartconfig_pressed)
+    {
+        smartconfig_pressed_time = system_get_time();
+        smartconfig_pressed = true;
+    } else if(v == 0 && smartconfig_pressed)
+    {
+        if(system_get_time() - smartconfig_pressed_time > 5000000)
+        {
+            memset(EEPROM.getDataPtr() + EEP_OFFSET_SMARTCFG, 1, 1);  //set the smart config flag
+            memset(EEPROM.getDataPtr() + EEP_OFFSET_SMARTCFG+1, 1, 1);  //set the key write flag
+            EEPROM.commit();
+            Serial1.println("will reboot to smartconfig mode");
+            digitalWrite(STATUS_LED, 0);
+            delay(100);
+            digitalWrite(STATUS_LED, 1);
+            delay(500);
+            digitalWrite(STATUS_LED, 0);
+            system_restart();
+            smartconfig_pressed = false;
+        }
+    } else
+    {
+        smartconfig_pressed = false;
+    }
+
     if(main_conn_status == KEEP_ALIVE)
     {
         rpc_server_loop();
