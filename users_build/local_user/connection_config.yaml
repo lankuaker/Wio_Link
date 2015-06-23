@@ -47,4 +47,9 @@ GroveButton:
 #    name: Grove-Button
 #    construct_arg_list:
 #        pin: 12
+GroveMagSw1:
+    name: Grove-Magnetic Switch
+    construct_arg_list:
+        pin: 12
+
 

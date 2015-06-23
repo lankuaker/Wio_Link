@@ -1,5 +1,5 @@
 /*
- * grove_ir_distance_intr.cpp
+ * grove_button.cpp
  *
  * Copyright (c) 2012 seeed technology inc.
  * Website    : www.seeed.cc
@@ -27,37 +27,44 @@
  */
 
 #include "suli2.h"
-#include "grove_ir_distance_intr.h"
+#include "grove_button.h"
 
-GroveIRDistanceInterrupter::GroveIRDistanceInterrupter(int pin)
+
+
+GroveButton::GroveButton(int pin)
 {
     this->io = (IO_T *)malloc(sizeof(IO_T));
 
-    suli_pin_init(io, pin, SULI_INPUT);
+    suli_pin_init(io, pin, INPUT_PULLUP);
+    time = millis();
 }
 
-bool GroveIRDistanceInterrupter::read_approach(uint8_t *approach)
+bool GroveButton::read_pressed(uint8_t *pressed)
 {
-    uint8_t v = suli_pin_read(io);
-    *approach = (v == 0) ? 1 : 0;
+    *pressed = suli_pin_read(io);
     return true;
 }
 
-bool GroveIRDistanceInterrupter::attach_event_reporter(CALLBACK_T reporter)
+
+bool GroveButton::attach_event_reporter(CALLBACK_T reporter)
 {
     this->event = (EVENT_T *)malloc(sizeof(EVENT_T));
 
     suli_event_init(event, reporter);
 
-    suli_pin_attach_interrupt_handler(io, &approach_interrupt_handler, SULI_FALL, this);
+    suli_pin_attach_interrupt_handler(io, &button_interrupt_handler, SULI_RISE, this);
 
     return true;
 }
 
-static void approach_interrupt_handler(void *para)
+
+static void button_interrupt_handler(void *para)
 {
-    GroveIRDistanceInterrupter *g = (GroveIRDistanceInterrupter *)para;
-
-    suli_event_trigger(g->event, "ir_approached", *(g->io));
+    GroveButton *g = (GroveButton *)para;
+    if (millis() - g->time < 10)
+    {
+        return;
+    }
+    g->time = millis();
+    suli_event_trigger(g->event, "button_pressed", *(g->io));
 }
-
