@@ -71,10 +71,15 @@ static unsigned char iv[16];
 void main_connection_init();
 void main_connection_send_hello(void *arg);
 
-///
-///
-
-
+//////////////////////////////////////////////////////////////////////////////////////////
+ 
+/**
+ * format the SN string into safe-printing string when the node is first used 
+ * because the contents in Flash is random before valid SN is written. 
+ * 
+ * @param input 
+ * @param output 
+ */
 static void format_sn(uint8_t *input, uint8_t *output)
 {
     for (int i = 0; i < 32;i++)
@@ -87,6 +92,9 @@ static void format_sn(uint8_t *input, uint8_t *output)
     *(output + 32) = '\0';
 }
 
+/**
+ * perform a reboot
+ */
 static void fire_reboot()
 {
     digitalWrite(STATUS_LED, 0);
@@ -97,6 +105,13 @@ static void fire_reboot()
     system_restart();
 }
 
+/**
+ * UDP packet recv callback
+ * 
+ * @param arg - the pointer to espconn struct
+ * @param pusrdata - recved data
+ * @param length - length of the recved data
+ */
 static void user_devicefind_recv(void *arg, char *pusrdata, unsigned short length)
 {
     struct espconn *conn = (struct espconn *)arg;
@@ -142,15 +157,6 @@ static void user_devicefind_recv(void *arg, char *pusrdata, unsigned short lengt
     } else if ((pkey=os_strstr(pusrdata, device_keysn_write_req)) != NULL)
     {
         /* prevent bad guy from flashing your node without your permission */
-        #if 0
-        pinMode(SMARTCONFIG_KEY, INPUT_PULLUP);
-        if (digitalRead(SMARTCONFIG_KEY) != 0)
-        {
-            return;
-        }
-        #endif
-
-
         if ((pusrdata + length - pkey - os_strlen(device_keysn_write_req)) >= (KEY_LEN+SN_LEN) && config_flag == 2)
         {
             pkey += os_strlen(device_keysn_write_req);
@@ -184,6 +190,9 @@ static void user_devicefind_recv(void *arg, char *pusrdata, unsigned short lengt
     }
 }
 
+/**
+ * init UDP socket
+ */
 void user_devicefind_init(void)
 {
     udp_conn.type = ESPCONN_UDP;
@@ -193,6 +202,13 @@ void user_devicefind_init(void)
     espconn_create(&udp_conn);
 }
 
+/**
+ * The callback for data receiving of the main TCP socket
+ * 
+ * @param arg 
+ * @param pusrdata 
+ * @param length 
+ */
 static void main_connection_recv_cb(void *arg, char *pusrdata, unsigned short length)
 {
     struct espconn *pespconn = arg;
@@ -207,15 +223,6 @@ static void main_connection_recv_cb(void *arg, char *pusrdata, unsigned short le
             get_hello = 2;
         } else
         {
-            #if 0
-            Serial1.println(length);
-            for (int i = 0; i < length;i++)
-            {
-                Serial1.print(*(pusrdata + i), HEX);
-                Serial1.print(" ");
-            }
-            Serial1.println();
-            #endif
             aes_init(&aes_ctx);
             aes_setkey_enc(&aes_ctx, EEPROM.getDataPtr() + EEP_OFFSET_KEY, KEY_LEN*8);
             memcpy(iv, pusrdata, 16);
@@ -253,11 +260,21 @@ static void main_connection_recv_cb(void *arg, char *pusrdata, unsigned short le
     }
 }
 
+/**
+ * The callback when data sent out via main TCP socket
+ * 
+ * @param arg 
+ */
 static void main_connection_sent_cb(void *arg)
 {
 
 }
 
+/**
+ * The callback when tx data has written into ESP8266's tx buffer
+ * 
+ * @param arg 
+ */
 static void main_connection_tx_write_finish_cb(void *arg)
 {
     struct espconn *pespconn = arg;
@@ -279,18 +296,22 @@ static void main_connection_tx_write_finish_cb(void *arg)
     }
 }
 
+/**
+ * put a char into tx ring-buffer
+ * 
+ * @param c - char to send
+ */
 void network_putc(char c)
 {
-#if 0
-    if (main_conn_status != KEEP_ALIVE) return;
-    if (main_conn.state > ESPCONN_NONE)
-    {
-        espconn_sent(&main_conn, &c, 1);
-    }
-#endif
     network_puts(&c, 1);
 }
 
+/**
+ * put a block of data into tx ring-buffer
+ * 
+ * @param data 
+ * @param len 
+ */
 void network_puts(char *data, int len)
 {
     if (main_conn_status != KEEP_ALIVE || !tx_stream_buffer) return;
@@ -311,7 +332,11 @@ void network_puts(char *data, int len)
 }
 
 
-
+/**
+ * Timer function for checking the hello response from server
+ * 
+ * @param arg 
+ */
 static void confirm_hello(void *arg)
 {
     Serial1.printf("confirm hello: %d \n", get_hello);
@@ -375,6 +400,11 @@ void main_connection_send_hello(void *arg)
     confirm_hello_retry_cnt = 0;
 }
 
+/**
+ * The callback when main TCP socket has been open and connected with server
+ * 
+ * @param arg 
+ */
 void main_connection_connected_callback(void *arg)
 {
     struct espconn *pespconn = (struct espconn *)arg;
@@ -395,6 +425,12 @@ void main_connection_connected_callback(void *arg)
 
 }
 
+/**
+ * The callback when some error or exception happened with the main TCP socket
+ * 
+ * @param arg 
+ * @param err 
+ */
 void main_connection_reconnect_callback(void *arg, sint8 err)
 {
     Serial1.printf("main conn re-conn, err: %d\n", err);
@@ -410,6 +446,9 @@ void main_connection_reconnect_callback(void *arg, sint8 err)
     main_conn_status = WAIT_CONN_DONE;
 }
 
+/**
+ * Blink the LEDs according to the status of network connection
+ */
 void network_check_timer_callback()
 {
     static uint8_t last_main_conn_status = 0xff;
@@ -460,18 +499,9 @@ void network_check_timer_callback()
     last_main_conn_status = main_conn_status;
 }
 
-bool check_ascii_char(uint8_t *data, int len)
-{
-    for (int i = 0; i < len;i++)
-    {
-        if (*(data+i) > 127)
-        {
-            return false;
-        }
-    }
-    return true;
-}
-
+/**
+ * init the main TCP socket
+ */
 void main_connection_init()
 {
     Serial1.printf("main_connection_init.\r\n");
@@ -492,6 +522,12 @@ void main_connection_init()
     main_conn_status = WAIT_CONN_DONE;
 }
 
+/**
+ * Callback for smartconfig routine
+ * 
+ * @param status 
+ * @param pdata 
+ */
 static void smartconfig_done_callback(sc_status status, void *pdata)
 {
     struct station_config *sta_conf;
@@ -524,6 +560,9 @@ static void smartconfig_done_callback(sc_status status, void *pdata)
     }
 }
 
+/**
+ * begin to establish network
+ */
 void establish_network()
 {
 #if ENABLE_DEBUG_ON_UART1
@@ -538,16 +577,15 @@ void establish_network()
     Serial1.printf("Chip id: 0x%08x\n", system_get_chip_id());
 
     /* get key and sn */
-    if (check_ascii_char(EEPROM.getDataPtr() + EEP_OFFSET_KEY, KEY_LEN))
-    {
-        Serial1.printf("Device key in flash: %s\n", EEPROM.getDataPtr() + EEP_OFFSET_KEY);
-    }
+    char *buff = new char[33];
+    
+    format_sn(EEPROM.getDataPtr() + EEP_OFFSET_KEY, (uint8_t *)buff);
+    Serial1.printf("Node's private key in flash: %s\n", buff);
+    
+    format_sn(EEPROM.getDataPtr() + EEP_OFFSET_SN, (uint8_t *)buff);
+    Serial1.printf("Node SN in flash: %s\n", buff);
 
-    if (check_ascii_char(EEPROM.getDataPtr() + EEP_OFFSET_SN, SN_LEN))
-    {
-        Serial1.printf("Node SN in flash: %s\n", EEPROM.getDataPtr() + EEP_OFFSET_SN);
-    }
-
+    delete[] buff;
 
     Serial1.printf("start to establish network connection.\r\n");
 
