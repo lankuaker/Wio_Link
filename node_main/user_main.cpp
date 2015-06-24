@@ -102,10 +102,9 @@ void pre_user_loop()
         smartconfig_pressed = true;
     } else if(v == 0 && smartconfig_pressed)
     {
-        if(system_get_time() - smartconfig_pressed_time > 5000000)
+        if(system_get_time() - smartconfig_pressed_time > 3000000)
         {
             memset(EEPROM.getDataPtr() + EEP_OFFSET_SMARTCFG, 1, 1);  //set the smart config flag
-            memset(EEPROM.getDataPtr() + EEP_OFFSET_SMARTCFG+1, 1, 1);  //set the key write flag
             EEPROM.commit();
             Serial1.println("will reboot to smartconfig mode");
             digitalWrite(STATUS_LED, 0);
