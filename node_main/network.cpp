@@ -46,7 +46,7 @@ uint8_t main_conn_status = WAIT_CONN_DONE;
 static uint8_t main_conn_retry_cnt = 0;
 static uint8_t get_hello = 0;
 static uint8_t confirm_hello_retry_cnt = 0;
-static os_event_t update_network_task_q;
+static uint32_t keepalive_last_recv_time = 0;
 
 const char *device_find_request = "Node?";
 const char *blank_device_find_request = "Blank?";
@@ -57,9 +57,11 @@ static struct espconn udp_conn;
 struct espconn main_conn;
 static struct _esp_tcp user_tcp;
 static os_timer_t timer_main_conn;
-static os_timer_t timer_network_check;
+static os_timer_t timer_main_conn_reconn;
+static os_timer_t timer_network_status_indicate;
 static os_timer_t timer_confirm_hello;
 static os_timer_t timer_tx;
+static os_timer_t timer_keepalive_check;
 
 CircularBuffer *rx_stream_buffer = NULL;
 CircularBuffer *tx_stream_buffer = NULL;
@@ -68,8 +70,9 @@ static aes_context aes_ctx;
 static int iv_offset = 0;
 static unsigned char iv[16];
 
-void main_connection_init();
+void main_connection_init(void *arg);
 void main_connection_send_hello(void *arg);
+void main_connection_reconnect_callback(void *arg, int8_t err);
 
 //////////////////////////////////////////////////////////////////////////////////////////
  
@@ -95,7 +98,7 @@ static void format_sn(uint8_t *input, uint8_t *output)
 /**
  * perform a reboot
  */
-static void fire_reboot()
+static void fire_reboot(void *arg)
 {
     digitalWrite(STATUS_LED, 0);
     delay(100);
@@ -238,6 +241,7 @@ static void main_connection_recv_cb(void *arg, char *pusrdata, unsigned short le
         aes_crypt_cfb128(&aes_ctx, AES_DECRYPT, length, &iv_offset, iv, pusrdata, pusrdata);
 
         Serial1.println(pusrdata);
+        keepalive_last_recv_time = millis();
 
         if (os_strncmp(pusrdata, "##PING##", 8) == 0 && tx_stream_buffer)
         {
@@ -331,6 +335,21 @@ void network_puts(char *data, int len)
     }
 }
 
+/**
+ * the function which will be called when timer_keepalive_check fired 
+ * to check if the socket to server is alive 
+ */
+static void keepalive_check_timer_fn(void *arg)
+{
+    if (millis() - keepalive_last_recv_time > 70000)
+    {
+        Serial1.println("No longer alive, reconnect...");
+        main_connection_reconnect_callback(NULL, 0);
+    } else
+    {
+        os_timer_arm(&timer_keepalive_check, 1000, 0);
+    }
+}
 
 /**
  * Timer function for checking the hello response from server
@@ -345,6 +364,10 @@ static void confirm_hello(void *arg)
     {
         Serial1.printf("handshake done, keep-alive\n");
         main_conn_status = KEEP_ALIVE;
+        keepalive_last_recv_time = millis();
+        os_timer_disarm(&timer_keepalive_check);
+        os_timer_setfn(&timer_keepalive_check, keepalive_check_timer_fn, arg);
+        os_timer_arm(&timer_keepalive_check, 1000, 0);
     } else if (get_hello == 2)
     {
         Serial1.printf("handshake: sorry from server\n");
@@ -415,7 +438,7 @@ void main_connection_connected_callback(void *arg)
     espconn_regist_recvcb(pespconn, main_connection_recv_cb);
     espconn_regist_sentcb(pespconn, main_connection_sent_cb);
 
-    espconn_set_opt(pespconn, 0x04);  //enable the 2920 write buffer
+    espconn_set_opt(pespconn, 0x0c);  //enable the 2920 write buffer, enable keep-alive detection
 
     espconn_regist_write_finish(pespconn, main_connection_tx_write_finish_cb); // register write finish callback
 
@@ -431,15 +454,10 @@ void main_connection_connected_callback(void *arg)
  * @param arg 
  * @param err 
  */
-void main_connection_reconnect_callback(void *arg, sint8 err)
+void main_connection_reconnect_callback(void *arg, int8_t err)
 {
     Serial1.printf("main conn re-conn, err: %d\n", err);
 
-    if (++main_conn_retry_cnt >= 5)
-    {
-        main_conn_status = DIED_IN_CONN;
-        return;
-    }
     os_timer_disarm(&timer_main_conn);
     os_timer_setfn(&timer_main_conn, main_connection_init, NULL);
     os_timer_arm(&timer_main_conn, 1000, 0);
@@ -449,7 +467,7 @@ void main_connection_reconnect_callback(void *arg, sint8 err)
 /**
  * Blink the LEDs according to the status of network connection
  */
-void network_check_timer_callback()
+void network_status_indicate_timer_fn(void *arg)
 {
     static uint8_t last_main_conn_status = 0xff;
 
@@ -479,17 +497,17 @@ void network_check_timer_callback()
     case WAIT_HELLO_DONE:
         if (main_conn_status != last_main_conn_status)
         {
-            os_timer_arm(&timer_network_check, 50, false);
+            os_timer_arm(&timer_network_status_indicate, 50, false);
             digitalWrite(STATUS_LED, 1);
         }else
         {
-            os_timer_arm(&timer_network_check,(digitalRead(STATUS_LED) > 0 ? 1000 : 50), false);
+            os_timer_arm(&timer_network_status_indicate,(digitalRead(STATUS_LED) > 0 ? 1000 : 50), false);
             digitalWrite(STATUS_LED, ~digitalRead(STATUS_LED));
         }
         break;
     case CONNECTED:
     case KEEP_ALIVE:
-        os_timer_arm(&timer_network_check, 1000, false);
+        os_timer_arm(&timer_network_status_indicate, 1000, false);
         digitalWrite(STATUS_LED, ~digitalRead(STATUS_LED));
         break;
     default:
@@ -500,11 +518,31 @@ void network_check_timer_callback()
 }
 
 /**
+ * confirm main connection is connected
+ */
+static void main_connection_confirm_timer_fn(void *arg)
+{
+    if (main_conn_status == WAIT_CONN_DONE)
+    {
+        espconn_disconnect(&main_conn);
+        os_timer_disarm(&timer_main_conn_reconn);
+        os_timer_setfn(&timer_main_conn_reconn, main_connection_init, NULL);
+        os_timer_arm(&timer_main_conn_reconn, 1, 0);
+    }
+}
+
+/**
  * init the main TCP socket
  */
-void main_connection_init()
+void main_connection_init(void *arg)
 {
     Serial1.printf("main_connection_init.\r\n");
+    
+    if (++main_conn_retry_cnt >= 5)
+    {
+        main_conn_status = DIED_IN_CONN;
+        return;
+    }
 
     main_conn.type = ESPCONN_TCP;
     main_conn.state = ESPCONN_NONE;
@@ -516,10 +554,16 @@ void main_connection_init()
     espconn_regist_connectcb(&main_conn, main_connection_connected_callback);
     espconn_regist_reconcb(&main_conn, main_connection_reconnect_callback);
     espconn_connect(&main_conn);
-    os_timer_disarm(&timer_network_check);
-    os_timer_setfn(&timer_network_check, network_check_timer_callback, NULL);
-    os_timer_arm(&timer_network_check, 1, false);
+    
+    os_timer_disarm(&timer_network_status_indicate);
+    os_timer_setfn(&timer_network_status_indicate, network_status_indicate_timer_fn, NULL);
+    os_timer_arm(&timer_network_status_indicate, 1, false);
+    
     main_conn_status = WAIT_CONN_DONE;
+    
+    os_timer_disarm(&timer_main_conn_reconn);
+    os_timer_setfn(&timer_main_conn_reconn, main_connection_confirm_timer_fn, NULL);
+    os_timer_arm(&timer_main_conn_reconn, 1000, 0);
 }
 
 /**
@@ -663,7 +707,7 @@ void establish_network()
     user_devicefind_init();
 
     /* establish the connection with server */
-    main_connection_init();
+    main_connection_init(NULL);
 
     #if 0
     while (main_conn_status < CONNECTED )
