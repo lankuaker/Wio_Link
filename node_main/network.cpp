@@ -187,7 +187,7 @@ static void user_devicefind_recv(void *arg, char *pusrdata, unsigned short lengt
             {
                 os_timer_disarm(&timer_main_conn);
                 os_timer_setfn(&timer_main_conn, fire_reboot, NULL);
-                os_timer_arm(&timer_main_conn, 1000, 0);
+                os_timer_arm(&timer_main_conn, 2000, 0);
             }
         }
     }
@@ -366,7 +366,7 @@ static void confirm_hello(void *arg)
         main_conn_status = KEEP_ALIVE;
         keepalive_last_recv_time = millis();
         os_timer_disarm(&timer_keepalive_check);
-        os_timer_setfn(&timer_keepalive_check, keepalive_check_timer_fn, arg);
+        os_timer_setfn(&timer_keepalive_check, keepalive_check_timer_fn, NULL);
         os_timer_arm(&timer_keepalive_check, 1000, 0);
     } else if (get_hello == 2)
     {
@@ -380,9 +380,14 @@ static void confirm_hello(void *arg)
             return;
         } else
         {
-            main_connection_send_hello(arg);
+            if (confirm_hello_retry_cnt % 10 == 0)
+            {
+                os_timer_setfn(&timer_confirm_hello, main_connection_send_hello, &main_conn);
+            } else
+            {
+                os_timer_setfn(&timer_confirm_hello, confirm_hello, NULL);
+            }
 
-            os_timer_setfn(&timer_confirm_hello, confirm_hello, arg);
             os_timer_arm(&timer_confirm_hello, 1000, 0);
         }
     }
@@ -418,9 +423,8 @@ void main_connection_send_hello(void *arg)
 
     get_hello = 0;
     os_timer_disarm(&timer_confirm_hello);
-    os_timer_setfn(&timer_confirm_hello, confirm_hello, arg);
+    os_timer_setfn(&timer_confirm_hello, confirm_hello, NULL);
     os_timer_arm(&timer_confirm_hello, 100, 0);
-    confirm_hello_retry_cnt = 0;
 }
 
 /**
@@ -443,6 +447,7 @@ void main_connection_connected_callback(void *arg)
     espconn_regist_write_finish(pespconn, main_connection_tx_write_finish_cb); // register write finish callback
 
     /* send hello */
+    confirm_hello_retry_cnt = 0;
     main_connection_send_hello(arg);
     main_conn_status = WAIT_HELLO_DONE;
 
@@ -563,7 +568,7 @@ void main_connection_init(void *arg)
     
     os_timer_disarm(&timer_main_conn_reconn);
     os_timer_setfn(&timer_main_conn_reconn, main_connection_confirm_timer_fn, NULL);
-    os_timer_arm(&timer_main_conn_reconn, 1000, 0);
+    os_timer_arm(&timer_main_conn_reconn, 10000, 0);
 }
 
 /**
@@ -609,8 +614,10 @@ static void smartconfig_done_callback(sc_status status, void *pdata)
  */
 void establish_network()
 {
+    
 #if ENABLE_DEBUG_ON_UART1
     Serial1.begin(74880);
+    //Serial1.setDebugOutput(true);
     Serial1.println("\n\n"); //clear the garbage in uart when boot up
 #endif
 
@@ -619,19 +626,25 @@ void establish_network()
 
     Serial1.printf("Node name: %s\n", NODE_NAME);
     Serial1.printf("Chip id: 0x%08x\n", system_get_chip_id());
-
+    
+    Serial1.print("Free heap size: ");
+    Serial1.println(system_get_free_heap_size());
+    
     /* get key and sn */
-    char *buff = new char[33];
+    char buff[33];
     
+    //os_memcpy(EEPROM.getDataPtr() + EEP_OFFSET_KEY, "9ed12049da8c1eb42a9872bb27cfb02e", 32);
     format_sn(EEPROM.getDataPtr() + EEP_OFFSET_KEY, (uint8_t *)buff);
-    Serial1.printf("Node's private key in flash: %s\n", buff);
+    Serial1.printf("Private key: %s\n", buff);
     
+    //os_memcpy(EEPROM.getDataPtr() + EEP_OFFSET_SN, "52f4370b14aedea33416db677b1c5726", 32);
     format_sn(EEPROM.getDataPtr() + EEP_OFFSET_SN, (uint8_t *)buff);
-    Serial1.printf("Node SN in flash: %s\n", buff);
-
-    delete[] buff;
-
+    Serial1.printf("Node SN: %s\n", buff);
+    
     Serial1.printf("start to establish network connection.\r\n");
+
+    Serial1.flush();
+    delay(1000);  //should delay some time to wait all settled before wifi_* API calls.
 
     /* get the smart config flag */
     uint8_t config_flag = *(EEPROM.getDataPtr() + EEP_OFFSET_SMARTCFG);
@@ -648,6 +661,7 @@ void establish_network()
         Serial1.printf("smart config ... \r\n");
 
         wifi_set_opmode_current(0x01); //smartconfig only support station mode
+        delay(2000);  //wait the settings to be settled
         smartconfig_status = WAIT_SMARTCONFIG_DONE;
         smartconfig_start(SC_TYPE_ESPTOUCH, smartconfig_done_callback);
 
@@ -668,9 +682,11 @@ void establish_network()
         memset(EEPROM.getDataPtr() + EEP_OFFSET_SMARTCFG, 2, 1);  //stage the smart config flag
         EEPROM.commit();
 
-    }
+    }  
 
-    wifi_set_opmode(0x01); //we're now only using the station mode
+    
+    /* enable the station mode */
+    wifi_set_opmode(0x01);
 
     struct station_config config;
     wifi_station_get_config(&config);
@@ -708,16 +724,6 @@ void establish_network()
 
     /* establish the connection with server */
     main_connection_init(NULL);
-
-    #if 0
-    while (main_conn_status < CONNECTED )
-    {
-        Serial1.printf("Wait connecting to server.\n");
-        delay(2000);
-    }
-
-    Serial1.printf("Network established.\n\n\n");
-    #endif
 }
 
 

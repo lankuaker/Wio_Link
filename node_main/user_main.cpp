@@ -62,7 +62,7 @@ void user_init(void)
     uart_div_modify(0, UART_CLK_FREQ / (115200));
 
     arduino_init();
-
+    
     system_init_done_cb(&init_done);
 }
 
@@ -78,7 +78,6 @@ void pre_user_setup()
     EEPROM.begin(4096);
     pinMode(SMARTCONFIG_KEY, INPUT_PULLUP);
     pinMode(STATUS_LED, OUTPUT);
-
     establish_network();
     rpc_server_init();
 }
