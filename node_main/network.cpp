@@ -69,6 +69,7 @@ CircularBuffer *tx_stream_buffer = NULL;
 static aes_context aes_ctx;
 static int iv_offset = 0;
 static unsigned char iv[16];
+static bool txing = false;
 
 void main_connection_init(void *arg);
 void main_connection_send_hello(void *arg);
@@ -290,6 +291,7 @@ static void main_connection_tx_write_finish_cb(void *arg)
     size_t size2 = size;
     if (size > 0)
     {
+        txing = true;
         size2 = (((size % 16) == 0) ? (size) : (size + (16 - size % 16)));  //damn, the python crypto library only supports 16*n block length
         char *data = (char *)malloc(size2);
         os_memset(data, 0, size2);
@@ -297,6 +299,9 @@ static void main_connection_tx_write_finish_cb(void *arg)
         aes_crypt_cfb128(&aes_ctx, AES_ENCRYPT, size2, &iv_offset, iv, data, data);
         espconn_sent(pespconn, data, size2);
         free(data);
+    } else
+    {
+        txing = false;
     }
 }
 
@@ -322,10 +327,22 @@ void network_puts(char *data, int len)
     if (main_conn.state > ESPCONN_NONE)
     {
         noInterrupts();
+        size_t room = tx_stream_buffer->capacity() - tx_stream_buffer->size();
+        interrupts();
+        
+        while (room < len)
+        {
+            delay(10);
+            noInterrupts();
+            room = tx_stream_buffer->capacity() - tx_stream_buffer->size();
+            interrupts();
+        }
+
+        noInterrupts();
         tx_stream_buffer->write(data, len);
         interrupts();
 
-        if ((strchr(data, '\r') || strchr(data, '\n') || tx_stream_buffer->size() > 512)/* && main_conn.state != ESPCONN_WRITE*/)
+        if ((strchr(data, '\r') || strchr(data, '\n') || tx_stream_buffer->size() > 512) && !txing)
         {
             //os_timer_disarm(&timer_tx);
             //os_timer_setfn(&timer_tx, main_connection_sent_cb, &main_conn);

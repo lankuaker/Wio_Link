@@ -473,6 +473,7 @@ int* ICACHE_FLASH_ATTR __errno(void) {
 // ##########################################################################
 //                     __ieee754  functions
 // ##########################################################################
+#if 0
 
 double ICACHE_FLASH_ATTR __ieee754_sinh(double x) {
     return sinh(x);
@@ -537,4 +538,4 @@ float ICACHE_FLASH_ATTR __ieee754_coshf(float x) {
 float ICACHE_FLASH_ATTR __ieee754_atan2f(float x, float y) {
     return atan2f(x, y);
 }
-
+#endif

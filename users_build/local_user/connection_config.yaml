@@ -51,5 +51,10 @@ GroveMagSw1:
     name: Grove-Magnetic Switch
     construct_arg_list:
         pin: 12
+GroveCompass111:
+    name: Grove-3Axis Compass
+    construct_arg_list:
+        pinsda: 4
+        pinscl: 5
 
 

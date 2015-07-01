@@ -117,6 +117,8 @@ def parse_class_header_file (file):
     for func in read_functions:
         args = func[1].split(',')
         args = [x.strip() for x in args]
+        if 'void' in args:
+            args.remove('void')
         reads[func[0]] = args
     patterns["Outputs"] = reads
 
@@ -127,6 +129,8 @@ def parse_class_header_file (file):
     for func in write_functions:
         args = func[1].split(',')
         args = [x.strip() for x in args]
+        if 'void' in args:
+            args.remove('void')
         writes[func[0]] = args
     patterns["Inputs"] = writes
 
