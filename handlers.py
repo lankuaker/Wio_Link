@@ -40,6 +40,8 @@ from shutil import copy
 from build_firmware import *
 import yaml
 import threading
+import smtplib
+import smtp_config
 
 from tornado.httpserver import HTTPServer
 from tornado.tcpserver import TCPServer
@@ -183,6 +185,94 @@ class UserChangePasswordHandler(BaseHandler):
         finally:
             self.application.conn.commit()
 
+class UserRetrievePasswordHandler(BaseHandler):
+    def get(self):
+        self.retrieve()
+
+    def post(self):
+        self.retrieve()
+        
+    def retrieve(self):
+        email = self.get_argument('email','')
+        if not email:
+            self.resp(400, "You must specify the email of the account which you want to retrieve password.\n")
+            return
+
+        if not re.match(r'^[_.0-9a-z-]+@([0-9a-z][0-9a-z-]+.)+[a-z]{2,4}$', email):
+            self.resp(400, "Bad email address\n")
+            return
+
+        gen_log.info("%s want to retrieve password"%(email))
+
+        cur = self.application.cur
+        try:
+            cur.execute('select * from users where email="%s"' % email)
+            row = cur.fetchone()
+            if not row:
+                self.resp(401, "No account registered with this email\n")
+                return
+
+            new_password = self.gen_token(email)[0:6]
+            cur.execute('update users set pwd="%s" where email="%s"' % (md5.new(new_password).hexdigest(), email))
+
+            #start a thread sending email here
+            self.request.connection.stream.io_loop.add_callback(self.start_thread_send_email, email, new_password)
+
+            self.resp(200, "The password has been sent to your email address\n")
+
+        except Exception,e:
+            self.resp(500, str(e))
+            return
+        finally:
+            self.application.conn.commit()
+
+
+    def start_thread_send_email (self, email, new_password):
+        thread_name = "email_thread-" + str(email)
+        li = threading.enumerate()
+        for l in li:
+            if l.getName() == thread_name:
+                print 'INFO: Skip same email request!'
+                return
+
+        threading.Thread(target=self.email_sending_thread, name=thread_name, 
+            args=(email, new_password)).start()
+        
+
+    def email_sending_thread (self, email, new_password):
+        s = smtplib.SMTP_SSL(smtp_config.smtp_server)
+        try:
+            s.login(smtp_config.smtp_user, smtp_config.smtp_pwd)
+        except Exception,e:
+            print e
+            return
+
+        sender = 'no_reply@seeed.cc'
+        receiver = email
+
+        message = """From: WiFi IOT Node <%s>
+To: <%s>
+Subject: Password for your account of iot.seeed.cc has been retrieved
+
+Dear User,
+
+Thanks for your interest in iot.seeed.cc, the new password for your account is
+%s
+
+Please change it as soon as possible.
+
+Thank you!
+
+IOT Team from Seeed
+""" % (sender, receiver, new_password)
+        try:
+            s.sendmail(sender, receiver, message)
+        except Exception,e:
+            print e
+            return
+        print 'sent new password %s to %s' % (new_password, email)
+
+        
 
 class UserLoginHandler(BaseHandler):
     def get (self):

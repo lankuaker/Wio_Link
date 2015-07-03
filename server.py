@@ -371,6 +371,7 @@ class myApplication(web.Application):
         (r"/v1/test[/]?", TestHandler),
         (r"/v1/user/create[/]?", UserCreateHandler),
         (r"/v1/user/changepassword[/]?", UserChangePasswordHandler),
+        (r"/v1/user/retrievepassword[/]?", UserRetrievePasswordHandler),
         (r"/v1/user/login[/]?", UserLoginHandler),
         (r"/v1/scan/drivers[/]?", DriversHandler),
         (r"/v1/scan/status[/]?", DriversStatusHandler),
