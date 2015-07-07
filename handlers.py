@@ -356,6 +356,10 @@ class NodeCreateHandler(BaseHandler):
 
 
 class NodeListHandler(BaseHandler):
+    def initialize (self, conns):
+        self.conns = conns
+        self.conns_sn = [conn.sn for conn in self.conns if not conn.killed]
+
     @web.authenticated
     def get (self):
         user = self.current_user
@@ -368,7 +372,10 @@ class NodeListHandler(BaseHandler):
             rows = cur.fetchall()
             nodes = []
             for r in rows:
-                nodes.append({"name":r["name"],"node_sn":r["node_sn"],"node_key":r['private_key']})
+                online = False
+                if r["node_sn"] in self.conns_sn:
+                    online = True
+                nodes.append({"name":r["name"],"node_sn":r["node_sn"],"node_key":r['private_key'], "online":online})
             self.resp(200, meta={"nodes": nodes})
         except Exception,e:
             self.resp(500,str(e))

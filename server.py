@@ -376,7 +376,7 @@ class myApplication(web.Application):
         (r"/v1/scan/drivers[/]?", DriversHandler),
         (r"/v1/scan/status[/]?", DriversStatusHandler),
         (r"/v1/nodes/create[/]?", NodeCreateHandler),
-        (r"/v1/nodes/list[/]?", NodeListHandler),
+        (r"/v1/nodes/list[/]?", NodeListHandler, dict(conns=DeviceServer.accepted_conns)),
         (r"/v1/nodes/rename[/]?", NodeRenameHandler),
         (r"/v1/nodes/delete[/]?", NodeDeleteHandler),
         (r"/v1/node/(.+)", NodeReadWriteHandler, dict(conns=DeviceServer.accepted_conns)),
