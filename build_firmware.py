@@ -127,7 +127,7 @@ def build_return_values (arg_list):
     for arg in arg_list:
         if not arg:
             continue
-        result += arg.strip().replace(' ', ': ')
+        result += arg.strip().replace('*', ': ').replace(' ','')
         result += ', '
     return result.rstrip(', ')
 
@@ -256,8 +256,11 @@ def gen_wrapper_registration (instance_name, info, arg_list):
 
     # event attachment
     if info['HasEvent']:
-        str_reg_method += '\r\n    %s->attach_event_reporter(rpc_server_event_report);\r\n' % (instance_name+"_ins")
-        str_wellknown += '    writer_print(TYPE_STRING, "\\"HasEvent %s\\",");\r\n' % (instance_name)
+        for ev in info['Events']:
+            str_reg_method += '\r\n'
+            str_reg_method += '    event = %s->attach_event_reporter_for_%s(rpc_server_event_report);\r\n' % (instance_name+"_ins", ev)
+            str_reg_method += '    event->event_name="%s";\r\n' % (ev)
+            str_wellknown += '    writer_print(TYPE_STRING, "\\"Event %s %s\\",");\r\n' % (instance_name, ev)
 
     fp_wrapper_h.close()
     fp_wrapper_cpp.close()
@@ -330,6 +333,7 @@ def gen_and_build (user_id, node_name):
     fp_reg_cpp.write('void rpc_server_register_resources()\r\n')
     fp_reg_cpp.write('{\r\n')
     fp_reg_cpp.write('    uint8_t arg_types[MAX_INPUT_ARG_LEN];\r\n')
+    fp_reg_cpp.write('    EVENT_T *event;\r\n')
     fp_reg_cpp.write('    \r\n')
     fp_reg_cpp.write(str_reg_method)
     fp_reg_cpp.write('}\r\n')

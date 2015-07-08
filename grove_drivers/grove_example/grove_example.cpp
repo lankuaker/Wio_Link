@@ -98,15 +98,15 @@ bool GroveExample::write_multi_value(int a, float b, uint32_t c)
 }
 
 
-bool GroveExample::attach_event_reporter(CALLBACK_T reporter)
+EVENT_T * GroveExample::attach_event_reporter_for_fire(CALLBACK_T reporter)
 {
     this->event1 = (EVENT_T *)malloc(sizeof(EVENT_T));
 
-    suli_event_init(event1, reporter);
+    suli_event_init(event1, reporter, NULL);
 
     suli_pin_attach_interrupt_handler(pin, &pin_interrupt_handler, SULI_RISE, this);
 
-    return true;
+    return this->event1;
 }
 
 void GroveExample::_internal_function(float x)
@@ -118,6 +118,5 @@ static void pin_interrupt_handler(void *para)
 {
     GroveExample *g = (GroveExample *)para;
 
-    suli_event_trigger(g->event1, "fire", *(g->pin));
-    Serial1.println("triggered");
+    suli_event_trigger(g->event1, *(g->pin));
 }

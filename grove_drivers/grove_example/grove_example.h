@@ -49,7 +49,7 @@ public:
     bool write_acc_mode(uint8_t mode);
     bool write_float_value(float f);
     bool write_multi_value(int a, float b, uint32_t c);
-    bool attach_event_reporter(CALLBACK_T reporter);
+    EVENT_T *attach_event_reporter_for_fire(CALLBACK_T reporter);
 
     IO_T *pin;
     EVENT_T *event1;

@@ -41,7 +41,7 @@ class GroveMagneticSwitch
 public:
     GroveMagneticSwitch(int pin);
     bool read_approach(uint8_t *mag_approach);
-    bool attach_event_reporter(CALLBACK_T reporter);
+    EVENT_T * attach_event_reporter_for_mag_approached(CALLBACK_T reporter);
     EVENT_T *event;
     IO_T *io;
     uint32_t time;

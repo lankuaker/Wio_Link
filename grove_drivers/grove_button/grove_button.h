@@ -41,7 +41,7 @@ class GroveButton
 public:
     GroveButton(int pin);
     bool read_pressed(uint8_t *pressed);
-    bool attach_event_reporter(CALLBACK_T reporter);
+    EVENT_T * attach_event_reporter_for_button_pressed(CALLBACK_T reporter);
     EVENT_T *event;
     IO_T *io;
     uint32_t time;

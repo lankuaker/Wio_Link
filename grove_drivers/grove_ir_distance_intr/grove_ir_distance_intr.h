@@ -42,9 +42,10 @@ class GroveIRDistanceInterrupter
 public:
     GroveIRDistanceInterrupter(int pin);
     bool read_approach(uint8_t *approach);
-    bool attach_event_reporter(CALLBACK_T reporter);
+    EVENT_T * attach_event_reporter_for_ir_approached(CALLBACK_T reporter);
     EVENT_T *event;
     IO_T *io;
+    uint32_t time;
 };
 
 static void approach_interrupt_handler(void *para);

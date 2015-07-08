@@ -43,21 +43,26 @@ bool GroveIRDistanceInterrupter::read_approach(uint8_t *approach)
     return true;
 }
 
-bool GroveIRDistanceInterrupter::attach_event_reporter(CALLBACK_T reporter)
+EVENT_T * GroveIRDistanceInterrupter::attach_event_reporter_for_ir_approached(CALLBACK_T reporter)
 {
     this->event = (EVENT_T *)malloc(sizeof(EVENT_T));
 
-    suli_event_init(event, reporter);
+    suli_event_init(event, reporter, NULL);
 
     suli_pin_attach_interrupt_handler(io, &approach_interrupt_handler, SULI_FALL, this);
 
-    return true;
+    return this->event;
 }
 
 static void approach_interrupt_handler(void *para)
 {
     GroveIRDistanceInterrupter *g = (GroveIRDistanceInterrupter *)para;
 
-    suli_event_trigger(g->event, "ir_approached", *(g->io));
+    if (millis() - g->time < 10)
+    {
+        return;
+    }
+    g->time = millis();
+    suli_event_trigger(g->event, *(g->io));
 }
 

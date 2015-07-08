@@ -69,9 +69,8 @@ And also we need more grove drivers commit from community if you know Arduino an
   * 所有read函数的输出数值均通过指针向外透出, 参数个数不限
   * 所有write函数参数个数不能超过4个
   * class封装中成员方法的参数数值类型仅支持{int, float, char, int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t}及他们的指针型
-  * class封装层中事件绑定函数的命名必须为attach_event_reporter(才能被脚本扫到)
-  * ~~需要上报事件时, EVENT_T全局事件变量的定义放到第一层驱动封装中, 因为事件触发是由底层到上层~~
-  * ~~class层封装event上报行为时,必须用以attach_event_handler为名的方法~~  
+  * 事件绑定函数的命名格式必须为EVENT_T * attach_event_reporter_for_\[event_name\](CALLBACK_T), 才能被脚本扫到
+  * 事件绑定函数EVENT_T * attach_event_reporter_for_\[event_name\]必须返回事件变量的指针
   
 * 构造函数参数
   * GPIO类型: 参数为(int pin)

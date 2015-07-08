@@ -136,8 +136,14 @@ def parse_class_header_file (file):
 
     ## event
     # bool attach_event_reporter(CALLBACK_T handler);
-    event_attachments = re.findall(r'^\s+bool\s+(attach_event_reporter)\((.*)\);', content, re.M)
+    event_attachments = re.findall(r'^\s+EVENT_T\s*\*\s*attach_event_reporter_for_(.*)\((.*)\);', content, re.M)
     print event_attachments
+    events = []
+    for ev in event_attachments:
+        events.append(ev[0])
+
+    patterns["Events"] = events
+
     if len(event_attachments) > 0:
         patterns["HasEvent"] = True
     else:

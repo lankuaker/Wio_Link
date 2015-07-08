@@ -569,18 +569,24 @@ inline int suli_uart_readable(UART_T *uart)
  * Event related APIs
  ***************************************************************************/
 typedef void (*event_callback_t)(char *event_name, uint32_t event_data);
-typedef event_callback_t        EVENT_T;
+struct __event_s
+{
+    event_callback_t    cb;
+    char                *event_name;
+};
+typedef __event_s               EVENT_T;
 typedef event_callback_t        CALLBACK_T;
 
-inline void suli_event_init(EVENT_T *event, CALLBACK_T cb)
+inline void suli_event_init(EVENT_T *event, CALLBACK_T cb, char *name)
 {
-    *event = cb;
+    event->cb = cb;
+    event->event_name = name;
 }
-inline void suli_event_trigger(EVENT_T *event, char *event_name, uint32_t event_data)
+inline void suli_event_trigger(EVENT_T *event, uint32_t event_data)
 {
-    if (event)
+    if (event->cb)
     {
-        (*event)(event_name, event_data);
+        (event->cb)(event->event_name, event_data);
     }
 }
 
