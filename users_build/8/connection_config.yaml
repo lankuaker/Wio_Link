@@ -1,4 +1,0 @@
-Grove_Relay:
-  name: Grove_Relay
-  construct_arg_list:
-    pin: 14

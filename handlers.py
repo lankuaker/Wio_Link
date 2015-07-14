@@ -473,7 +473,9 @@ class NodeBaseHandler(BaseHandler):
 class NodeReadWriteHandler(NodeBaseHandler):
 
     @gen.coroutine
-    def get(self, uri):
+    def get(self, ignore, uri):
+
+        print ignore
 
         uri = uri.split("?")[0]
         print "get:",uri
@@ -496,7 +498,7 @@ class NodeReadWriteHandler(NodeBaseHandler):
         self.resp(404, "Node is offline")
 
     @gen.coroutine
-    def post (self, uri):
+    def post (self, ignore, uri):
 
         uri = uri.split("?")[0].rstrip("/")
         print "post to:",uri
@@ -606,6 +608,34 @@ class NodeEventHandler(websocket.WebSocketHandler):
         return result_future
 
 
+class NodeGetConfigHandler(NodeBaseHandler):
+
+    def get(self):
+        node = self.get_node()
+        if not node:
+            return
+
+        user_id = node["user_id"]
+        node_name = node["name"]
+
+        cur_dir = os.path.split(os.path.realpath(__file__))[0]
+        user_build_dir = cur_dir + '/users_build/' + str(user_id)
+        if not os.path.exists(user_build_dir):
+            self.resp(404, "Config not found\n")
+
+        try:
+            yaml_file = open("%s/connection_config.yaml"%user_build_dir, 'r')
+            self.resp(200, yaml_file.read())
+        except Exception,e:
+            print "Exception when reading yaml file", e
+            self.resp(404, "Config not found\n")
+
+
+    def post(self):
+        self.resp(404, "Please get this url\n")
+
+
+
 class UserDownloadHandler(NodeBaseHandler):
     """
     post two para, node_token and yaml
@@ -665,7 +695,7 @@ class UserDownloadHandler(NodeBaseHandler):
 
         yaml_file.close()
 
-        copy('%s/users_build/local_user/Makefile'%cur_dir, user_build_dir)
+        copy('%s/Makefile.template'%cur_dir, '%s/Makefile'%user_build_dir)
 
         self.request.connection.stream.io_loop.add_callback(self.ota_process, user_id, node_name, node['node_sn'])
 
@@ -844,35 +874,6 @@ class OTAHandler(BaseHandler):
         self.resp(404, "Please get this url.")
 
 
-'''
-for test
-'''
-class OTATrigHandler(BaseHandler):
-
-    def initialize (self, conns):
-        self.conns = conns
-
-
-    @gen.coroutine
-    def get (self):
-
-        sn = self.get_argument("sn","")
-        if not sn:
-            gen_log.error("ota bin request has no sn provided")
-            return
-        print sn
-
-        for conn in self.conns:
-            if conn.sn == sn and not conn.killed:
-                try:
-                    cmd = "OTA\r\n"
-                    cmd = cmd.encode("ascii")
-                    ok, resp = yield conn.submit_and_wait_resp (cmd, "ota_trig_ack")
-                    self.resp(200,resp)
-                except Exception,e:
-                    print e
-                return
-        self.resp(404, "Node is offline")
 
 
 
