@@ -298,7 +298,7 @@ class UserLoginHandler(BaseHandler):
             if not row:
                 self.resp(401, "Login failed - invalid email or password")
                 return
-            self.resp(200, "Logged in",{"token": row["token"]})
+            self.resp(200, "Logged in",{"token": row["token"], "user_id": row["user_id"]})
         except Exception,e:
             self.resp(500,str(e))
             return
