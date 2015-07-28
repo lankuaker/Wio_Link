@@ -35,10 +35,10 @@ GroveMoisture:
 #    name: Grove-Temperature&Humidity
 #    construct_arg_list:
 #        pin: 14
-GroveIRDistanceInterrupter111:
-    name: Grove-IR Distance Interrupter
-    construct_arg_list:
-        pin: 14
+#GroveIRDistanceInterrupter111:
+#    name: Grove-IR Distance Interrupter
+#    construct_arg_list:
+#        pin: 14
 GroveButton:
     name: Grove-Button
     construct_arg_list:
@@ -56,5 +56,26 @@ GroveCompass111:
     construct_arg_list:
         pinsda: 4
         pinscl: 5
-
-
+GroveSPDTRelay30A:
+    name: Grove - SPDT Relay(30A)
+    construct_arg_list:
+        pin: 14
+#GroveSpeaker:
+#    name: Grove - Speaker
+#    construct_arg_list:
+#        pin: 14
+#GroveGesture:
+#    name: Grove - Gesture v1.0
+#    construct_arg_list:
+#        pinsda: 4
+#        pinscl: 5
+#GroveAirquality:
+#    name: Grove - Air Quality Sensor
+#    construct_arg_list:
+#        pin: 17   
+#GroveMultiChannelGas:     
+#    name: Grove - Multichannel Gas Sensor
+#    construct_arg_list:
+#        pinsda: 4
+#        pinscl: 5
+       

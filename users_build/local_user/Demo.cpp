@@ -17,13 +17,226 @@
 #include "Arduino.h"
 #include "suli2.h"
 
+#include "grove_spdt_relay_30a.h"
+//#include "grove_speaker.h"
+//#include "grove_gesture_paj7620.h"
+//#include "grove_airquality_tp401a.h"
+//#include "grove_multichannel_gas_mics6814.h"
+
+
+
+//GroveMultiChannelGas
+#if 0
+
+GroveMultiChannelGas *multichannel_gas;
+
 void setup()
 {
+    Serial1.println("\r\n\r\nGroveMultiChannelGas\r\n");
+    multichannel_gas = new GroveMultiChannelGas(4, 5);
+    Serial1.println("\r\n\r\ninitialized");
+}
+
+void loop()
+{  
+    multichannel_gas->readRS();
+    Serial1.print("Res[0]: ");
+    Serial1.println(multichannel_gas->res[0]);
+    Serial1.print("Res[1]: ");
+    Serial1.println(multichannel_gas->res[1]);
+    Serial1.print("Res[2]: ");
+    Serial1.println(multichannel_gas->res[2]);
+    
+    multichannel_gas->calcGas();
+    Serial1.print("NH3: ");
+    Serial1.print(multichannel_gas->density_nh3);
+    Serial1.println("ppm");
+    Serial1.print("CO: ");
+    Serial1.print(multichannel_gas->density_co);
+    Serial1.println("ppm");
+    Serial1.print("NO2: ");
+    Serial1.print(multichannel_gas->density_no2);
+    Serial1.println("ppm");
+    
+    delay(1000);
+    Serial1.println("...");
+}
+
+#endif
+
+
+//GroveAirquality
+#if 0
+
+GroveAirquality *airquality;
+int quality = 0;
+
+void setup()
+{
+    Serial1.println("\r\n\r\nGroveAirquality\r\n");
+    airquality = new GroveAirquality(17);
+    Serial1.println("\r\n\r\ninitialized");
+}
+
+void loop()
+{  
+    if(airquality->read_quality(&quality) == true)
+    {
+        Serial1.print("get quality is ");
+        Serial1.print(quality);
+        if(quality>700)
+        {
+            Serial1.println("High pollution! Force signal active.");		
+        }
+    	else if(quality>150)
+        {			
+            Serial1.println("\t High pollution!");		
+        }
+    	else if(quality>50)
+        {		
+            Serial1.println("\t Low pollution!");		
+        }
+    	else
+        {
+            Serial1.println("\t Air fresh");
+        }
+    }
+    else
+    {
+        Serial1.println("the air quality sensor is not ready for reading value");
+    }
+    
+    delay(1000);
+}
+
+#endif
+
+
+//GroveGesture
+#if 0
+
+GroveGesture *gesture;
+uint8_t motion = 0;
+
+void setup()
+{
+    Serial1.println("\r\n\r\nGroveGesture\r\n");
+    gesture = new GroveGesture(4, 5);
+    Serial1.println("\r\n\r\ninitialized");
 }
 
 void loop()
 {
+    gesture->read_gesture_motion(&motion);
+    if(motion != Gesture_None)
+    {
+        switch(motion)
+        {
+            case Gesture_None:
+                //nothing to do
+                break;
+            case Gesture_Right:
+                Serial1.println("Right");
+                break;
+            case Gesture_Left:
+                Serial1.println("Left");
+                break;
+            case Gesture_Up:
+                Serial1.println("Up");
+                break;
+            case Gesture_Down:
+                Serial1.println("Down");
+                break;
+            case Gesture_Foward:
+                Serial1.println("Forward");
+                break;
+            case Gesture_Backward:
+                Serial1.println("Backward");
+                break;
+            case Gesture_Clockwise:
+                Serial1.println("Clockwise");
+                break;
+            case Gesture_CountClockwize:
+                Serial1.println("Count Clockwise");
+                break;
+            case Gesture_Wave:
+                Serial1.println("Wave");
+                break;
+            default:
+                //nothing to do
+                break;
+        }
+        motion = 0;//clear flag
+    }
+    delay(100);
 }
+
+#endif
+
+//GroveSpeaker
+#if 0
+
+GroveSpeaker *speaker;
+const int BassTab[]={1911,1702,1516,1431,1275,1136,1012};//bass 1~7
+
+void setup() 
+{
+    Serial1.println("\r\n\r\nGroveSpeaker\r\n");
+    speaker = new GroveSpeaker(14);
+}
+void loop()
+{
+	for(int note_index=0;note_index<7;note_index++)
+  	{
+    	speaker->write_sound(BassTab[note_index], 500);
+		delay(500);
+  	}
+}
+
+#endif
+
+
+//GroveSPDTRelay30A
+#if 1
+
+GroveSPDTRelay30A *spdtRelay;
+void setup()
+{
+    Serial1.println("\r\n\r\nGroveSPDTRelay30A\r\n");
+    spdtRelay = new GroveSPDTRelay30A(14);
+}
+
+void loop()
+{
+    spdtRelay->write_onoff(1);
+    delay(500);
+    spdtRelay->write_onoff(0);
+    delay(500);
+}
+
+#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #if 0
 
@@ -31,8 +244,8 @@ GroveAccMMA7660 *acc;
 
 void setup()
 {
-    //Serial.begin(9600);
-    //Serial.println("Demo\r\n");
+    //Serial1.begin(9600);
+    //Serial1.println("Demo\r\n");
     acc = new GroveAccMMA7660(4, 5);
 }
 void loop()
@@ -76,12 +289,12 @@ at_upDate_rsp(void *arg)
 
     if(server->upgrade_flag == true)
     {
-        Serial.println("device_upgrade_success\r\n");
+        Serial1.println("device_upgrade_success\r\n");
         wifi_station_disconnect();
         system_upgrade_reboot();
     } else
     {
-        Serial.println("device_upgrade_failed\r\n");
+        Serial1.println("device_upgrade_failed\r\n");
     }
 
     os_free(server->url);
@@ -116,11 +329,11 @@ at_exeCmdCiupdate(uint8_t id)
 
     if(system_upgrade_userbin_check() == UPGRADE_FW_BIN1)
     {
-        Serial.printf("Running user1.bin \r\n\r\n");
+        Serial1.printf("Running user1.bin \r\n\r\n");
         os_memcpy(user_bin, "user2.bin", 10);
     } else if(system_upgrade_userbin_check() == UPGRADE_FW_BIN2)
     {
-        Serial.printf("Running user2.bin \r\n\r\n");
+        Serial1.printf("Running user2.bin \r\n\r\n");
         os_memcpy(user_bin, "user1.bin", 10);
     }
 
@@ -131,10 +344,10 @@ at_exeCmdCiupdate(uint8_t id)
 
     if(system_upgrade_start(upServer) == false)
     {
-        Serial.println("Upgrade already started.");
+        Serial1.println("Upgrade already started.");
     } else
     {
-        Serial.println("Upgrade started");
+        Serial1.println("Upgrade started");
     }
 }
 
@@ -145,18 +358,18 @@ os_timer_t t1;
 void print_cnt(void *arg)
 {
     int *counter = (int *)arg;
-    Serial.printf("cnt: %d \r\n", *counter);
+    Serial1.printf("cnt: %d \r\n", *counter);
 }
 void task1(os_event_t *event)
 {
-    Serial.println("task1");
+    Serial1.println("task1");
     cnt++;
     os_timer_arm(&t1, 1, 0);
 }
 void task2(os_event_t *event)
 {
-    Serial.print("task2");
-    Serial.println(cnt);
+    Serial1.print("task2");
+    Serial1.println(cnt);
 }
 
 struct station_config config;
@@ -168,7 +381,7 @@ void setup()
 {
     // initialize digital pin 13 as an output.
     pinMode(12, OUTPUT);
-    Serial.begin(115200);
+    Serial1.begin(115200);
     //suli_i2c_init(&i2c, 0, 0);
 #if 0
     wifi_set_opmode_current(0x01);
@@ -189,18 +402,18 @@ void loop()
     Serial1.println(analogRead(A0));
     delay(1000);
     return;
-    Serial.println(wifi_station_get_connect_status());
-    Serial.flush();
+    Serial1.println(wifi_station_get_connect_status());
+    Serial1.flush();
     digitalWrite(12, HIGH);   // turn the LED on (HIGH is the voltage level)
     delay(1000);              // wait for a second
     digitalWrite(12, LOW);    // turn the LED off by making the voltage LOW
     delay(200);              // wait for a second
-    Serial.println("hello2");
+    Serial1.println("hello2");
     //suli_i2c_write(&i2c, 0, "adfasdfasd", 5);
-    if(Serial.available()>0)
+    if(Serial1.available()>0)
     {
-        char c = Serial.read();
-        Serial.println(c);
+        char c = Serial1.read();
+        Serial1.println(c);
         if(c == 'u')
         {
             at_exeCmdCiupdate(0);
@@ -208,8 +421,8 @@ void loop()
     }
     system_os_post(USER_TASK_PRIO_2, 0, 0);
     uint8_t app = system_upgrade_userbin_check() + 1;
-    Serial.print("user");
-    Serial.println(app);
+    Serial1.print("user");
+    Serial1.println(app);
 
     os_printf("test print from loop 3333\r\n");
 }
