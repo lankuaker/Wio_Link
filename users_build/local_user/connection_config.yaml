@@ -27,10 +27,10 @@ Grove_Gyro_ITG3200:
     construct_arg_list:
         pinsda: 4
         pinscl: 5
-GroveMoisture:
-    name: Grove-Moisture
-    construct_arg_list:
-        pin: 17
+#GroveMoisture:
+#    name: Grove-Moisture
+#    construct_arg_list:
+#        pin: 17
 #GroveTempHum111:
 #    name: Grove-Temperature&Humidity
 #    construct_arg_list:
@@ -39,27 +39,27 @@ GroveMoisture:
 #    name: Grove-IR Distance Interrupter
 #    construct_arg_list:
 #        pin: 14
-GroveButton:
-    name: Grove-Button
-    construct_arg_list:
-        pin: 0
+#GroveButton:
+#    name: Grove-Button
+#    construct_arg_list:
+#        pin: 0
 #GroveButton1:
 #    name: Grove-Button
 #    construct_arg_list:
 #        pin: 12
-GroveMagSw1:
-    name: Grove-Magnetic Switch
-    construct_arg_list:
-        pin: 12
+#GroveMagSw1:
+#    name: Grove-Magnetic Switch
+#    construct_arg_list:
+#        pin: 12
 GroveCompass111:
     name: Grove-3Axis Compass
     construct_arg_list:
         pinsda: 4
         pinscl: 5
-GroveSPDTRelay30A:
-    name: Grove - SPDT Relay(30A)
-    construct_arg_list:
-        pin: 14
+#GroveSPDTRelay30A:
+#    name: Grove - SPDT Relay(30A)
+#    construct_arg_list:
+#        pin: 14
 #GroveSpeaker:
 #    name: Grove - Speaker
 #    construct_arg_list:
@@ -73,9 +73,9 @@ GroveSPDTRelay30A:
 #    name: Grove - Air Quality Sensor
 #    construct_arg_list:
 #        pin: 17   
-#GroveMultiChannelGas:     
-#    name: Grove - Multichannel Gas Sensor
-#    construct_arg_list:
-#        pinsda: 4
-#        pinscl: 5
+GroveMultiChannelGas:     
+    name: Grove - Multichannel Gas Sensor
+    construct_arg_list:
+        pinsda: 4
+        pinscl: 5
        

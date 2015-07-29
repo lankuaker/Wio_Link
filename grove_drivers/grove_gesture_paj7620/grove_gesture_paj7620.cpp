@@ -320,7 +320,7 @@ bool GroveGesture::_init(void)
     return true;
 }
 
-bool GroveGesture::read_gesture_motion(uint8_t *motion)
+bool GroveGesture::read_motion(uint8_t *motion)
 {
 	uint8_t data = 0, data1 = 0, error;
 	

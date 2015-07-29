@@ -123,7 +123,7 @@ class GroveGesture
 {
 public:
     GroveGesture(int pinsda, int pinscl);
-    bool GroveGesture::read_gesture_motion(uint8_t *motion);
+    bool read_motion(uint8_t *motion);
 private:
     I2C_T *i2c;
     bool _init(void);

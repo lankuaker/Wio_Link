@@ -61,12 +61,11 @@ public:
     GroveMultiChannelGas(int pinsda, int pinscl);
     uint16_t res0[3];//sensors res0
     uint16_t res[3];//sensors res
-    float density_nh3, density_co, density_no2;//gas concentration
     
     bool begin(int address);
-    int16_t readR0(void);
-    int16_t readRS(void);
-    bool calcGas(void);
+    bool read_res0(uint16_t *res0_ch1, uint16_t *res0_ch2, uint16_t *res0_ch3);
+    bool read_res(uint16_t *res_ch1, uint16_t *res_ch2, uint16_t *res_ch3);
+    bool read_concentration(float *nh3, float *co, float *no2);
     bool changeI2cAddr(uint8_t newAddr);
     bool doCalibrate(void);
     bool powerOn(void);

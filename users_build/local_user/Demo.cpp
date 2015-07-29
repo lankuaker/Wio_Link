@@ -17,18 +17,58 @@
 #include "Arduino.h"
 #include "suli2.h"
 
-#include "grove_spdt_relay_30a.h"
+//#include "grove_spdt_relay_30a.h"
 //#include "grove_speaker.h"
 //#include "grove_gesture_paj7620.h"
 //#include "grove_airquality_tp401a.h"
 //#include "grove_multichannel_gas_mics6814.h"
 
 
+void setup()
+{
+
+}
+
+void loop()
+{    
+
+}
+
+
+
+//test PWM
+/*
+PWM_T pwm;
+uint32_t freq = 10000;
+
+void setup()
+{
+    Serial1.println("\r\nsuli_pwm_init");
+    suli_pwm_init(&pwm, 5);
+    Serial1.println("suli_pwm_frequency");
+    suli_pwm_frequency(&pwm, freq);//unit: Hz
+    Serial1.println("suli_pwm_output");
+    suli_pwm_output(&pwm, 0.5);
+    Serial1.println("initialized");
+}
+
+void loop()
+{    
+    suli_pwm_frequency(&pwm, freq);//unit: Hz
+    freq += 1000;
+    if(freq > 50000) freq = 10000;
+    delay(250);
+    //Serial1.print(".");
+}
+*/
+
 
 //GroveMultiChannelGas
 #if 0
 
 GroveMultiChannelGas *multichannel_gas;
+uint16_t res_ch1, res_ch2, res_ch3;
+float nh3, co, no2;//gas concentration
 
 void setup()
 {
@@ -39,23 +79,23 @@ void setup()
 
 void loop()
 {  
-    multichannel_gas->readRS();
+    multichannel_gas->read_res(&res_ch1, &res_ch2, &res_ch3);
     Serial1.print("Res[0]: ");
-    Serial1.println(multichannel_gas->res[0]);
+    Serial1.println(res_ch1);
     Serial1.print("Res[1]: ");
-    Serial1.println(multichannel_gas->res[1]);
+    Serial1.println(res_ch2);
     Serial1.print("Res[2]: ");
-    Serial1.println(multichannel_gas->res[2]);
+    Serial1.println(res_ch3);
     
-    multichannel_gas->calcGas();
+    multichannel_gas->read_concentration(&nh3, &co, &no2);
     Serial1.print("NH3: ");
-    Serial1.print(multichannel_gas->density_nh3);
+    Serial1.print(nh3);
     Serial1.println("ppm");
     Serial1.print("CO: ");
-    Serial1.print(multichannel_gas->density_co);
+    Serial1.print(co);
     Serial1.println("ppm");
     Serial1.print("NO2: ");
-    Serial1.print(multichannel_gas->density_no2);
+    Serial1.print(no2);
     Serial1.println("ppm");
     
     delay(1000);
@@ -127,7 +167,7 @@ void setup()
 
 void loop()
 {
-    gesture->read_gesture_motion(&motion);
+    gesture->read_motion(&motion);
     if(motion != Gesture_None)
     {
         switch(motion)
@@ -197,7 +237,7 @@ void loop()
 
 
 //GroveSPDTRelay30A
-#if 1
+#if 0
 
 GroveSPDTRelay30A *spdtRelay;
 void setup()
