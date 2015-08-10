@@ -452,7 +452,7 @@ class NodeBaseHandler(BaseHandler):
                 token = token_str.replace("token ","")
             except:
                 token = None
-        print token
+        print "node token:", token
         if token:
             try:
                 cur = self.application.cur
@@ -465,7 +465,7 @@ class NodeBaseHandler(BaseHandler):
         else:
             node = None
 
-        print "get current node:", str(node)
+        print "get current node:", node["name"], str(node)
         if not node:
             self.resp(403,"Please attach the valid node token (not the user token)")
         return node
@@ -870,14 +870,24 @@ class OTAHandler(BaseHandler):
         if not node:
             return
 
-        #get the user dir
-        user_dir = os.path.join("users_build/",str(node['user_id']))
+        #get the user dir and path of bin
+        bin_path = os.path.join("users_build/",str(node['user_id']), "user%s.bin"%str(app))
 
         #put user*.bin out
         self.set_header("Content-Type","application/octet-stream")
         self.set_header("Content-Transfer-Encoding", "binary")
-        self.write(open(os.path.join(user_dir, "user%s.bin"%str(app))).read())
+        self.set_header("Content-Length", os.path.getsize(bin_path))
 
+        with open(bin_path,"rb") as file:
+            while True:
+                chunk_size = 64 * 1024
+                chunk = file.read(chunk_size)
+                if chunk:
+                    self.write(chunk)
+                    yield self.flush()
+                else:
+                    print "firmware bin sent done."
+                    return        
 
     def post (self, uri):
         self.resp(404, "Please get this url.")

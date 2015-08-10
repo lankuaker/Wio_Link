@@ -45,6 +45,7 @@ void network_putc(char c);
 void network_puts(char *data, int len);
 
 extern CircularBuffer *rx_stream_buffer;
+extern uint32_t keepalive_last_recv_time;
 
 
 #endif

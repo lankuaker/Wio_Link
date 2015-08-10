@@ -46,7 +46,7 @@ uint8_t main_conn_status = WAIT_CONN_DONE;
 static uint8_t main_conn_retry_cnt = 0;
 static uint8_t get_hello = 0;
 static uint8_t confirm_hello_retry_cnt = 0;
-static uint32_t keepalive_last_recv_time = 0;
+uint32_t keepalive_last_recv_time = 0;
 
 const char *device_find_request = "Node?";
 const char *blank_device_find_request = "Blank?";
