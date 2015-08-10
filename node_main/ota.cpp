@@ -60,12 +60,13 @@ void ota_response(void *arg)
         Serial1.println("device_upgrade_success\r\n");
         ota_succ = true;
         os_timer_setfn(&timer_reboot, timer_reboot_proc, NULL);
-        os_timer_arm(&timer_reboot, 1000, false);
-        response_msg_open("ota_result");
-        writer_print(TYPE_STRING, "\"success\"");
-        response_msg_close();
-        //wifi_station_disconnect();
-        //system_upgrade_reboot();
+        os_timer_arm(&timer_reboot, 3000, false);
+        for (int i = 0; i < 3;i++)
+        {
+            response_msg_open("ota_result");
+            writer_print(TYPE_STRING, "\"success\"");
+            response_msg_close();           
+        }
     } else
     {
         Serial1.println("device_upgrade_failed\r\n");
@@ -92,13 +93,13 @@ void ota_start()
     struct upgrade_server_info *upServer = (struct upgrade_server_info *)os_zalloc(sizeof(struct upgrade_server_info));
 
     upServer->pespconn = NULL;
-    const char esp_server_ip[4] = OTA_SERVER_IP;
+    const char esp_server_ip[4] = SERVER_IP;
     os_memcpy(upServer->ip, esp_server_ip, 4);
 
     upServer->port = OTA_SERVER_PORT;
 
     upServer->check_cb = ota_response;
-    upServer->check_times = 60000;
+    upServer->check_times = 300000;
 
     if(upServer->url == NULL)
     {

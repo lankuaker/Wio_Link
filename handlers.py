@@ -624,12 +624,13 @@ class NodeGetConfigHandler(NodeBaseHandler):
         user_build_dir = cur_dir + '/users_build/' + str(user_id)
         if not os.path.exists(user_build_dir):
             self.resp(404, "Config not found\n")
+            return
 
         try:
             yaml_file = open("%s/connection_config.yaml"%user_build_dir, 'r')
             self.resp(200, yaml_file.read())
         except Exception,e:
-            print "Exception when reading yaml file", e
+            print "Exception when reading yaml file:", e
             self.resp(404, "Config not found\n")
 
 
@@ -701,6 +702,9 @@ class UserDownloadHandler(NodeBaseHandler):
 
         self.request.connection.stream.io_loop.add_callback(self.ota_process, user_id, node_name, node['node_sn'])
 
+        #clear the possible old state recv during last ota process
+        self.cur_conn.state_happened = []
+
         self.resp(200,"",meta={'ota_status': "going", "ota_msg": "Building firmware.."})
 
 
@@ -756,6 +760,7 @@ class UserDownloadHandler(NodeBaseHandler):
                 self.cur_conn.state_happened.append(state)
             else:
                 self.cur_conn.state_waiters.pop(0).set_result(state)
+
         return
 
 
@@ -869,6 +874,8 @@ class OTAHandler(BaseHandler):
         user_dir = os.path.join("users_build/",str(node['user_id']))
 
         #put user*.bin out
+        self.set_header("Content-Type","application/octet-stream")
+        self.set_header("Content-Transfer-Encoding", "binary")
         self.write(open(os.path.join(user_dir, "user%s.bin"%str(app))).read())
 
 
