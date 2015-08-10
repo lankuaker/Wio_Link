@@ -298,7 +298,7 @@ class UserLoginHandler(BaseHandler):
             if not row:
                 self.resp(401, "Login failed - invalid email or password")
                 return
-            self.resp(200, "Logged in",{"token": row["token"]})
+            self.resp(200, "Logged in",{"token": row["token"], "user_id": row["user_id"]})
         except Exception,e:
             self.resp(500,str(e))
             return
@@ -390,17 +390,19 @@ class NodeRenameHandler(BaseHandler):
 
     @web.authenticated
     def post(self):
+        node_sn = self.get_argument("node_sn","").strip()
+        if not node_sn:
+            self.resp(400, "Missing node sn information\n")
+            return
+
         new_node_name = self.get_argument("name","").strip()
         if not new_node_name:
             self.resp(400, "Missing node name information\n")
             return
 
-        user = self.current_user
-        user_id = user["user_id"]
-
         cur = self.application.cur
         try:
-            cur.execute("UPDATE nodes set name='%s' WHERE user_id='%s'" %(new_node_name, user_id))
+            cur.execute("UPDATE nodes set name='%s' WHERE node_sn='%s'" %(new_node_name, node_sn))
             self.resp(200, "Node renamed",{"name": new_node_name})
         except Exception,e:
             self.resp(500,str(e))
