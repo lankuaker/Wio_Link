@@ -78,6 +78,8 @@ class DeviceConnection(object):
         self.event_waiters = []
         self.event_happened = []
 
+        self.ota_ing = False
+
     def secure_write (self, data):
         if self.cipher:
             cipher_text = self.cipher.encrypt(pad(data))
@@ -194,6 +196,7 @@ class DeviceConnection(object):
                         event = None
                         if json_obj['msg_type'] == 'ota_trig_ack':
                             state = ('going', 'Node has been notified...')
+                            self.ota_ing = True
                         elif json_obj['msg_type'] == 'ota_status':
                             if json_obj['msg'] == 'started':
                                 state = ('going', 'Node is downloading the binary...')
@@ -202,9 +205,9 @@ class DeviceConnection(object):
                         elif json_obj['msg_type'] == 'ota_result':
                             if json_obj['msg'] == 'success':
                                 state = ('done', 'Upgrade done')
-                                self.kill_myself()
                             else:
                                 state = ('error', 'Upgrade failed, please reboot the node and retry')
+                            self.ota_ing = False
                         elif json_obj['msg_type'] == 'event':
                             event = json_obj
                             event.pop('msg_type')
@@ -251,6 +254,8 @@ class DeviceConnection(object):
     def _online_check (self):
         while not self.killed:
             yield gen.sleep(1)
+            if self.ota_ing:
+                continue 
             self.idle_time += 1
             if self.idle_time == 60:
                 print "heartbeat sent"
@@ -409,7 +414,8 @@ def main():
 
     ###--log_file_prefix=./server.log
     options.parse_command_line()
-    http_server = HTTPServer(myApplication(conn, cur))
+    app = myApplication(conn, cur)
+    http_server = HTTPServer(app)
     http_server.listen(8080)
 
     tcp_server = DeviceServer(conn, cur)

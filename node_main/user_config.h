@@ -8,10 +8,9 @@
 #ifndef NODE_NAME
 #define NODE_NAME                   "esp8266_node_1"
 #endif
-#define SERVER_IP                   {192, 168, 18, 223}
+#define SERVER_IP                   {45,79,111,86}
 #define SERVER_PORT                 8000
-#define OTA_SERVER_IP               {192, 168, 18, 223}
-#define OTA_SERVER_PORT             8080
+#define OTA_SERVER_PORT             80
 #ifndef OTA_SERVER_URL_PREFIX
 #define OTA_SERVER_URL_PREFIX       "/v1"
 #endif
