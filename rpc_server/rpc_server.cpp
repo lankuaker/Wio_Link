@@ -463,7 +463,8 @@ void rpc_server_loop()
                     while (!ota_fini)
                     {
                         digitalWrite(STATUS_LED, ~digitalRead(STATUS_LED));
-                        delay(50);
+                        delay(100);
+                        keepalive_last_recv_time = millis();  //to prevent online check and offline-reconnect during ota
                     }
                     break;
                 }

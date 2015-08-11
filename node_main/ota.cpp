@@ -86,6 +86,7 @@ void ota_response(void *arg)
 
 void ota_start()
 {
+    ota_fini = false;
 
     //uint8_t user_bin[12] = { 0 };
     int bin_num = 1;
@@ -130,7 +131,6 @@ void ota_start()
     os_sprintf(upServer->url,
                "GET %s/ota/bin?app=%d&sn=%s HTTP/1.1\r\nHost: " IPSTR ":%d\r\n" pheadbuffer "",
                OTA_SERVER_URL_PREFIX, bin_num, sn, IP2STR(upServer->ip), OTA_SERVER_PORT);
-
 
     if(system_upgrade_start(upServer) == false)
     {
