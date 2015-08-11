@@ -39,7 +39,9 @@ GroveMultiChannelGas::GroveMultiChannelGas(int pinsda, int pinscl)
     
     //get the default address of device. user should use his own address he set to the device previously.
     i2cAddress = MULTICHANNEL_GAS_ADDRESS;
+    
     //read out the R0 value of each channel
+    #if 0  //jack: the initialization should be done with the asyn mode, we cannot wait to death here... TODO...
     while(read_res0(&res0[0], &res0[1], &res0[2]) != true)
     {
 #if USE_DEBUG
@@ -56,6 +58,7 @@ GroveMultiChannelGas::GroveMultiChannelGas(int pinsda, int pinscl)
     Serial1.print("Res0[2]: ");
     Serial1.println(res0[2]);
 #endif    
+    #endif
     powerOn();
 }
 
