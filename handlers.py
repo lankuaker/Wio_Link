@@ -33,6 +33,7 @@ import sqlite3 as lite
 import re
 import jwt
 import md5
+import hashlib
 import base64
 import httplib
 import uuid
@@ -657,6 +658,7 @@ class NodeGetResourcesHandler(NodeBaseHandler):
 
         user_id = node["user_id"]
         node_name = node["name"]
+        node_id = node['node_id']
 
         cur_dir = os.path.split(os.path.realpath(__file__))[0]
         user_build_dir = cur_dir + '/users_build/' + str(user_id)
@@ -681,11 +683,34 @@ class NodeGetResourcesHandler(NodeBaseHandler):
             return
 
         #calculate the checksum of 2 file
+        sha1 = hashlib.sha1()
+        sha1.update(config_file.read())
+        chksum_config = sha1.hexdigest()
+        sha1 = hashlib.sha1()
+        sha1.update(drv_db_file.read())
+        chksum_drv_db = sha1.hexdigest()
 
         #query the database, if 2 file not changed, echo cached html
+        resource = None
+        try:
+            cur = self.application.cur
+            cur.execute('select * from resources where node_id="%s"'%node_id)
+            rows = cur.fetchall()
+            if len(rows) > 0:
+                resource = rows[0]
+        except:
+            resource = None
+
+        if resource:
+            if chksum_config == resource['chksum_config'] and chksum_drv_db == resource['chksum_dbjson']:
+                print "echo the cached page for node_id:", node_id
+                self.write(resource['render_content'])
+                return
 
         #else render new resource page
         #load the yaml file into object
+        config_file.seek(0)
+        drv_db_file.seek(0)
         try:
             config = yaml.load(config_file)
         except yaml.YAMLError, err:
@@ -780,6 +805,18 @@ class NodeGetResourcesHandler(NodeBaseHandler):
                                   node_sn = node['node_sn'] , url_base = server_config.vhost_url_base)
 
         #store the page html into database
+        try:
+            cur = self.application.cur
+            if resource:
+                cur.execute('update resources set chksum_config=?,chksum_dbjson=?,render_content=? where node_id=?',
+                            (chksum_config, chksum_drv_db, page, node_id))
+            else:
+                cur.execute('insert into resources (node_id, chksum_config, chksum_dbjson, render_content) values(?,?,?,?)',
+                            (node_id, chksum_config, chksum_drv_db, page))
+        except:
+            resource = None
+        finally:
+            self.application.conn.commit()
 
         #echo out
         self.write(page)
