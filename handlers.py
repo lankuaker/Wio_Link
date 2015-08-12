@@ -41,7 +41,7 @@ from build_firmware import *
 import yaml
 import threading
 import smtplib
-import smtp_config
+import config as server_config
 
 from tornado.httpserver import HTTPServer
 from tornado.tcpserver import TCPServer
@@ -240,9 +240,9 @@ class UserRetrievePasswordHandler(BaseHandler):
         
 
     def email_sending_thread (self, email, new_password):
-        s = smtplib.SMTP_SSL(smtp_config.smtp_server)
+        s = smtplib.SMTP_SSL(server_config.smtp_server)
         try:
-            s.login(smtp_config.smtp_user, smtp_config.smtp_pwd)
+            s.login(server_config.smtp_user, server_config.smtp_pwd)
         except Exception,e:
             print e
             return
@@ -415,7 +415,7 @@ class NodeDeleteHandler(BaseHandler):
     def get (self):
         self.resp(404, "Please post to this url\n")
 
-
+    @web.authenticated
     def post(self):
         node_sn = self.get_argument("node_sn","").strip()
         if not node_sn:
@@ -442,6 +442,9 @@ class NodeBaseHandler(BaseHandler):
 
     def initialize (self, conns):
         self.conns = conns
+
+    def get_current_user(self):
+        return None
 
     def get_node (self):
         node = None
@@ -569,12 +572,15 @@ class NodeEventHandler(websocket.WebSocketHandler):
         return True
 
     def open(self):
+        print "websocket open"
         self.connected = True
 
     def on_close(self):
-        if self.connected:
+        print "websocket close"
+        if self.connected and self.cur_conn:
             cur_waiters = self.cur_conn.event_waiters
             if self.future in cur_waiters:
+                self.future.set_result(None)
                 cur_waiters.remove(self.future)
                 # cancel yield
                 pass
@@ -599,7 +605,8 @@ class NodeEventHandler(websocket.WebSocketHandler):
         while self.connected:
             self.future = self.wait_event_post()
             event = yield self.future
-            self.write_message(event)
+            if event:
+                self.write_message(event)
             yield gen.moment
 
     def wait_event_post(self):
@@ -640,6 +647,147 @@ class NodeGetConfigHandler(NodeBaseHandler):
     def post(self):
         self.resp(404, "Please get this url\n")
 
+
+class NodeGetResourcesHandler(NodeBaseHandler):
+
+    def get(self):
+        node = self.get_node()
+        if not node:
+            return
+
+        user_id = node["user_id"]
+        node_name = node["name"]
+
+        cur_dir = os.path.split(os.path.realpath(__file__))[0]
+        user_build_dir = cur_dir + '/users_build/' + str(user_id)
+        if not os.path.exists(user_build_dir):
+            self.resp(404, "Configuration file not found\n")
+            return
+
+        #open the yaml file for reading
+        try:
+            config_file = open('%s/connection_config.yaml'%user_build_dir,'r')
+        except Exception,e:
+            print "Exception when reading yaml file:", e
+            self.resp(404, "No resources, the node has not been configured jet.\n")
+            return
+
+        #open the json file for reading
+        try:
+            drv_db_file = open('%s/database.json' % cur_dir,'r')
+        except Exception,e:
+            print "Exception when reading grove drivers database file:", e
+            self.resp(404, "Internal error, the grove drivers database file is corrupted.\n")
+            return
+
+        #calculate the checksum of 2 file
+
+        #query the database, if 2 file not changed, echo cached html
+
+        #else render new resource page
+        #load the yaml file into object
+        try:
+            config = yaml.load(config_file)
+        except yaml.YAMLError, err:
+            print "Error in parsing yaml file:", err
+            self.resp(404, "No resources, the configuration file is corrupted.\n")
+            return
+        except Exception,e:
+            print "Error in loading yaml file:", e
+            self.resp(404, "No resources, the configuration file is corrupted.\n")
+            return
+
+        #load the json file into object
+        try:
+            drv_db = json.load(drv_db_file)
+        except Exception,e:
+            print "Error in parsing grove drivers database file:", e
+            self.resp(404, "Internal error, the grove drivers database file is corrupted.\n")
+            return
+
+        #prepare resource data structs
+        data = []
+        events = []
+
+        if config:
+            for grove_instance_name in config.keys():
+                grove = find_grove_in_database(config[grove_instance_name]['name'], drv_db)
+                if grove:
+                    for fun in grove['Outputs'].items():
+                        item = {}
+                        item['type'] = 'GET'
+                        #build read arg
+                        arguments = []
+                        method_name = fun[0].replace('read_','')
+                        url = server_config.vhost_url_base + '/v1/node/' + grove_instance_name + '/' + method_name
+                        arg_list = [arg for arg in fun[1] if arg.find("*") < 0]  #find out the ones dont have "*"
+                        for arg in arg_list:
+                            if not arg:
+                                continue
+                            t = arg.strip().split(' ')[0]
+                            name = arg.strip().split(' ')[1]
+                            arguments.append('[%s]: %s value' % (name, t))
+                            url += ('/[%s]' % name)
+                        item['url'] = url + '?access_token=' + node['private_key']
+                        item['arguments'] = arguments
+
+
+                        #build returns
+                        returns = ""
+                        arg_list = [arg for arg in fun[1] if arg.find("*")>-1]  #find out the ones have "*"
+                        for arg in arg_list:
+                            if not arg:
+                                continue
+                            t = arg.strip().replace('*', '').split(' ')[0]
+                            name = arg.strip().replace('*', '').split(' ')[1]
+                            returns += ('"%s": [%s value],' % (name, t))
+                        returns = returns.rstrip(',')
+                        item['returns'] = returns
+                        data.append(item)
+
+                    for fun in grove['Inputs'].items():
+                        item = {}
+                        item['type'] = 'POST'
+                        #build write arg
+                        arguments = []
+                        method_name = fun[0].replace('write_','')
+                        url = server_config.vhost_url_base + '/v1/node/' + grove_instance_name + '/' + method_name
+                        arg_list = [arg for arg in fun[1] if arg.find("*")<0]  #find out the ones havent "*"
+                        for arg in arg_list:
+                            if not arg:
+                                continue
+                            t = arg.strip().replace('*', '').split(' ')[0]
+                            name = arg.strip().replace('*', '').split(' ')[1]
+                            arguments.append('[%s]: %s value' % (name, t))
+                            url += ('/[%s]' % name)
+                        item['url'] = url + '?access_token=' + node['private_key']
+                        item['arguments'] = arguments
+                        data.append(item)
+
+                    if grove['HasEvent']:
+                        events += grove['Events']
+
+
+                    
+                else:
+                    error_msg = "Error, cannot find %s in grove drivers database file."%grove_instance_name
+                    print error_msg
+                    self.resp(404, error_msg)
+                    return
+
+        #render the template
+        page = self.render_string('resources.html', node_name = node_name, events = events, data = data, 
+                                  node_sn = node['node_sn'] , url_base = server_config.vhost_url_base)
+
+        #store the page html into database
+
+        #echo out
+        self.write(page)
+
+
+
+    def post(self):
+        self.resp(404, "Please get this url\n")
 
 
 class UserDownloadHandler(NodeBaseHandler):
@@ -891,6 +1039,7 @@ class OTAHandler(BaseHandler):
                 else:
                     print "firmware bin sent done."
                     return        
+
 
     def post (self, uri):
         self.resp(404, "Please get this url.")
