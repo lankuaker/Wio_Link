@@ -565,6 +565,9 @@ class NodeEventHandler(websocket.WebSocketHandler):
         self.connected = False
         self.future = None
 
+    def check_origin(self, origin):
+        return True
+
     def open(self):
         self.connected = True
 
