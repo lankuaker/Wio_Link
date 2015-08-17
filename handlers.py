@@ -940,6 +940,7 @@ class UserDownloadHandler(NodeBaseHandler):
             cmd = "OTA\r\n"
             cmd = cmd.encode("ascii")
             self.cur_conn.submit_cmd (cmd)
+            # todo: sometiome no answer too long, but no error prompt
         except Exception,e:
             print e
             #save state
