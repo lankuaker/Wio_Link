@@ -1,5 +1,5 @@
 /*
- * grove_gyro_itg3200.cpp
+ * grove_multichannel_gas_mics6814.cpp
  *
  * Copyright (c) 2012 seeed technology inc.
  * Website    : www.seeed.cc
@@ -26,11 +26,10 @@
  * THE SOFTWARE.
  */
 
-
 #include "suli2.h"
+#include <math.h>
 #include "grove_multichannel_gas_mics6814.h"
 
-#define USE_DEBUG (1)
 
 GroveMultiChannelGas::GroveMultiChannelGas(int pinsda, int pinscl)
 {
@@ -40,25 +39,9 @@ GroveMultiChannelGas::GroveMultiChannelGas(int pinsda, int pinscl)
     //get the default address of device. user should use his own address he set to the device previously.
     i2cAddress = MULTICHANNEL_GAS_ADDRESS;
     
-    //read out the R0 value of each channel
-    #if 0  //jack: the initialization should be done with the asyn mode, we cannot wait to death here... TODO...
-    while(read_res0(&res0[0], &res0[1], &res0[2]) != true)
-    {
-#if USE_DEBUG
-        Serial1.println("wait...");
-#endif
-        delay(1000);
-    }
+    is_connected = 0;
+    if (readR0() >= 0) is_connected = 1;
 
-#if USE_DEBUG
-    Serial1.print("Res0[0]: ");
-    Serial1.println(res0[0]);
-    Serial1.print("Res0[1]: ");
-    Serial1.println(res0[1]);
-    Serial1.print("Res0[2]: ");
-    Serial1.println(res0[2]);
-#endif    
-    #endif
     powerOn();
 }
 
@@ -84,8 +67,10 @@ int16_t GroveMultiChannelGas::readData(uint8_t cmd)
 
     //send command
     sendCmd(cmd);
+    
     //wait for a while, because the device is a MCU, it need some time to handle the request.
-    delay(2);
+    suli_delay_ms(2);
+    
     //read sensor data
     int length = suli_i2c_read(this->i2c, i2cAddress, buffer, 4);
     if(length != 4)
@@ -96,6 +81,7 @@ int16_t GroveMultiChannelGas::readData(uint8_t cmd)
     checksum = (uint8_t)(buffer[0] + buffer[1] + buffer[2]);
     if(checksum != buffer[3])
         return -4;//checksum wrong
+    
     rtnData = ((buffer[1] << 8) + buffer[2]);
     
     return rtnData;//successful
@@ -105,7 +91,7 @@ int16_t GroveMultiChannelGas::readData(uint8_t cmd)
 ** Function name:           readR0
 ** Descriptions:            read R0 stored in slave MCU
 *********************************************************************************************************/
-bool GroveMultiChannelGas::read_res0(uint16_t *res0_ch1, uint16_t *res0_ch2, uint16_t *res0_ch3)
+int16_t GroveMultiChannelGas::readR0()
 {
     int16_t rtnData = 0;
 
@@ -113,32 +99,33 @@ bool GroveMultiChannelGas::read_res0(uint16_t *res0_ch1, uint16_t *res0_ch2, uin
     if(rtnData >= 0)
         res0[0] = rtnData;
     else
-        return false;//unsuccessful
+        return rtnData;//unsuccessful
 
     rtnData = readData(READ_R0_CH2);
     if(rtnData >= 0)
         res0[1] = rtnData;
     else
-        return false;//unsuccessful
+        return rtnData;//unsuccessful
 
     rtnData = readData(READ_R0_CH3);
     if(rtnData >= 0)
         res0[2] = rtnData;
     else
-        return false;//unsuccessful
+        return rtnData;//unsuccessful
     
-    *res0_ch1 = res0[0];
-    *res0_ch2 = res0[1];
-    *res0_ch3 = res0[2];
+    for(int i=0; i<3; i++)
+    {
+        if (res0[i] == 0) res0[i] = 0.000001f;
+    }
     
-    return true;//successful
+    return 0;//successful
 }
 
 /*********************************************************************************************************
-** Function name:           readRS
+** Function name:           readR 
 ** Descriptions:            read resistance value of each channel from slave MCU
 *********************************************************************************************************/
-bool GroveMultiChannelGas::read_res(uint16_t *res_ch1, uint16_t *res_ch2, uint16_t *res_ch3)
+int16_t GroveMultiChannelGas::readR()
 {
     int16_t rtnData = 0;
 
@@ -146,61 +133,132 @@ bool GroveMultiChannelGas::read_res(uint16_t *res_ch1, uint16_t *res_ch2, uint16
     if(rtnData >= 0)
         res[0] = rtnData;
     else
-        return false;//unsuccessful
+        return rtnData;//unsuccessful
 
     rtnData = readData(READ_RS_CH2);
     if(rtnData >= 0)
         res[1] = rtnData;
     else
-        return false;//unsuccessful
+        return rtnData;//unsuccessful
 
     rtnData = readData(READ_RS_CH3);
     if(rtnData >= 0)
         res[2] = rtnData;
     else
-        return false;//unsuccessful
-
-    *res_ch1 = res[0];
-    *res_ch2 = res[1];
-    *res_ch3 = res[2];
+        return rtnData;//unsuccessful
     
-    return true;//successful
+    return 0;//successful
 }
 
 /*********************************************************************************************************
 ** Function name:           calcGas
 ** Descriptions:            calculate gas concentration of each channel from slave MCU
+** Parameters:
+                            gas - gas type
+** Returns:
+                            float value - concentration of the gas
 *********************************************************************************************************/
-bool GroveMultiChannelGas::read_concentration(float *nh3, float *co, float *no2)
+float GroveMultiChannelGas::calcGas(int gas)
 {
-    
+    if(!is_connected)
+    {
+        if(readR0() >= 0) is_connected = 1;
+        else return -1.0f;
+    }
+
+    if(readR() < 0)
+        return -2.0f;
+
     float ratio0 = (float)res[0] / res0[0];
-    if(ratio0 < 0.04) ratio0 = 0.04;
-    if(ratio0 > 0.8) ratio0 = 0.8;
     float ratio1 = (float)res[1] / res0[1];
-    if(ratio1 < 0.01) ratio1 = 0.01;
-    if(ratio1 > 3) ratio1 = 3;
     float ratio2 = (float)res[2] / res0[2];
-    if(ratio2 < 0.07) ratio2 = 0.07;
-    if(ratio2 > 40) ratio2 = 40;
-    
-    *nh3 = 1 / (ratio0 * ratio0 * pow(10, 0.4));
-    *co = pow(10, 0.6) / pow(ratio1, 1.2);
-    *no2 = ratio2 / pow(10, 0.8);
-    
-    return true;
+
+    float c = 0;
+
+    switch(gas)
+    {
+        case CO:
+        {
+            if(ratio1 < 0.01) ratio1 = 0.01;
+            if(ratio1 > 3) ratio1 = 3;
+            //c = pow(10, 0.6) / pow(ratio1, 1.2);
+            c = pow(ratio1, -1.179)*4.385;  //mod by jack
+            break;
+        }
+        case NO2:
+        {
+            if(ratio2 < 0.07) ratio2 = 0.07;
+            if(ratio2 > 40) ratio2 = 40;
+            //c = ratio2 / pow(10, 0.8);
+            c = pow(ratio2, 1.007)/6.855;  //mod by jack
+            break;
+        }
+        case NH3:
+        {
+            if(ratio0 < 0.04) ratio0 = 0.04;
+            if(ratio0 > 0.8) ratio0 = 0.8;
+            //c = 1 / (ratio0 * ratio0 * pow(10, 0.4));
+            c = pow(ratio0, -1.67)/1.47;  //modi by jack
+            break;
+        }
+        case C3H8:  //add by jack
+        {
+            if(ratio0 < 0.23) ratio0 = 0.23;
+            if(ratio0 > 0.8) ratio0 = 0.8;
+            c = pow(ratio0, -2.518)*570.164;
+            break;
+        }
+        case C4H10:  //add by jack
+        {
+            if(ratio0 < 0.15) ratio0 = 0.15;
+            if(ratio0 > 0.65) ratio0 = 0.65;
+            c = pow(ratio0, -2.138)*398.107;
+            break;
+        }
+        case CH4:  //add by jack
+        {
+            if(ratio1 < 0.5) ratio1 = 0.5;
+            if(ratio1 > 0.7) ratio1 = 0.7;
+            c = pow(ratio1, -4.363)*630.957;
+            break;
+        }
+        case H2:  //add by jack
+        {
+            if(ratio1 < 0.04) ratio1 = 0.04;
+            if(ratio1 > 0.8) ratio1 = 0.8;
+            c = pow(ratio1, -1.8)*0.73;
+            break;
+        }
+        case C2H5OH:  //add by jack
+        {
+            if(ratio1 < 0.04) ratio1 = 0.04;
+            if(ratio1 > 1.1) ratio1 = 1.1;
+            c = pow(ratio1, -1.552)*1.622;
+            break;
+        }
+        default:
+            break;
+    }
+
+    return isnan(c)?-3:c;
 }
 
 /*********************************************************************************************************
 ** Function name:           changeI2cAddr
 ** Descriptions:            change I2C address of the slave MCU, and this address will be stored in EEPROM of slave MCU
 *********************************************************************************************************/
-bool GroveMultiChannelGas::changeI2cAddr(uint8_t newAddr)
+void GroveMultiChannelGas::changeI2cAddr(uint8_t newAddr)
 {
-    Wire.beginTransmission(i2cAddress); // transmit to device
-    Wire.write(CHANGE_I2C_ADDR);              // sends one byte
-    Wire.write(newAddr);              // sends one byte
-    Wire.endTransmission();    // stop transmitting
+    //Wire.beginTransmission(i2cAddress); // transmit to device
+    //Wire.write(CHANGE_I2C_ADDR);              // sends one byte
+    //Wire.write(newAddr);              // sends one byte
+    //Wire.endTransmission();    // stop transmitting
+    
+    uint8_t data[2];
+    data[0] = CHANGE_I2C_ADDR;
+    data[1] = newAddr;
+
+    suli_i2c_write(this->i2c, i2cAddress, data, 2);
     i2cAddress = newAddr;
 }
 
@@ -208,16 +266,21 @@ bool GroveMultiChannelGas::changeI2cAddr(uint8_t newAddr)
 ** Function name:           doCalibrate
 ** Descriptions:            tell slave to do a calibration, it will take about 8~10s
 *********************************************************************************************************/
-bool GroveMultiChannelGas::doCalibrate(void)
+void GroveMultiChannelGas::doCalibrate(void)
 {
     sendCmd(DO_CALIBARTE);
+
+    suli_delay_ms(8000);
+    
+    if(readR0() >= 0) is_connected = 1;
+    else is_connected = 0;
 }
 
 /*********************************************************************************************************
 ** Function name:           powerOn
 ** Descriptions:            power on sensor heater
 *********************************************************************************************************/
-bool GroveMultiChannelGas::powerOn(void)
+void GroveMultiChannelGas::powerOn(void)
 {
     sendCmd(POWER_ON);
 }
@@ -226,11 +289,54 @@ bool GroveMultiChannelGas::powerOn(void)
 ** Function name:           powerOff
 ** Descriptions:            power off sensor heater
 *********************************************************************************************************/
-bool GroveMultiChannelGas::powerOff(void)
+void GroveMultiChannelGas::powerOff(void)
 {
     sendCmd(POWER_OFF);
 }
 
-
+/*********************************************************************************************************
+** Function name:           read_xxx
+** Descriptions:            measure the concentration of xxx, with unit ppm
+*********************************************************************************************************/
+bool GroveMultiChannelGas::read_CO(float *concentration)
+{
+    *concentration = calcGas(CO);
+    return true;    
+}
+bool GroveMultiChannelGas::read_NO2(float *concentration)
+{
+    *concentration = calcGas(NO2);
+    return true;    
+}
+bool GroveMultiChannelGas::read_NH3(float *concentration)
+{
+    *concentration = calcGas(NH3);
+    return true;    
+}
+bool GroveMultiChannelGas::read_C3H8(float *concentration)
+{
+    *concentration = calcGas(C3H8);
+    return true;    
+}
+bool GroveMultiChannelGas::read_C4H10(float *concentration)
+{
+    *concentration = calcGas(C4H10);
+    return true;    
+}
+bool GroveMultiChannelGas::read_CH4(float *concentration)
+{
+    *concentration = calcGas(CH4);
+    return true;    
+}
+bool GroveMultiChannelGas::read_H2(float *concentration)
+{
+    *concentration = calcGas(H2);
+    return true;    
+}
+bool GroveMultiChannelGas::read_C2H5OH(float *concentration)
+{
+    *concentration = calcGas(C2H5OH);
+    return true;    
+}
 
 

@@ -713,10 +713,18 @@ void establish_network()
 
     /* check IP */
     uint8_t connect_status = wifi_station_get_connect_status();
+    const char *get_ip_state[6] = {
+        "IDLE",
+        "CONNECTING",
+        "WRONG_PASSWORD",
+        "NO_AP_FOUND",
+        "CONNECT_FAIL",
+        "GOT_IP"
+    };
     int wait_sec = 0;
     while (connect_status != STATION_GOT_IP)
     {
-        Serial1.printf("Wait getting ip, state: %d\n", connect_status);
+        Serial1.printf("Wait getting ip, state: %s\n", get_ip_state[connect_status]);
         delay(1000);
         connect_status = wifi_station_get_connect_status();
         digitalWrite(STATUS_LED, 1);
