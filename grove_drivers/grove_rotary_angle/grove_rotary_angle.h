@@ -34,7 +34,7 @@
 
 //GROVE_NAME        "Grove-Rotary Angle Sensor"
 //IF_TYPE           GPIO
-//IMAGE_URL         http://www.seeedstudio.com/depot/bmz_cache/1/100eefa0c7159e81dd6382b7ebee5c59.image.530x397.jpg
+//IMAGE_URL         http://www.seeedstudio.com/depot/bmz_cache/4/47c18125fbb4c9db7e3104f5a3b04ef5.image.530x397.jpg
 
 
 class GroveRotaryAngle
