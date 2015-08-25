@@ -469,9 +469,11 @@ class NodeBaseHandler(BaseHandler):
         else:
             node = None
 
-        print "get current node:", node["name"], str(node)
         if not node:
             self.resp(403,"Please attach the valid node token (not the user token)")
+        else:
+            print "get current node:", node["name"], str(node)
+
         return node
 
 
@@ -547,11 +549,11 @@ class NodeReadWriteHandler(NodeBaseHandler):
                     cmd_args += arg
                     cmd_args += "/"
 
-
         for conn in self.conns:
             if conn.sn == node['node_sn'] and not conn.killed:
                 try:
-                    cmd = "POST /%s/%s\r\n"%(uri, cmd_args)
+                    cmd = ("/%s/%s"%(uri, cmd_args)).rstrip("/")
+                    cmd = "POST %s\r\n"%(cmd)
                     cmd = cmd.encode("ascii")
                     ok, resp = yield conn.submit_and_wait_resp (cmd, "resp_post")
                     self.resp(200,resp)

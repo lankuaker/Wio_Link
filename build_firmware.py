@@ -58,7 +58,7 @@ def find_grove_in_database (grove_name, json_obj):
             return grove
     return {}
 
-def declare_vars (arg_list):
+def declare_read_vars (arg_list):
     result = ""
     for arg in arg_list:
         if not arg:
@@ -97,7 +97,7 @@ def build_read_print (arg_list):
     result += '        writer_print(TYPE_STRING, "}");\r\n'
     return result
 
-def build_unpack_vars (arg_list):
+def build_read_unpack_vars (arg_list):
     global error_msg
     result = ""
     arg_list = [arg for arg in arg_list if arg.find("*") < 0]  #find out the ones dont have "*"
@@ -106,7 +106,7 @@ def build_unpack_vars (arg_list):
             continue
         t = arg.strip().split(' ')[0]
         name = arg.strip().split(' ')[1]
-        result += '    %s = *((%s *)arg_ptr); arg_ptr += sizeof(%s);\r\n' % (name, t, t)
+        result += '    memcpy(&%s, arg_ptr, sizeof(%s)); arg_ptr += sizeof(%s);\r\n' % (name, t, t)
     return result;
 
 def build_read_with_arg (arg_list):
@@ -121,23 +121,74 @@ def build_read_with_arg (arg_list):
         result += '/%s_%s' % (t, name)
     return result;
 
+def build_reg_read_arg_type (arg_list):
+    global error_msg
+    result = ""
+    arg_list = [arg for arg in arg_list if arg.find("*") < 0]
+    length = min(4, len(arg_list))
+    for i in xrange(length):
+        if not arg_list[i]:
+            continue
+        t = arg_list[i].strip().split(' ')[0]
+        if t in TYPE_MAP.keys():
+            result += "    arg_types[%d] = %s;\r\n" %(i, TYPE_MAP[t])
+        else:
+            error_msg = 'arg type %s not supported' % t
+            #sys.exit()
+            return ""
+    return result
+
 def build_return_values (arg_list):
     result = ""
     arg_list = [arg for arg in arg_list if arg.find("*")>-1]  #find out the ones have "*"
     for arg in arg_list:
         if not arg:
             continue
-        result += arg.strip().replace('*', ': ').replace(' ','')
+        result += arg.strip().replace('*', '')
         result += ', '
     return result.rstrip(', ')
 
-def build_write_args (arg_list):
+def declare_write_vars (arg_list):
     result = ""
-    arg_list = [arg for arg in arg_list if arg.find("*")<0]  #find out the ones havent "*"
     for arg in arg_list:
         if not arg:
             continue
-        result += arg.strip().replace('*', ': ')
+        result += arg
+        result += ';\r\n    '
+    return result
+
+def build_write_unpack_vars (arg_list):
+    global error_msg
+    result = ""
+    #arg_list = [arg for arg in arg_list if arg.find("*") < 0]  #find out the ones dont have "*"
+    for arg in arg_list:
+        if not arg:
+            continue
+        if arg.find("char *") >= 0 or arg.find("const char *") >= 0:
+            t = "char *"
+            name = arg.strip().split(' ')[1].replace('*','')
+        else:
+            t = arg.strip().split(' ')[0]
+            name = arg.strip().split(' ')[1]
+        result += '    memcpy(&%s, arg_ptr, sizeof(%s)); arg_ptr += sizeof(%s);\r\n' % (name, t, t)
+    return result
+
+def build_write_call_args (arg_list):
+    result = ""
+    for arg in arg_list:
+        if not arg:
+            continue
+        result += arg.strip().split(' ')[1].replace('*', '')
+        result += ','
+    return result.rstrip(',')
+
+def build_write_args (arg_list):
+    result = ""
+    #arg_list = [arg for arg in arg_list if arg.find("*")<0]  #find out the ones havent "*"
+    for arg in arg_list:
+        if not arg:
+            continue
+        result += arg.strip()
         result += ', '
     result = result.rstrip(', ')
     if result == "":
@@ -147,12 +198,15 @@ def build_write_args (arg_list):
 def build_reg_write_arg_type (arg_list):
     global error_msg
     result = ""
-    arg_list = [arg for arg in arg_list if arg.find("*") < 0]
+    #arg_list = [arg for arg in arg_list if arg.find("*") < 0]  #find out the ones havent "*"
     length = min(4, len(arg_list))
     for i in xrange(length):
         if not arg_list[i]:
             continue
-        t = arg_list[i].strip().split(' ')[0]
+        if arg_list[i].find("char *") >= 0 or arg_list[i].find("const char *") >= 0:
+            t = "char *"
+        else:
+            t = arg_list[i].strip().split(' ')[0]
         if t in TYPE_MAP.keys():
             result += "    arg_types[%d] = %s;\r\n" %(i, TYPE_MAP[t])
         else:
@@ -206,20 +260,25 @@ def gen_wrapper_registration (instance_name, info, arg_list):
         fp_wrapper_cpp.write('{\r\n')
         fp_wrapper_cpp.write('    %s *grove = (%s *)class_ptr;\r\n' % (info['ClassName'], info['ClassName']))
         fp_wrapper_cpp.write('    uint8_t *arg_ptr = (uint8_t *)input;\r\n')
-        fp_wrapper_cpp.write('    %s\r\n'%declare_vars(fun[1]))
-        fp_wrapper_cpp.write(build_unpack_vars(fun[1]))
+        fp_wrapper_cpp.write('    %s\r\n'%declare_read_vars(fun[1]))
+        fp_wrapper_cpp.write(build_read_unpack_vars(fun[1]))
         fp_wrapper_cpp.write('\r\n')
         fp_wrapper_cpp.write('    if(grove->%s(%s))\r\n'%(fun[0],build_read_call_args(fun[1])))
         fp_wrapper_cpp.write('    {\r\n')
         fp_wrapper_cpp.write(build_read_print(fun[1]))
         fp_wrapper_cpp.write('    }else\r\n')
         fp_wrapper_cpp.write('    {\r\n')
-        fp_wrapper_cpp.write('        writer_print(TYPE_STRING, "null");\r\n')
+        if info['CanGetLastError']:
+            fp_wrapper_cpp.write('        writer_print(TYPE_STRING, "\\"");\r\n')
+            fp_wrapper_cpp.write('        writer_print(TYPE_STRING, grove->get_last_error());\r\n')
+            fp_wrapper_cpp.write('        writer_print(TYPE_STRING, "\\"");\r\n')
+        else:
+            fp_wrapper_cpp.write('        writer_print(TYPE_STRING, "null");\r\n')
         fp_wrapper_cpp.write('    }\r\n')
         fp_wrapper_cpp.write('}\r\n\r\n')
 
         str_reg_method += '    memset(arg_types, TYPE_NONE, MAX_INPUT_ARG_LEN);\r\n'
-        str_reg_method += build_reg_write_arg_type(fun[1])
+        str_reg_method += build_reg_read_arg_type(fun[1])
         str_reg_method += '    rpc_server_register_method("%s", "%s", METHOD_READ, %s, %s, arg_types);\r\n' % \
                           (instance_name, fun[0].replace('read_',''), '__'+grove_name+'_'+fun[0], instance_name+"_ins")
 
@@ -236,13 +295,20 @@ def gen_wrapper_registration (instance_name, info, arg_list):
         fp_wrapper_cpp.write('{\r\n')
         fp_wrapper_cpp.write('    %s *grove = (%s *)class_ptr;\r\n' % (info['ClassName'], info['ClassName']))
         fp_wrapper_cpp.write('    uint8_t *arg_ptr = (uint8_t *)input;\r\n')
-        fp_wrapper_cpp.write('    %s\r\n' % declare_vars(fun[1]))
-        fp_wrapper_cpp.write(build_unpack_vars(fun[1]))
+        fp_wrapper_cpp.write('    %s\r\n' % declare_write_vars(fun[1]))
+        fp_wrapper_cpp.write(build_write_unpack_vars(fun[1]))
         fp_wrapper_cpp.write('\r\n')
-        fp_wrapper_cpp.write('    if(grove->%s(%s))\r\n'%(fun[0],build_read_call_args(fun[1])))
+        fp_wrapper_cpp.write('    if(grove->%s(%s))\r\n'%(fun[0],build_write_call_args(fun[1])))
         fp_wrapper_cpp.write('        writer_print(TYPE_STRING, "\\"OK\\"");\r\n')
         fp_wrapper_cpp.write('    else\r\n')
-        fp_wrapper_cpp.write('        writer_print(TYPE_STRING, "\\"Failed\\"");\r\n')
+        fp_wrapper_cpp.write('    {\r\n')
+        if info['CanGetLastError']:
+            fp_wrapper_cpp.write('        writer_print(TYPE_STRING, "\\"Failed: ");\r\n')
+            fp_wrapper_cpp.write('        writer_print(TYPE_STRING, grove->get_last_error());\r\n')
+            fp_wrapper_cpp.write('        writer_print(TYPE_STRING, "\\"");\r\n')
+        else:
+            fp_wrapper_cpp.write('        writer_print(TYPE_STRING, "\\"Failed\\"");\r\n')
+        fp_wrapper_cpp.write('    }\r\n')
         fp_wrapper_cpp.write('}\r\n\r\n')
 
         str_reg_method += '    memset(arg_types, TYPE_NONE, MAX_INPUT_ARG_LEN);\r\n'

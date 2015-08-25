@@ -36,6 +36,7 @@
 #include "osapi.h"
 #include "mem.h"
 #include "user_interface.h"
+#include "debug.h"
 
 void* malloc(size_t size) {
     size = ((size + 3) & ~((size_t)0x3));
@@ -86,47 +87,11 @@ int vsnprintf(char * buffer, size_t size, const char * format, va_list arg) {
     return ets_vsnprintf(buffer, size, format, arg);
 }
 
-int memcmp(const void *s1, const void *s2, size_t n) {
-    return ets_memcmp(s1, s2, n);
-}
-
-void* memcpy(void *dest, const void *src, size_t n) {
-    return ets_memcpy(dest, src, n);
-}
-
-void* memset(void *s, int c, size_t n) {
-    return ets_memset(s, c, n);
-}
-
-int strcmp(const char *s1, const char *s2) {
-    return ets_strcmp(s1, s2);
-}
-
-char* strcpy(char *dest, const char *src) {
-    return ets_strcpy(dest, src);
-}
-
-size_t strlen(const char *s) {
-    return ets_strlen(s);
-}
-
-int strncmp(const char *s1, const char *s2, size_t len) {
-    return ets_strncmp(s1, s2, len);
-}
-
-char* strncpy(char * dest, const char * src, size_t n) {
-    return ets_strncpy(dest, src, n);
-}
-
 size_t ICACHE_FLASH_ATTR strnlen(const char *s, size_t len) {
     // there is no ets_strnlen
     const char *cp;
     for (cp = s; len != 0 && *cp != '\0'; cp++, len--);
     return (size_t)(cp - s);
-}
-
-char* strstr(const char *haystack, const char *needle) {
-    return ets_strstr(haystack, needle);
 }
 
 char* ICACHE_FLASH_ATTR strchr(const char * str, int character) {
@@ -159,70 +124,74 @@ char* ICACHE_FLASH_ATTR strcat(char * dest, const char * src) {
 }
 
 char* ICACHE_FLASH_ATTR strncat(char * dest, const char * src, size_t n) {
-    uint32_t offset = strlen(dest);
-    for(uint32_t i = 0; i < n; i++) {
-        *(dest + i + offset) = *(src + i);
-        if(*(src + i) == 0x00) {
-            break;
-        }
+    size_t i;
+    size_t offset = strlen(dest);
+    for(i = 0; i < n && src[i]; i++) {
+        dest[i + offset] = src[i];
     }
+    dest[i + offset] = 0;
     return dest;
 }
 
+char* ICACHE_FLASH_ATTR strtok_r(char* s, const char* delim, char** last) {
+    const char* spanp;
+    char* tok;
+    char c;
+    char sc;
 
-char* ICACHE_FLASH_ATTR strtok_r(char * str, const char * delimiters, char ** temp) {
-    static char * ret = NULL;
-    char * start = NULL;
-    char * end = NULL;
-    uint32_t size = 0;
+    if (s == NULL && (s = *last) == NULL) {
+        return (NULL);
+    }
 
-    if(str == NULL) {
-        if(temp == NULL) {
-            return NULL;
+
+    // Skip (span) leading delimiters 
+    //
+cont:
+    c = *s++;
+    for (spanp = delim; (sc = *spanp++) != 0;) {
+        if (c == sc) {
+            goto cont;
         }
-        start = *temp;
-    } else {
-        start = str;
     }
 
-    if(start == NULL) {
-        return NULL;
+    // check for no delimiters left
+    //
+    if (c == '\0') {
+        *last = NULL;
+        return (NULL);
     }
 
-    if(delimiters == NULL) {
-        return NULL;
-    }
+    tok = s - 1;
 
-    end = start;
 
-    while(1) {
-        for(uint16_t i = 0; i < strlen(delimiters); i++) {
-            if(*end == *(delimiters + i)) {
-                break;
+    // Scan token 
+    // Note that delim must have one NUL; we stop if we see that, too.
+    //
+    for (;;) {
+        c = *s++;
+        spanp = (char *)delim;
+        do {
+            if ((sc = *spanp++) == c) {
+                if (c == 0) {
+                    s = NULL;
+                }
+                else {
+                    s[-1] = '\0';
+                }
+                *last = s;
+                return (tok);
             }
-        }
-        end++;
-        if(*end == 0x00) {
-            break;
-        }
+
+        } while (sc != 0);
     }
 
-    *temp = end;
-
-    if(ret != NULL) {
-        free(ret);
-    }
-
-    size = (end - start);
-    ret = (char *) malloc(size);
-    strncpy(ret, start, size);
-    return ret;
+    // NOTREACHED EVER
 }
 
-char* ICACHE_FLASH_ATTR strtok(char * str, const char * delimiters) {
-    static char * ret = NULL;
-    ret = strtok_r(str, delimiters, &ret);
-    return ret;
+char* ICACHE_FLASH_ATTR strtok(char* s, const char* delim) {
+    static char* last;
+
+    return (strtok_r(s, delim, &last));
 }
 
 int ICACHE_FLASH_ATTR strcasecmp(const char * str1, const char * str2) {
@@ -246,57 +215,6 @@ char* ICACHE_FLASH_ATTR strdup(const char *str) {
     return cstr;
 }
 
-long int ICACHE_FLASH_ATTR strtol(const char* str, char** endptr, int base) {
-    long int result = 0;
-    int sign = 1;
-
-    while(isspace(*str)) {
-        str++;
-    }
-
-    if(*str == 0x00) {
-        // only space in str?
-        *endptr = (char*) str;
-        return result;
-    }
-
-    switch(base) {
-        case 10:
-
-            if(*str == '-') {
-                sign = -1;
-                str++;
-            } else if(*str == '+') {
-                str++;
-            }
-
-            for(uint8_t i = 0; *str; i++, str++) {
-                int x = *str - '0';
-                if(x < 0 || x > 9) {
-                    break;
-                }
-                result = result * 10 + x;
-            }
-            break;
-        case 2:
-            for(uint8_t i = 0; *str; i++, str++) {
-                int x = *str - '0';
-                if(x < 0 || x > 1) {
-                    break;
-                }
-                result = result * 2 + x;
-            }
-            break;
-        case 16:
-        default:
-            os_printf("fnk: strtol() only supports base 10 and 2 ATM!\n");
-            break;
-
-    }
-    *endptr = (char*) str;
-    return sign * result;
-}
-
 // based on Source:
 // https://github.com/anakod/Sming/blob/master/Sming/system/stringconversion.cpp#L93
 double ICACHE_FLASH_ATTR strtod(const char* str, char** endptr) {
@@ -311,7 +229,7 @@ double ICACHE_FLASH_ATTR strtod(const char* str, char** endptr) {
 
     if(*str == 0x00) {
         // only space in str?
-        *endptr = (char*) str;
+        if (endptr) *endptr = (char*) str;
         return result;
     }
 
@@ -341,7 +259,7 @@ double ICACHE_FLASH_ATTR strtod(const char* str, char** endptr) {
 
         str++;
     }
-    *endptr = (char*) str;
+    if (endptr) *endptr = (char*) str;
     return result * factor;
 }
 
@@ -466,76 +384,233 @@ int isblank(int c) {
 static int errno_var = 0;
 
 int* ICACHE_FLASH_ATTR __errno(void) {
-    os_printf("__errno is called last error: %d (not current)\n", errno_var);
+    DEBUGV("__errno is called last error: %d (not current)\n", errno_var);
     return &errno_var;
 }
 
-// ##########################################################################
-//                     __ieee754  functions
-// ##########################################################################
-#if 0
 
-double ICACHE_FLASH_ATTR __ieee754_sinh(double x) {
-    return sinh(x);
+/*
+ * begin newlib/string/strlcpy.c
+ * 
+ * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
+ * THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+size_t ICACHE_FLASH_ATTR strlcpy(char* dst, const char* src, size_t size) {
+    const char *s = src;
+    size_t n = size;
+
+    if (n != 0 && --n != 0) {
+        do {
+            if ((*dst++ = *s++) == 0)
+                break;
+        } while (--n != 0);
+    }
+
+    if (n == 0) {
+        if (size != 0)
+            *dst = 0;
+        while (*s++);
+    }
+
+    return(s - src - 1);
+}
+/*
+ * end of newlib/string/strlcpy.c
+ */
+
+
+
+/**
+ * strtol() and strtoul() implementations borrowed from newlib:
+ * http://www.sourceware.org/newlib/
+ *      newlib/libc/stdlib/strtol.c
+ *      newlib/libc/stdlib/strtoul.c
+ *
+ * Adapted for ESP8266 by Kiril Zyapkov <kiril.zyapkov@gmail.com>
+ *
+ * Copyright (c) 1990 The Regents of the University of California.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+long ICACHE_FLASH_ATTR strtol(const char *nptr, char **endptr, int base) {
+	const unsigned char *s = (const unsigned char *)nptr;
+	unsigned long acc;
+	int c;
+	unsigned long cutoff;
+	int neg = 0, any, cutlim;
+
+	/*
+	 * Skip white space and pick up leading +/- sign if any.
+	 * If base is 0, allow 0x for hex and 0 for octal, else
+	 * assume decimal; if base is already 16, allow 0x.
+	 */
+	do {
+		c = *s++;
+	} while (isspace(c));
+	if (c == '-') {
+		neg = 1;
+		c = *s++;
+	} else if (c == '+')
+		c = *s++;
+	if ((base == 0 || base == 16) &&
+	    c == '0' && (*s == 'x' || *s == 'X')) {
+		c = s[1];
+		s += 2;
+		base = 16;
+	}
+	if (base == 0)
+		base = c == '0' ? 8 : 10;
+
+	/*
+	 * Compute the cutoff value between legal numbers and illegal
+	 * numbers.  That is the largest legal value, divided by the
+	 * base.  An input number that is greater than this value, if
+	 * followed by a legal input character, is too big.  One that
+	 * is equal to this value may be valid or not; the limit
+	 * between valid and invalid numbers is then based on the last
+	 * digit.  For instance, if the range for longs is
+	 * [-2147483648..2147483647] and the input base is 10,
+	 * cutoff will be set to 214748364 and cutlim to either
+	 * 7 (neg==0) or 8 (neg==1), meaning that if we have accumulated
+	 * a value > 214748364, or equal but the next digit is > 7 (or 8),
+	 * the number is too big, and we will return a range error.
+	 *
+	 * Set any if any `digits' consumed; make it negative to indicate
+	 * overflow.
+	 */
+	cutoff = neg ? -(unsigned long)LONG_MIN : LONG_MAX;
+	cutlim = cutoff % (unsigned long)base;
+	cutoff /= (unsigned long)base;
+	for (acc = 0, any = 0;; c = *s++) {
+		if (isdigit(c))
+			c -= '0';
+		else if (isalpha(c))
+			c -= isupper(c) ? 'A' - 10 : 'a' - 10;
+		else
+			break;
+		if (c >= base)
+			break;
+               if (any < 0 || acc > cutoff || (acc == cutoff && c > cutlim))
+			any = -1;
+		else {
+			any = 1;
+			acc *= base;
+			acc += c;
+		}
+	}
+	if (any < 0) {
+		acc = neg ? LONG_MIN : LONG_MAX;
+		errno = ERANGE;
+	} else if (neg)
+		acc = -acc;
+	if (endptr != 0)
+		*endptr = (char *) (any ? (char *)s - 1 : nptr);
+	return (acc);
 }
 
-double ICACHE_FLASH_ATTR __ieee754_hypot(double x, double y) {
-    return hypot(x, y);
-}
+unsigned long ICACHE_FLASH_ATTR strtoul(const char *nptr, char **endptr, int base)
+{
+	const unsigned char *s = (const unsigned char *)nptr;
+	unsigned long acc;
+	int c;
+	unsigned long cutoff;
+	int neg = 0, any, cutlim;
 
-float ICACHE_FLASH_ATTR __ieee754_hypotf(float x, float y) {
-    return hypotf(x, y);
+	/*
+	 * See strtol for comments as to the logic used.
+	 */
+	do {
+		c = *s++;
+	} while (isspace(c));
+	if (c == '-') {
+		neg = 1;
+		c = *s++;
+	} else if (c == '+')
+		c = *s++;
+	if ((base == 0 || base == 16) &&
+	    c == '0' && (*s == 'x' || *s == 'X')) {
+		c = s[1];
+		s += 2;
+		base = 16;
+	}
+	if (base == 0)
+		base = c == '0' ? 8 : 10;
+	cutoff = (unsigned long)ULONG_MAX / (unsigned long)base;
+	cutlim = (unsigned long)ULONG_MAX % (unsigned long)base;
+	for (acc = 0, any = 0;; c = *s++) {
+		if (isdigit(c))
+			c -= '0';
+		else if (isalpha(c))
+			c -= isupper(c) ? 'A' - 10 : 'a' - 10;
+		else
+			break;
+		if (c >= base)
+			break;
+               if (any < 0 || acc > cutoff || (acc == cutoff && c > cutlim))
+			any = -1;
+		else {
+			any = 1;
+			acc *= base;
+			acc += c;
+		}
+	}
+	if (any < 0) {
+		acc = ULONG_MAX;
+		errno = ERANGE;
+	} else if (neg)
+		acc = -acc;
+	if (endptr != 0)
+		*endptr = (char *) (any ? (char *)s - 1 : nptr);
+	return (acc);
 }
-
-float ICACHE_FLASH_ATTR __ieee754_logf(float x) {
-    return logf(x);
-}
-
-double ICACHE_FLASH_ATTR __ieee754_log10(double x) {
-    return log10(x);
-}
-
-double ICACHE_FLASH_ATTR __ieee754_exp(double x) {
-    return exp(x);
-}
-
-double ICACHE_FLASH_ATTR __ieee754_cosh(double x) {
-    return cosh(x);
-}
-
-float ICACHE_FLASH_ATTR __ieee754_expf(float x) {
-    return expf(x);
-}
-
-float ICACHE_FLASH_ATTR __ieee754_log10f(float x) {
-    return log10f(x);
-}
-
-double ICACHE_FLASH_ATTR __ieee754_atan2(double x, double y) {
-    return atan2(x, y);
-}
-
-float ICACHE_FLASH_ATTR __ieee754_sqrtf(float x) {
-    return sqrtf(x);
-}
-
-float ICACHE_FLASH_ATTR __ieee754_sinhf(float x) {
-    return sinhf(x);
-}
-
-double ICACHE_FLASH_ATTR __ieee754_log(double x) {
-    return log(x);
-}
-
-double ICACHE_FLASH_ATTR __ieee754_sqrt(double x) {
-    return sqrt(x);
-}
-
-float ICACHE_FLASH_ATTR __ieee754_coshf(float x) {
-    return coshf(x);
-}
-
-float ICACHE_FLASH_ATTR __ieee754_atan2f(float x, float y) {
-    return atan2f(x, y);
-}
-#endif

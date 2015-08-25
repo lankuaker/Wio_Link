@@ -111,7 +111,7 @@ def parse_class_header_file (file):
         return ("can not find construct arg list in %s"%file,{})
 
     ## read functions
-    read_functions = re.findall(r'^\s+bool\s+(read_[a-zA-z0-9_]+)\((.*)\);', content, re.M)
+    read_functions = re.findall(r'^\s+bool\s+(read_[a-zA-z0-9_]+)\((.*)\).*$', content, re.M)
     print read_functions
     reads = {}
     for func in read_functions:
@@ -123,7 +123,7 @@ def parse_class_header_file (file):
     patterns["Outputs"] = reads
 
     ## write functions
-    write_functions = re.findall(r'^\s+bool\s+(write_[a-zA-z0-9_]+)\((.*)\);', content, re.M)
+    write_functions = re.findall(r'^\s+bool\s+(write_[a-zA-z0-9_]+)\((.*)\).*$', content, re.M)
     print write_functions
     writes = {}
     for func in write_functions:
@@ -136,7 +136,7 @@ def parse_class_header_file (file):
 
     ## event
     # bool attach_event_reporter(CALLBACK_T handler);
-    event_attachments = re.findall(r'^\s+EVENT_T\s*\*\s*attach_event_reporter_for_(.*)\((.*)\);', content, re.M)
+    event_attachments = re.findall(r'^\s+EVENT_T\s*\*\s*attach_event_reporter_for_(.*)\((.*)\);$', content, re.M)
     print event_attachments
     events = []
     for ev in event_attachments:
@@ -148,6 +148,13 @@ def parse_class_header_file (file):
         patterns["HasEvent"] = True
     else:
         patterns["HasEvent"] = False
+
+    ## get last error
+    get_last_error_func = re.findall(r'^\s+char\s*\*\s*get_last_error\(\s*\).*$', content, re.M)
+    if len(get_last_error_func) > 0:
+        patterns["CanGetLastError"] = True
+    else:
+        patterns["CanGetLastError"] = False
 
     return ("OK",patterns)
 

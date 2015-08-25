@@ -71,6 +71,7 @@ static int iv_offset = 0;
 static unsigned char iv[16];
 static bool txing = false;
 
+extern "C" struct rst_info* system_get_rst_info(void);
 void main_connection_init(void *arg);
 void main_connection_send_hello(void *arg);
 void main_connection_reconnect_callback(void *arg, int8_t err);
@@ -641,6 +642,8 @@ void establish_network()
     if (!rx_stream_buffer) rx_stream_buffer = new CircularBuffer(256);
     if (!tx_stream_buffer) tx_stream_buffer = new CircularBuffer(1024);
 
+    struct rst_info *reason = system_get_rst_info();
+    Serial1.printf("Boot reason: %d\n", reason->flag);
     Serial1.printf("Node name: %s\n", NODE_NAME);
     Serial1.printf("Chip id: 0x%08x\n", system_get_chip_id());
     

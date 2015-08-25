@@ -233,7 +233,7 @@ void rpc_server_loop()
 #endif
 
     //writer_print(TYPE_INT, &parse_stage);
-    while (stream_available() > 0)
+    while (stream_available() > 0 || parse_stage == PARSE_CALL)
     {
         switch (parse_stage)
         {
