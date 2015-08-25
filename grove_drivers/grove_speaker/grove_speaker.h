@@ -32,7 +32,7 @@
 
 #include "suli2.h"
 
-//GROVE_NAME        "Grove - Speaker"
+//GROVE_NAME        "Grove-Speaker"
 //IF_TYPE           GPIO
 //IMAGE_URL         http://www.seeedstudio.com/depot/images/product/Grove%20Speaker_01.jpg
 
@@ -41,9 +41,11 @@ class GroveSpeaker
 {
 public:
     GroveSpeaker(int pin);
-    bool write_sound(int freq, int duration);
+    bool write_sound_ms(int freq, int duration_ms);
+    bool write_sound_start(int freq);
+    bool write_sound_stop();
 private:
-    IO_T *io;
+    PWM_T *io;
 };
 
 

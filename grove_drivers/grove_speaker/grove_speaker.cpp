@@ -29,38 +29,95 @@
 #include "suli2.h"
 #include "grove_speaker.h"
 
-#define USE_DEBUG (1)
+#if 0
+static float pitches[14] = {
+    /*a*/220.00,
+    /*b*/246.94,
+    /*c*/261.63,
+    /*d*/293.66,
+    /*e*/329.63,
+    /*f*/349.23,
+    /*g*/392.00,
+    /*A*/440.00,
+    /*B*/493.88,
+    /*C*/523.25,
+    /*D*/587.33,
+    /*E*/659.26,
+    /*F*/698.46,
+    /*G*/783.99
+};
+#endif
 
 GroveSpeaker::GroveSpeaker(int pin)
 {
-    this->io = (IO_T *)malloc(sizeof(IO_T));
+    this->io = (PWM_T *)malloc(sizeof(PWM_T));
 
-    suli_pin_init(this->io, pin, SULI_OUTPUT);
+    suli_pwm_init(this->io, pin);
     suli_pin_write(this->io, SULI_LOW);
 }
 
 //duration: the time sounds, unit: ms
 //freq: the frequency of speaker, unit: Hz
-bool GroveSpeaker::write_sound(int freq, int duration)
+bool GroveSpeaker::write_sound_ms(int freq, int duration_ms)
 {  
-    if(freq == 0 || duration == 0) return;
+    if(freq == 0 || duration_ms == 0) return;
 	
 	uint32_t interval = (uint32_t)1000000 / freq;//convert the unit to us
-	uint32_t times = (uint32_t)duration * 1000 / interval;//calcuate how many times the loop takes
-#if USE_DEBUG
+    
+    if (interval > 10000)
+    {
+        interval = 10000;
+    } else if (interval < 5)
+    {
+        interval = 5;
+    }
+
+    uint32_t times = (uint32_t)duration_ms * 1000 / interval; //calcuate how many times the loop takes
+    uint32_t times_5ms = 5000 / interval;
+    
+#if ENABLE_DEBUG_ON_UART1
 	Serial1.print("interval");
 	Serial1.println(interval);
 	Serial1.print("times");
 	Serial1.println(times);
 #endif
-	for(int i=0; i<times; i++)
- 	{
-		suli_pin_write(this->io, SULI_HIGH);
-		suli_delay_us(interval);
-		suli_pin_write(this->io, SULI_LOW);
-		suli_delay_us(interval);
-	}
+    if (interval > 2000)
+    {
+        for (int i = 0; i < times; i++)
+     	{
+    		suli_pin_write(this->io, SULI_HIGH);
+    		suli_delay_ms(interval/2000);
+    		suli_pin_write(this->io, SULI_LOW);
+    		suli_delay_ms(interval/2000);
+        }
+    } else
+    {
+        for (int i = 0; i < times; i++)
+     	{
+    		suli_pin_write(this->io, SULI_HIGH);
+    		suli_delay_us(interval/2);
+    		suli_pin_write(this->io, SULI_LOW);
+    		suli_delay_us(interval/2);
+            if (i % times_5ms == (times_5ms-1))
+            {
+                suli_delay_ms(0); //yield the cpu
+            }
+        }
+    }
 	
     return true;
 }
 
+bool GroveSpeaker::write_sound_start(int freq)
+{
+    suli_pwm_frequency(this->io, freq);
+    suli_pwm_output(this->io, 0.5);
+    return true;
+}
+
+
+bool GroveSpeaker::write_sound_stop()
+{
+    suli_pwm_output(this->io, 0);
+    return true;
+}
