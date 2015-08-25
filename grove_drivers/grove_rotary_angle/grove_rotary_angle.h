@@ -33,7 +33,7 @@
 #include "suli2.h"
 
 //GROVE_NAME        "Grove-Rotary Angle Sensor"
-//IF_TYPE           GPIO
+//IF_TYPE           ANALOG
 //IMAGE_URL         http://www.seeedstudio.com/depot/bmz_cache/4/47c18125fbb4c9db7e3104f5a3b04ef5.image.530x397.jpg
 
 
