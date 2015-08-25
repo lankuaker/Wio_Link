@@ -43,7 +43,7 @@
 
 //GROVE_NAME        "Grove-WS2812 LED Strip 60"
 //IF_TYPE           GPIO
-//IMAGE_URL         http://www.seeedstudio.com/depot/bmz_cache/3/3780d3a3cc3e57600702c7999a1550d3.image.530x397.jpg
+//IMAGE_URL         http://www.seeedstudio.com/depot/bmz_cache/4/4f346dc15724a7b5a5c1383253aeefc9.image.530x397.jpg
 
 #define MAX_LED_CNT             60
 

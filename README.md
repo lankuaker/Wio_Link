@@ -76,7 +76,6 @@ And also we need more grove drivers commit from community if you know Arduino an
   
 * 构造函数参数
   * GPIO类型: 参数为(int pin)
-  * PWM类型: 参数为(int pin)
   * ANALOG类型: 参数为(int pin)
   * I2C类型: 参数为(int pinsda, int pinscl)
   * UART类型: 参数为(int pintx, int pinrx)
