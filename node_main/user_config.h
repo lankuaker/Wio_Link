@@ -6,7 +6,7 @@
 #define SMARTCONFIG_KEY             0
 #define STATUS_LED                  15
 #ifndef NODE_NAME
-#define NODE_NAME                   "esp8266_node_1"
+#define NODE_NAME                   "Pion One 001"
 #endif
 #define SERVER_IP                   {45,79,111,86}
 #define SERVER_PORT                 8000

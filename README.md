@@ -68,7 +68,8 @@ And also we need more grove drivers commit from community if you know Arduino an
   * 所有read/write函数返回类型为bool
   * 所有read函数的输出数值均通过指针向外透出, 参数个数不限
   * 所有write函数参数个数不能超过4个
-  * class封装中成员方法的参数数值类型仅支持{int, float, char, int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t}及他们的指针型
+  * class封装中所有对外开放成员方法的参数数值类型支持{int, float, char, int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t}及他们的指针型，指针类型是输出型参数（如read方法的输出），非指针类型是输入型参数（如read方法的输入参数和write方法的输入参数）
+  * class封装中所有对外开放成员方法的参数数据类型还支持字符串（实验性支持），但限制为：只能有1个字串参数，且是最后一个参数，字串长度最大256
   * 事件绑定函数的命名格式必须为EVENT_T * attach_event_reporter_for_\[event_name\](CALLBACK_T), 才能被脚本扫到
   * 事件绑定函数EVENT_T * attach_event_reporter_for_\[event_name\]必须返回事件变量的指针
   
