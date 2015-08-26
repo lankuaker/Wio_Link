@@ -81,7 +81,7 @@ class BaseHandler(web.RequestHandler):
         else:
             user = None
 
-        print "get current user", str(user)
+        gen_log.info("get current user"+ str(user))
         if not user:
             self.resp(403,"Please login to get the token")
         return user
@@ -233,7 +233,7 @@ class UserRetrievePasswordHandler(BaseHandler):
         li = threading.enumerate()
         for l in li:
             if l.getName() == thread_name:
-                print 'INFO: Skip same email request!'
+                gen_log.info('INFO: Skip same email request!')
                 return
 
         threading.Thread(target=self.email_sending_thread, name=thread_name, 
@@ -245,7 +245,7 @@ class UserRetrievePasswordHandler(BaseHandler):
         try:
             s.login(server_config.smtp_user, server_config.smtp_pwd)
         except Exception,e:
-            print e
+            gen_log.error(e)
             return
 
         sender = 'no_reply@seeed.cc'
@@ -269,9 +269,9 @@ IOT Team from Seeed
         try:
             s.sendmail(sender, receiver, message)
         except Exception,e:
-            print e
+            gen_log.error(e)
             return
-        print 'sent new password %s to %s' % (new_password, email)
+        gen_log.info('sent new password %s to %s' % (new_password, email))
 
         
 
@@ -456,7 +456,7 @@ class NodeBaseHandler(BaseHandler):
                 token = token_str.replace("token ","")
             except:
                 token = None
-        print "node token:", token
+        gen_log.debug("node token:"+ token)
         if token:
             try:
                 cur = self.application.cur
@@ -472,7 +472,7 @@ class NodeBaseHandler(BaseHandler):
         if not node:
             self.resp(403,"Please attach the valid node token (not the user token)")
         else:
-            print "get current node:", node["name"], str(node)
+            gen_log.info("get current node:"+ node["name"]+ str(node))
 
         return node
 
@@ -483,10 +483,10 @@ class NodeReadWriteHandler(NodeBaseHandler):
     @gen.coroutine
     def get(self, ignore, uri):
 
-        print ignore
+        gen_log.debug(ignore)
 
         uri = uri.split("?")[0]
-        print "get:",uri
+        gen_log.debug("get:"+ uri)
 
 
         node = self.get_node()
@@ -501,7 +501,7 @@ class NodeReadWriteHandler(NodeBaseHandler):
                     ok, resp = yield conn.submit_and_wait_resp (cmd, "resp_get")
                     self.resp(200,resp)
                 except Exception,e:
-                    print e
+                    gen_log.error(e)
                 return
         self.resp(404, "Node is offline")
 
@@ -509,7 +509,7 @@ class NodeReadWriteHandler(NodeBaseHandler):
     def post (self, ignore, uri):
 
         uri = uri.split("?")[0].rstrip("/")
-        print "post to:",uri
+        gen_log.info("post to:"+ uri)
 
         node = self.get_node()
         if not node:
@@ -523,7 +523,7 @@ class NodeReadWriteHandler(NodeBaseHandler):
         cmd_args = ""
 
         if json_obj:
-            print "post request:", json_obj
+            gen_log.info("post request:"+ json_obj)
 
             if not isinstance(json_obj, dict):
                 self.resp(400, "Bad format of json: must be key/value pair.")
@@ -535,7 +535,7 @@ class NodeReadWriteHandler(NodeBaseHandler):
 
             arg_list = self.request.body.split('&')
 
-            print "post request:", arg_list
+            gen_log.info("post request:"+ str(arg_list))
 
             if len(arg_list) == 1 and arg_list[0] == "":
                 arg_list = []
@@ -558,7 +558,7 @@ class NodeReadWriteHandler(NodeBaseHandler):
                     ok, resp = yield conn.submit_and_wait_resp (cmd, "resp_post")
                     self.resp(200,resp)
                 except Exception,e:
-                    print e
+                    gen_log.error(e)
                 return
 
         self.resp(404, "Node is offline")
@@ -575,11 +575,11 @@ class NodeEventHandler(websocket.WebSocketHandler):
         return True
 
     def open(self):
-        print "websocket open"
+        gen_log.info("websocket open")
         self.connected = True
 
     def on_close(self):
-        print "websocket close"
+        gen_log.info("websocket close")
         if self.connected and self.cur_conn:
             cur_waiters = self.cur_conn.event_waiters
             if self.future in cur_waiters:
@@ -632,9 +632,10 @@ class NodeGetConfigHandler(NodeBaseHandler):
 
         user_id = node["user_id"]
         node_name = node["name"]
+        node_sn = node["node_sn"]
 
         cur_dir = os.path.split(os.path.realpath(__file__))[0]
-        user_build_dir = cur_dir + '/users_build/' + str(user_id)
+        user_build_dir = cur_dir + '/users_build/' + str(user_id)  + '_' + node_sn
         if not os.path.exists(user_build_dir):
             self.resp(404, "Config not found\n")
             return
@@ -643,7 +644,7 @@ class NodeGetConfigHandler(NodeBaseHandler):
             yaml_file = open("%s/connection_config.yaml"%user_build_dir, 'r')
             self.resp(200, yaml_file.read())
         except Exception,e:
-            print "Exception when reading yaml file:", e
+            gen_log.error("Exception when reading yaml file:"+ str(e))
             self.resp(404, "Config not found\n")
 
 
@@ -661,9 +662,10 @@ class NodeGetResourcesHandler(NodeBaseHandler):
         user_id = node["user_id"]
         node_name = node["name"]
         node_id = node['node_id']
+        node_sn = node['node_sn']
 
         cur_dir = os.path.split(os.path.realpath(__file__))[0]
-        user_build_dir = cur_dir + '/users_build/' + str(user_id)
+        user_build_dir = cur_dir + '/users_build/' + str(user_id) + '_' + node_sn
         if not os.path.exists(user_build_dir):
             self.resp(404, "Configuration file not found\n")
             return
@@ -672,7 +674,7 @@ class NodeGetResourcesHandler(NodeBaseHandler):
         try:
             config_file = open('%s/connection_config.yaml'%user_build_dir,'r')
         except Exception,e:
-            print "Exception when reading yaml file:", e
+            gen_log.error("Exception when reading yaml file:"+ str(e))
             self.resp(404, "No resources, the node has not been configured jet.\n")
             return
 
@@ -680,7 +682,7 @@ class NodeGetResourcesHandler(NodeBaseHandler):
         try:
             drv_db_file = open('%s/database.json' % cur_dir,'r')
         except Exception,e:
-            print "Exception when reading grove drivers database file:", e
+            gen_log.error("Exception when reading grove drivers database file:"+ str(e))
             self.resp(404, "Internal error, the grove drivers database file is corrupted.\n")
             return
 
@@ -705,7 +707,7 @@ class NodeGetResourcesHandler(NodeBaseHandler):
 
         if resource:
             if chksum_config == resource['chksum_config'] and chksum_drv_db == resource['chksum_dbjson']:
-                print "echo the cached page for node_id:", node_id
+                gen_log.info("echo the cached page for node_id: %d" % node_id)
                 self.write(resource['render_content'])
                 return
 
@@ -716,11 +718,11 @@ class NodeGetResourcesHandler(NodeBaseHandler):
         try:
             config = yaml.load(config_file)
         except yaml.YAMLError, err:
-            print "Error in parsing yaml file:", err
+            gen_log.error("Error in parsing yaml file:"+ str(err))
             self.resp(404, "No resources, the configuration file is corrupted.\n")
             return
         except Exception,e:
-            print "Error in loading yaml file:", e
+            gen_log.error("Error in loading yaml file:"+ str(e))
             self.resp(404, "No resources, the configuration file is corrupted.\n")
             return
 
@@ -728,7 +730,7 @@ class NodeGetResourcesHandler(NodeBaseHandler):
         try:
             drv_db = json.load(drv_db_file)
         except Exception,e:
-            print "Error in parsing grove drivers database file:", e
+            gen_log.error("Error in parsing grove drivers database file:"+ str(e))
             self.resp(404, "Internal error, the grove drivers database file is corrupted.\n")
             return
 
@@ -798,7 +800,7 @@ class NodeGetResourcesHandler(NodeBaseHandler):
                     
                 else:
                     error_msg = "Error, cannot find %s in grove drivers database file."%grove_instance_name
-                    print error_msg
+                    gen_log.error(error_msg)
                     self.resp(404, error_msg)
                     return
 
@@ -829,7 +831,7 @@ class NodeGetResourcesHandler(NodeBaseHandler):
         self.resp(404, "Please get this url\n")
 
 
-class UserDownloadHandler(NodeBaseHandler):
+class FirmwareBuildingHandler(NodeBaseHandler):
     """
     post two para, node_token and yaml
 
@@ -864,22 +866,22 @@ class UserDownloadHandler(NodeBaseHandler):
 
         user_id = node["user_id"]
         node_name = node["name"]
-
-        pass # test node id is valid?
+        node_id = node["node_id"]
+        node_sn = node["node_sn"]
 
         try:
             yaml = base64.b64decode(yaml)
         except:
             yaml = ""
 
-        print yaml
+        gen_log.debug(yaml)
         if not yaml:
             gen_log.error("no valid yaml provided")
             self.resp(400, "no valid yaml provided")
             return
 
         cur_dir = os.path.split(os.path.realpath(__file__))[0]
-        user_build_dir = cur_dir + '/users_build/' + str(user_id)
+        user_build_dir = cur_dir + '/users_build/' + str(user_id) + '_' + node_sn
         if not os.path.exists(user_build_dir):
             os.makedirs(user_build_dir)
 
@@ -890,11 +892,22 @@ class UserDownloadHandler(NodeBaseHandler):
 
         copy('%s/Makefile.template'%cur_dir, '%s/Makefile'%user_build_dir)
 
-        self.request.connection.stream.io_loop.add_callback(self.ota_process, user_id, node_name, node['node_sn'])
+        self.request.connection.stream.io_loop.add_callback(self.ota_process, user_id, node_name, node_sn)
 
         #clear the possible old state recv during last ota process
         self.cur_conn.state_happened = []
 
+        #log the building
+        try:
+            cur = self.application.cur
+            cur.execute("insert into builds (node_id, build_date, build_starttime, build_endtime) \
+                        values(?,date('now'),datetime('now'),datetime('now'))", (node_id, ))
+        except Exception,e:
+            gen_log.error("Failed to log the building record: %s" % str(e))
+        finally:
+            self.application.conn.commit()
+
+        #echo the response first
         self.resp(200,"",meta={'ota_status': "going", "ota_msg": "Building firmware.."})
 
 
@@ -903,7 +916,7 @@ class UserDownloadHandler(NodeBaseHandler):
         li = threading.enumerate()
         for l in li:
             if l.getName() == thread_name:
-                print 'INFO: Skip same request!'
+                gen_log.info('INFO: Skip same request!')
                 return
 
         threading.Thread(target=self.build_thread, name=thread_name, 
@@ -916,10 +929,9 @@ class UserDownloadHandler(NodeBaseHandler):
             self.resp(404, "Node is offline")
             return
 
-        if not gen_and_build(str(user_id), node_name):
+        if not gen_and_build(str(user_id), node_sn, node_name):
             error_msg = get_error_msg()
             gen_log.error(error_msg)
-            print error_msg
             #save state
             state = ("error", "build error: "+error_msg)
             if len(self.cur_conn.state_waiters) == 0:
@@ -931,7 +943,7 @@ class UserDownloadHandler(NodeBaseHandler):
 
         #save state
         state = ("going", "Notifing the node...")
-        print state
+        gen_log.info(state)
         if len(self.cur_conn.state_waiters) == 0:
             self.cur_conn.state_happened.append(state)
         else:
@@ -944,7 +956,7 @@ class UserDownloadHandler(NodeBaseHandler):
             self.cur_conn.submit_cmd (cmd)
             # todo: sometiome no answer too long, but no error prompt
         except Exception,e:
-            print e
+            gen_log.error(e)
             #save state
             state = ("error", "notify error: "+str(e))
             if len(self.cur_conn.state_waiters) == 0:
@@ -956,14 +968,14 @@ class UserDownloadHandler(NodeBaseHandler):
 
 
 
-class OTAUpdatesHandler(NodeBaseHandler):
+class OTAStatusReportingHandler(NodeBaseHandler):
 
     def get (self):
         self.resp(404, "Please post to this url\n")
 
     @gen.coroutine
     def post(self):
-        print "request ota status"
+        gen_log.info("request ota status")
 
         node = self.get_node()
         if not node:
@@ -983,7 +995,7 @@ class OTAUpdatesHandler(NodeBaseHandler):
         self.cur_conn = cur_conn
 
         state = yield self.wait_ota_status_change()
-        print "+++post state to app:", state
+        gen_log.info("+++post state to app:"+ str(state))
 
         if self.request.connection.stream.closed():
             return
@@ -992,7 +1004,7 @@ class OTAUpdatesHandler(NodeBaseHandler):
 
     def on_connection_close(self):
         # global_message_buffer.cancel_wait(self.future)
-        print "on_connection_close"
+        gen_log.info("on_connection_close")
 
     def wait_ota_status_change(self):
         result_future = Future()
@@ -1009,7 +1021,7 @@ class OTAUpdatesHandler(NodeBaseHandler):
 
 
 
-class OTAHandler(BaseHandler):
+class OTAFirmwareSendingHandler(BaseHandler):
 
     def initialize (self, conns):
         self.conns = conns
@@ -1044,7 +1056,7 @@ class OTAHandler(BaseHandler):
         else:
             node = None
 
-        print "get current node:", str(node)
+        gen_log.info("get current node:"+ str(node))
         if not node:
             gen_log.error("can not find the specified node for ota bin request")
         return node
@@ -1061,8 +1073,11 @@ class OTAHandler(BaseHandler):
         if not node:
             return
 
+        node_sn = node['node_sn']
+        user_id = node['user_id']
+
         #get the user dir and path of bin
-        bin_path = os.path.join("users_build/",str(node['user_id']), "user%s.bin"%str(app))
+        bin_path = os.path.join("users_build/",str(user_id) + '_' + str(node_sn), "user%s.bin"%str(app))
 
         #put user*.bin out
         self.set_header("Content-Type","application/octet-stream")
@@ -1077,7 +1092,7 @@ class OTAHandler(BaseHandler):
                     self.write(chunk)
                     yield self.flush()
                 else:
-                    print "firmware bin sent done."
+                    gen_log.info("firmware bin sent done.")
                     return        
 
 
