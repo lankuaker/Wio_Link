@@ -711,6 +711,8 @@ class NodeGetResourcesHandler(NodeBaseHandler):
                 self.write(resource['render_content'])
                 return
 
+        gen_log.info("re-render the resource page for node_id: %d" % node_id)
+
         #else render new resource page
         #load the yaml file into object
         config_file.seek(0)
@@ -781,11 +783,16 @@ class NodeGetResourcesHandler(NodeBaseHandler):
                         arguments = []
                         method_name = fun[0].replace('write_','')
                         url = server_config.vhost_url_base + '/v1/node/' + grove_instance_name + '/' + method_name
-                        arg_list = [arg for arg in fun[1] if arg.find("*")<0]  #find out the ones havent "*"
+                        #arg_list = [arg for arg in fun[1] if arg.find("*")<0]  #find out the ones havent "*"
+                        arg_list = fun[1]
                         for arg in arg_list:
                             if not arg:
                                 continue
-                            t = arg.strip().replace('*', '').split(' ')[0]
+                            string_type = True if arg.find("char *") >= 0 else False
+                            if string_type: 
+                                t = "char *"
+                            else:
+                                t = arg.strip().replace('*', '').split(' ')[0]
                             name = arg.strip().replace('*', '').split(' ')[1]
                             arguments.append('[%s]: %s value' % (name, t))
                             url += ('/[%s]' % name)
