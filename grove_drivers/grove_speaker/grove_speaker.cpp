@@ -60,7 +60,7 @@ GroveSpeaker::GroveSpeaker(int pin)
 //freq: the frequency of speaker, unit: Hz
 bool GroveSpeaker::write_sound_ms(int freq, int duration_ms)
 {  
-    if(freq == 0 || duration_ms == 0) return;
+    if(freq == 0 || duration_ms == 0) return false;
 	
 	uint32_t interval = (uint32_t)1000000 / freq;//convert the unit to us
     

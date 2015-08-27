@@ -1,5 +1,5 @@
 /*
- * grove_comp_hmc5883l.h
+ * grove_airquality_tp401a.h
  *
  * Copyright (c) 2012 seeed technology inc.
  * Website    : www.seeed.cc
@@ -43,12 +43,12 @@ class GroveAirquality
 public:
     GroveAirquality(int pin);
     bool read_quality(int *quality);
+    char *get_last_error() { return error_desc; };
 
 private:
     ANALOG_T *analog;
-    void _init(void);
     uint32_t inited_time;
-    bool is_sensor_exist;
+    char *error_desc;
 };
 
 #endif
