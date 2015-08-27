@@ -53,7 +53,7 @@ enum
 
 #define ARG_BUFFER_LEN                  256
 
-typedef void (*method_ptr_t)(void *class_ptr, void *input);
+typedef bool (*method_ptr_t)(void *class_ptr, void *input);
 
 struct resource_s;
 

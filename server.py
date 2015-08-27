@@ -299,8 +299,9 @@ class DeviceConnection(object):
             try:
                 for msg in self.recv_msg_queue:
                     if msg['msg_type'] == target_resp:
-                        tmp = msg['msg']
+                        tmp = msg
                         self.recv_msg_queue.remove(msg)
+                        del tmp['msg_type']
                         raise gen.Return((True, tmp))
                 yield gen.sleep(0.1)
                 timeout += 0.1

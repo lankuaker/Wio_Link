@@ -123,6 +123,11 @@ void response_msg_open(char *msg_type)
     stream_write_string(msg2, strlen(msg2));
 }
 
+void response_msg_append_205()
+{
+    char *msg = ", \"status\": 205";
+    stream_write_string(msg, strlen(msg));
+}
 
 void response_msg_close()
 {

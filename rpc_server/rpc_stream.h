@@ -44,7 +44,7 @@ int stream_available();
 void writer_print(type_t type, const void *data, bool append_comma = false);
 
 void response_msg_open(char *msg_type);
-
+void response_msg_append_205();
 void response_msg_close();
 
 #endif

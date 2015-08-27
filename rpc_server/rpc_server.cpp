@@ -442,7 +442,7 @@ void rpc_server_loop()
                         break;
                     }
                     //writer_print(TYPE_STRING, "{");
-                    p_resource->method_ptr(p_resource->class_ptr, arg_buff);
+                    if (false == p_resource->method_ptr(p_resource->class_ptr, arg_buff)) response_msg_append_205();
                     //writer_print(TYPE_STRING, "}");
                     response_msg_close();
 

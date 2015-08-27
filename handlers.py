@@ -89,6 +89,7 @@ class BaseHandler(web.RequestHandler):
 
 
     '''
+    205 - custom, get response from node but with error
     400 - bad variables / format
     401 - unauthorized
     403 - forbidden
@@ -499,7 +500,10 @@ class NodeReadWriteHandler(NodeBaseHandler):
                     cmd = "GET /%s\r\n"%(uri)
                     cmd = cmd.encode("ascii")
                     ok, resp = yield conn.submit_and_wait_resp (cmd, "resp_get")
-                    self.resp(200,resp)
+                    if 'status' in resp:
+                        self.resp(resp['status'],resp['msg'])
+                    else:
+                        self.resp(200,resp['msg'])
                 except Exception,e:
                     gen_log.error(e)
                 return

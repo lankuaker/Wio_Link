@@ -254,9 +254,9 @@ def gen_wrapper_registration (instance_name, info, arg_list):
     #read functions
 
     for fun in info['Outputs'].items():
-        fp_wrapper_h.write('void __%s_%s(void *class_ptr, void *input);\r\n' % (grove_name, fun[0]))
+        fp_wrapper_h.write('bool __%s_%s(void *class_ptr, void *input);\r\n' % (grove_name, fun[0]))
 
-        fp_wrapper_cpp.write('void __%s_%s(void *class_ptr, void *input)\r\n' % (grove_name, fun[0]))
+        fp_wrapper_cpp.write('bool __%s_%s(void *class_ptr, void *input)\r\n' % (grove_name, fun[0]))
         fp_wrapper_cpp.write('{\r\n')
         fp_wrapper_cpp.write('    %s *grove = (%s *)class_ptr;\r\n' % (info['ClassName'], info['ClassName']))
         fp_wrapper_cpp.write('    uint8_t *arg_ptr = (uint8_t *)input;\r\n')
@@ -266,6 +266,7 @@ def gen_wrapper_registration (instance_name, info, arg_list):
         fp_wrapper_cpp.write('    if(grove->%s(%s))\r\n'%(fun[0],build_read_call_args(fun[1])))
         fp_wrapper_cpp.write('    {\r\n')
         fp_wrapper_cpp.write(build_read_print(fun[1]))
+        fp_wrapper_cpp.write('        return true;\r\n')
         fp_wrapper_cpp.write('    }else\r\n')
         fp_wrapper_cpp.write('    {\r\n')
         if info['CanGetLastError']:
@@ -274,6 +275,7 @@ def gen_wrapper_registration (instance_name, info, arg_list):
             fp_wrapper_cpp.write('        writer_print(TYPE_STRING, "\\"");\r\n')
         else:
             fp_wrapper_cpp.write('        writer_print(TYPE_STRING, "null");\r\n')
+        fp_wrapper_cpp.write('        return false;\r\n')
         fp_wrapper_cpp.write('    }\r\n')
         fp_wrapper_cpp.write('}\r\n\r\n')
 
@@ -289,9 +291,9 @@ def gen_wrapper_registration (instance_name, info, arg_list):
 
     #write functions
     for fun in info['Inputs'].items():
-        fp_wrapper_h.write('void __%s_%s(void *class_ptr, void *input);\r\n' % (grove_name, fun[0]))
+        fp_wrapper_h.write('bool __%s_%s(void *class_ptr, void *input);\r\n' % (grove_name, fun[0]))
 
-        fp_wrapper_cpp.write('void __%s_%s(void *class_ptr, void *input)\r\n' % (grove_name, fun[0]))
+        fp_wrapper_cpp.write('bool __%s_%s(void *class_ptr, void *input)\r\n' % (grove_name, fun[0]))
         fp_wrapper_cpp.write('{\r\n')
         fp_wrapper_cpp.write('    %s *grove = (%s *)class_ptr;\r\n' % (info['ClassName'], info['ClassName']))
         fp_wrapper_cpp.write('    uint8_t *arg_ptr = (uint8_t *)input;\r\n')
@@ -299,7 +301,10 @@ def gen_wrapper_registration (instance_name, info, arg_list):
         fp_wrapper_cpp.write(build_write_unpack_vars(fun[1]))
         fp_wrapper_cpp.write('\r\n')
         fp_wrapper_cpp.write('    if(grove->%s(%s))\r\n'%(fun[0],build_write_call_args(fun[1])))
+        fp_wrapper_cpp.write('    {\r\n')
         fp_wrapper_cpp.write('        writer_print(TYPE_STRING, "\\"OK\\"");\r\n')
+        fp_wrapper_cpp.write('        return true;\r\n')
+        fp_wrapper_cpp.write('    }\r\n')
         fp_wrapper_cpp.write('    else\r\n')
         fp_wrapper_cpp.write('    {\r\n')
         if info['CanGetLastError']:
@@ -308,6 +313,7 @@ def gen_wrapper_registration (instance_name, info, arg_list):
             fp_wrapper_cpp.write('        writer_print(TYPE_STRING, "\\"");\r\n')
         else:
             fp_wrapper_cpp.write('        writer_print(TYPE_STRING, "\\"Failed\\"");\r\n')
+        fp_wrapper_cpp.write('        return false;\r\n')
         fp_wrapper_cpp.write('    }\r\n')
         fp_wrapper_cpp.write('}\r\n\r\n')
 

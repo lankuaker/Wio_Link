@@ -72,7 +72,7 @@ And also we need more grove drivers commit from community if you know Arduino an
   * class封装中所有对外开放的写方法的参数数据类型还（实验性）支持字符串类型“char *“，但限制为：只能有1个字串参数，且是最后一个参数，字串长度最大256
   * 事件绑定函数的命名格式必须为EVENT_T * attach_event_reporter_for_\[event_name\](CALLBACK_T), 才能被脚本扫到
   * 事件绑定函数EVENT_T * attach_event_reporter_for_\[event_name\]必须返回事件变量的指针
-  * 异常原因查询函数格式为：char *get_last_error()，若驱动中实现了此函数，当读写函数调用异常而返回false时，会将此函数返回值所指向的字符串作为出错信息返回给云端调用
+  * 异常原因查询函数格式为：char *get_last_error()，若驱动中实现了此函数，当读写函数调用因异常而返回false时，会将此函数返回值所指向的字符串作为出错信息返回给云端调用，需要注意的是，字符串需要存储在RAM中。
   
 * 构造函数参数
   * GPIO类型: 参数为(int pin)
