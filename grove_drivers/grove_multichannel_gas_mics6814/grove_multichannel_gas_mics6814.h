@@ -67,6 +67,13 @@ public:
     void powerOn(void);
     void powerOff(void);
     
+    /**
+     * Read the concentration of CO gas with unit ppm.
+     * 
+     * @param concentration_ppm - the concentration of CO gas, unit: ppm
+     * 
+     * @return bool 
+     */
     bool read_CO(float *concentration_ppm);
     bool read_NO2(float *concentration_ppm);
     bool read_NH3(float *concentration_ppm);

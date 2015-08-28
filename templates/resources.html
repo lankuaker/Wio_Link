@@ -89,6 +89,9 @@
             display:inline-block;
             white-space:pre
         }
+        p.description{
+            font-size: 90%
+        }
     </style>
 </head>
 
@@ -102,6 +105,9 @@
     <h3 class="am-panel-title">{{item['url']}}</h3>
   </div>
   <div class="am-panel-bd">
+    {% if item['brief'] %}
+    <p class="description">{{item['brief']}}</p>
+    {% end %}
     <h5>Request method: {{item['type']}}</h5>
 
     {% if item['arguments'] %}
@@ -117,9 +123,17 @@
         <ul>
           {% if item['type'] == 'GET' %}
           <li>{"status": 200, "msg": { {{item['returns']}} }}</li>
+            {% if item['return_docs'] %}
+            {% for ret_doc in item['return_docs'] %}
+            <ul style="margin: 5px;">
+              <li>{{ret_doc}}</li>
+            </ul>
+            {% end %}
+            {% end %}
+          <li>{"status": 205, "msg": "failure reason here"}</li>
           {% else %}
           <li>{"status": 200, "msg": "OK"}</li>
-          <li>{"status": 200, "msg": "Failed"}</li>
+          <li>{"status": 205, "msg": "failure reason here"}</li>
           {% end %}
         </ul>
   </div>

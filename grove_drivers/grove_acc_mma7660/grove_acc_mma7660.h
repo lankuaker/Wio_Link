@@ -1,4 +1,4 @@
-/*
+﻿/*
  * grove_acc_mma7660.h
  *
  * Copyright (c) 2012 seeed technology inc.
@@ -32,7 +32,7 @@
 
 #include "suli2.h"
 
-//GROVE_NAME        "Grove-3Axis Digital Acc(�1.5g)"
+//GROVE_NAME        "Grove-3Axis Digital Acc(±1.5g)"
 //IF_TYPE           I2C
 //IMAGE_URL         http://www.seeedstudio.com/wiki/images/b/bb/3_aix_acc.jpg
 
@@ -67,7 +67,26 @@ class GroveAccMMA7660
 {
 public:
     GroveAccMMA7660(int pinsda, int pinscl);
-    bool read_accelerometer(float *ax, float *ay, float *az);
+
+    /**
+     * read the acceleration in unit g
+     *
+     * @param ax - acceleration in x axis
+     * @param ay - acceleration in y axis
+     * @param az - acceleration in z axis
+     *
+     * @return bool
+     */
+    bool read_acceleration(float *ax, float *ay, float *az);
+
+    /**
+     * read the status if the thing was shacked
+     * shake can be done in any axis
+     *
+     * @param shaked 1: shaked 0: not
+     *
+     * @return bool
+     */
     bool read_shaked(uint8_t *shaked);
 
 //private:

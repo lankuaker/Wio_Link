@@ -74,6 +74,26 @@ And also we need more grove drivers commit from community if you know Arduino an
   * 事件绑定函数EVENT_T * attach_event_reporter_for_\[event_name\]必须返回事件变量的指针
   * 异常原因查询函数格式为：char *get_last_error()，若驱动中实现了此函数，当读写函数调用因异常而返回false时，会将此函数返回值所指向的字符串作为出错信息返回给云端调用，需要注意的是，字符串需要存储在RAM中。
   
+* read/write函数的注释
+  * 按规范书写的函数注释将会被扫描脚本扫到，并在节点resource资源页打印
+  * 函数注释的主要作用是解释函数的作用及每个参数的含义及取值范围
+  * 正确的注释如下所示，需要注意的是：
+    - @para 参数解释需在一行内完成
+    - 注释以/**开始， 以\*/结束
+    - description可多行
+    
+>     /**
+>      * set or reset or clear the led strip with a specified color
+>      * multiline description is allowed
+>      * 
+>      * @param total_led_cnt - the total count of this strip, max: 60(too many leds will cause the power unstable)
+>      * @param rgb_hex_string - a rgb value in hex format, e.g. AA55CC (without # or 0x)
+>      * 
+>      * @return bool 
+>      */
+    
+
+  
 * 构造函数参数
   * GPIO类型: 参数为(int pin)
   * ANALOG类型: 参数为(int pin)

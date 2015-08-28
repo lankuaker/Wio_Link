@@ -58,6 +58,13 @@ def find_grove_in_database (grove_name, json_obj):
             return grove
     return {}
 
+def find_grove_in_docs_db (grove_id, json_obj):
+    for grove in json_obj:
+        #print grove['GroveName']," -- ", grove_name
+        if grove['ID'] == grove_id:
+            return grove
+    return {}
+
 def declare_read_vars (arg_list):
     result = ""
     for arg in arg_list:
@@ -351,7 +358,7 @@ def gen_and_build (user_id, node_sn, node_name):
     cur_dir = os.path.split(os.path.realpath(__file__))[0]
 
     try:
-        f_database = open('%s/database.json' % cur_dir,'r')
+        f_database = open('%s/drivers.json' % cur_dir,'r')
         js = json.load(f_database)
     except Exception,e:
         error_msg = str(e)

@@ -311,7 +311,7 @@ class DriversHandler(BaseHandler):
     @web.authenticated
     def get (self):
         cur_dir = os.path.split(os.path.realpath(__file__))[0]
-        self.write(open(os.path.join(cur_dir, "database.json")).read())
+        self.write(open(os.path.join(cur_dir, "drivers.json")).read())
 
     @web.authenticated
     def post(self):
@@ -658,6 +658,105 @@ class NodeGetConfigHandler(NodeBaseHandler):
 
 class NodeGetResourcesHandler(NodeBaseHandler):
 
+    def prepare_data_for_template(self, node, grove_instance_name, grove, grove_doc):
+
+        data = []
+        events = []
+
+        methods_doc = grove_doc['Methods']
+        for fun in grove['Outputs'].items():
+            item = {}
+            item['type'] = 'GET'
+            #build read arg
+            arguments = []
+            method_name = fun[0].replace('read_','')
+            url = server_config.vhost_url_base + '/v1/node/' + grove_instance_name + '/' + method_name
+            arg_list = [arg for arg in fun[1] if arg.find("*") < 0]  #find out the ones dont have "*"
+            for arg in arg_list:
+                if not arg:
+                    continue
+                t = arg.strip().split(' ')[0]
+                name = arg.strip().split(' ')[1]
+                
+                if fun[0] in methods_doc and name in methods_doc[fun[0]]:
+                    comment = ", " + methods_doc[fun[0]][name]
+                else:
+                    comment = ""
+
+                arguments.append('[%s]: %s value%s' % (name, t, comment))
+                url += ('/[%s]' % name)
+
+            item['url'] = url + '?access_token=' + node['private_key']
+            item['arguments'] = arguments
+
+            item['brief'] = ""
+            if fun[0] in methods_doc and '@brief@' in methods_doc[fun[0]]: 
+                item['brief'] = methods_doc[fun[0]]['@brief@']
+
+
+            #build returns
+            returns = ""
+            return_docs = []
+            arg_list = [arg for arg in fun[1] if arg.find("*")>-1]  #find out the ones have "*"
+            for arg in arg_list:
+                if not arg:
+                    continue
+                t = arg.strip().replace('*', '').split(' ')[0]
+                name = arg.strip().replace('*', '').split(' ')[1]
+                returns += ('"%s": [%s value],' % (name, t))
+
+                if fun[0] in methods_doc and name in methods_doc[fun[0]]:
+                    comment = ", " + methods_doc[fun[0]][name]
+                    return_docs.append('%s: %s value%s' % (name, t, comment))
+
+
+            returns = returns.rstrip(',')
+            item['returns'] = returns
+            item['return_docs'] = return_docs
+
+            data.append(item)
+
+        for fun in grove['Inputs'].items():
+            item = {}
+            item['type'] = 'POST'
+            #build write arg
+            arguments = []
+            method_name = fun[0].replace('write_','')
+            url = server_config.vhost_url_base + '/v1/node/' + grove_instance_name + '/' + method_name
+            #arg_list = [arg for arg in fun[1] if arg.find("*")<0]  #find out the ones havent "*"
+            arg_list = fun[1]
+            for arg in arg_list:
+                if not arg:
+                    continue
+                string_type = True if arg.find("char *") >= 0 else False
+                if string_type: 
+                    t = "char *"
+                else:
+                    t = arg.strip().replace('*', '').split(' ')[0]
+                name = arg.strip().replace('*', '').split(' ')[1]
+
+                if fun[0] in methods_doc and name in methods_doc[fun[0]]:
+                    comment = ", " + methods_doc[fun[0]][name]
+                else:
+                    comment = ""
+
+                arguments.append('[%s]: %s value%s' % (name, t, comment))
+                url += ('/[%s]' % name)
+            item['url'] = url + '?access_token=' + node['private_key']
+            item['arguments'] = arguments
+
+            item['brief'] = ""
+            if fun[0] in methods_doc and '@brief@' in methods_doc[fun[0]]: 
+                item['brief'] = methods_doc[fun[0]]['@brief@']
+
+            data.append(item)
+
+        if grove['HasEvent']:
+            events += grove['Events']
+
+        return (data, events)
+
+
     def get(self):
         node = self.get_node()
         if not node:
@@ -684,7 +783,8 @@ class NodeGetResourcesHandler(NodeBaseHandler):
 
         #open the json file for reading
         try:
-            drv_db_file = open('%s/database.json' % cur_dir,'r')
+            drv_db_file = open('%s/drivers.json' % cur_dir,'r')
+            drv_doc_file= open('%s/driver_docs.json' % cur_dir,'r')
         except Exception,e:
             gen_log.error("Exception when reading grove drivers database file:"+ str(e))
             self.resp(404, "Internal error, the grove drivers database file is corrupted.\n")
@@ -695,7 +795,7 @@ class NodeGetResourcesHandler(NodeBaseHandler):
         sha1.update(config_file.read())
         chksum_config = sha1.hexdigest()
         sha1 = hashlib.sha1()
-        sha1.update(drv_db_file.read())
+        sha1.update(drv_db_file.read() + drv_doc_file.read())
         chksum_drv_db = sha1.hexdigest()
 
         #query the database, if 2 file not changed, echo cached html
@@ -721,6 +821,7 @@ class NodeGetResourcesHandler(NodeBaseHandler):
         #load the yaml file into object
         config_file.seek(0)
         drv_db_file.seek(0)
+        drv_doc_file.seek(0)
         try:
             config = yaml.load(config_file)
         except yaml.YAMLError, err:
@@ -735,6 +836,7 @@ class NodeGetResourcesHandler(NodeBaseHandler):
         #load the json file into object
         try:
             drv_db = json.load(drv_db_file)
+            drv_docs = json.load(drv_doc_file)
         except Exception,e:
             gen_log.error("Error in parsing grove drivers database file:"+ str(e))
             self.resp(404, "Internal error, the grove drivers database file is corrupted.\n")
@@ -748,68 +850,19 @@ class NodeGetResourcesHandler(NodeBaseHandler):
             for grove_instance_name in config.keys():
                 grove = find_grove_in_database(config[grove_instance_name]['name'], drv_db)
                 if grove:
-                    for fun in grove['Outputs'].items():
-                        item = {}
-                        item['type'] = 'GET'
-                        #build read arg
-                        arguments = []
-                        method_name = fun[0].replace('read_','')
-                        url = server_config.vhost_url_base + '/v1/node/' + grove_instance_name + '/' + method_name
-                        arg_list = [arg for arg in fun[1] if arg.find("*") < 0]  #find out the ones dont have "*"
-                        for arg in arg_list:
-                            if not arg:
-                                continue
-                            t = arg.strip().split(' ')[0]
-                            name = arg.strip().split(' ')[1]
-                            arguments.append('[%s]: %s value' % (name, t))
-                            url += ('/[%s]' % name)
-                        item['url'] = url + '?access_token=' + node['private_key']
-                        item['arguments'] = arguments
+                    grove_doc = find_grove_in_docs_db(grove['ID'], drv_docs)
+                    if grove_doc:
+                        d, e = self.prepare_data_for_template(node,grove_instance_name,grove,grove_doc)
+                        data += d
+                        events += e
 
-
-                        #build returns
-                        returns = ""
-                        arg_list = [arg for arg in fun[1] if arg.find("*")>-1]  #find out the ones have "*"
-                        for arg in arg_list:
-                            if not arg:
-                                continue
-                            t = arg.strip().replace('*', '').split(' ')[0]
-                            name = arg.strip().replace('*', '').split(' ')[1]
-                            returns += ('"%s": [%s value],' % (name, t))
-                        returns = returns.rstrip(',')
-                        item['returns'] = returns
-                        data.append(item)
-
-                    for fun in grove['Inputs'].items():
-                        item = {}
-                        item['type'] = 'POST'
-                        #build write arg
-                        arguments = []
-                        method_name = fun[0].replace('write_','')
-                        url = server_config.vhost_url_base + '/v1/node/' + grove_instance_name + '/' + method_name
-                        #arg_list = [arg for arg in fun[1] if arg.find("*")<0]  #find out the ones havent "*"
-                        arg_list = fun[1]
-                        for arg in arg_list:
-                            if not arg:
-                                continue
-                            string_type = True if arg.find("char *") >= 0 else False
-                            if string_type: 
-                                t = "char *"
-                            else:
-                                t = arg.strip().replace('*', '').split(' ')[0]
-                            name = arg.strip().replace('*', '').split(' ')[1]
-                            arguments.append('[%s]: %s value' % (name, t))
-                            url += ('/[%s]' % name)
-                        item['url'] = url + '?access_token=' + node['private_key']
-                        item['arguments'] = arguments
-                        data.append(item)
-
-                    if grove['HasEvent']:
-                        events += grove['Events']
-
-
+                    else:  #if grove_doc
+                        error_msg = "Error, cannot find %s in grove driver documentation database file."%grove_instance_name
+                        gen_log.error(error_msg)
+                        self.resp(404, error_msg)
+                        return
                     
-                else:
+                else:  #if grove
                     error_msg = "Error, cannot find %s in grove drivers database file."%grove_instance_name
                     gen_log.error(error_msg)
                     self.resp(404, error_msg)
