@@ -41,6 +41,14 @@ class GroveElecMagnet
 {
 public:
     GroveElecMagnet(int pin);
+    
+    /**
+     * 
+     * 
+     * @param onoff - 1: on/generate electromagnetism, 0: off
+     * 
+     * @return bool 
+     */
     bool write_onoff(int onoff);
 private:
     IO_T *io;

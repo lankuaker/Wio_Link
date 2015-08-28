@@ -41,6 +41,14 @@ class GroveServo
 {
 public:
     GroveServo(int pin);
+    
+    /**
+     * Drive the servo to rotate a specific angle.
+     * 
+     * @param degree - the angle in unite degress
+     * 
+     * @return bool 
+     */
     bool write_angle(int degree);
 private:
     PWM_T *io;

@@ -133,7 +133,8 @@ def parse_class_header_file (file):
             dict_paras[p[0]] = p[1]
 
         briefs = re.findall(r'(?!\* @)\* (.*)', func[0], re.M)
-        dict_paras['@brief@'] = '\n'.join(briefs)
+        brief = '\n'.join(briefs)
+        dict_paras['@brief@'] = brief if brief.strip().strip('\n') else ""
         doc[func[1]] = dict_paras
 
     ## write functions
@@ -157,7 +158,8 @@ def parse_class_header_file (file):
             dict_paras[p[0]] = p[1]
 
         briefs = re.findall(r'(?!\* @)\* (.*)', func[0], re.M)
-        dict_paras['@brief@'] = '\n'.join(briefs)
+        brief = '\n'.join(briefs)
+        dict_paras['@brief@'] = brief if brief.strip().strip('\n') else ""
         doc[func[1]] = dict_paras
 
     ## event

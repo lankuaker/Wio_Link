@@ -41,6 +41,14 @@ class GroveEL
 {
 public:
     GroveEL(int pin);
+    
+    /**
+     * 
+     * 
+     * @param onoff - 1: on, 0: off
+     * 
+     * @return bool 
+     */
     bool write_onoff(int onoff);
 private:
     IO_T *io;

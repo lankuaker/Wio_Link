@@ -41,7 +41,16 @@ class GroveIRDistanceInterrupter
 {
 public:
     GroveIRDistanceInterrupter(int pin);
+    
+    /**
+     * Read the status if a object is approaching the sensor.
+     * 
+     * @param approach - 1: something approached 0: not
+     * 
+     * @return bool 
+     */
     bool read_approach(uint8_t *approach);
+    
     EVENT_T * attach_event_reporter_for_ir_approached(CALLBACK_T reporter);
     EVENT_T *event;
     IO_T *io;

@@ -40,6 +40,14 @@ class GroveMoisture
 {
 public:
     GroveMoisture(int pin);
+    
+    /**
+     * 
+     * 
+     * @param moisture - analog value, range: 0~1023
+     * 
+     * @return bool 
+     */
     bool read_moisture(uint16_t *moisture);
 
 private:

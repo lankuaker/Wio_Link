@@ -163,11 +163,18 @@ float GroveMultiChannelGas::calcGas(int gas)
     if(!is_connected)
     {
         if(readR0() >= 0) is_connected = 1;
-        else return -1.0f;
+        else
+        {
+            error_desc = "The sensor is not connected.";
+            return -1.0f;
+        }
     }
 
-    if(readR() < 0)
+    if (readR() < 0)
+    {
+        error_desc = "Error when communicating with the sensor.";
         return -2.0f;
+    }
 
     float ratio0 = (float)res[0] / res0[0];
     float ratio1 = (float)res[1] / res0[1];
@@ -306,37 +313,44 @@ bool GroveMultiChannelGas::read_CO(float *concentration)
 bool GroveMultiChannelGas::read_NO2(float *concentration)
 {
     *concentration = calcGas(NO2);
-    return true;    
+    if (*concentration >= 0) return true;
+    else return false;
 }
 bool GroveMultiChannelGas::read_NH3(float *concentration)
 {
     *concentration = calcGas(NH3);
-    return true;    
+    if (*concentration >= 0) return true;
+    else return false;
 }
 bool GroveMultiChannelGas::read_C3H8(float *concentration)
 {
     *concentration = calcGas(C3H8);
-    return true;    
+    if (*concentration >= 0) return true;
+    else return false;
 }
 bool GroveMultiChannelGas::read_C4H10(float *concentration)
 {
     *concentration = calcGas(C4H10);
-    return true;    
+    if (*concentration >= 0) return true;
+    else return false;
 }
 bool GroveMultiChannelGas::read_CH4(float *concentration)
 {
     *concentration = calcGas(CH4);
-    return true;    
+    if (*concentration >= 0) return true;
+    else return false;
 }
 bool GroveMultiChannelGas::read_H2(float *concentration)
 {
     *concentration = calcGas(H2);
-    return true;    
+    if (*concentration >= 0) return true;
+    else return false;
 }
 bool GroveMultiChannelGas::read_C2H5OH(float *concentration)
 {
     *concentration = calcGas(C2H5OH);
-    return true;    
+    if (*concentration >= 0) return true;
+    else return false;
 }
 
 

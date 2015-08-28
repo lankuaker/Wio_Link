@@ -82,6 +82,9 @@ public:
     bool read_CH4(float *concentration_ppm);
     bool read_H2(float *concentration_ppm);
     bool read_C2H5OH(float *concentration_ppm);
+    
+    char *get_last_error() { return error_desc; };
+    
 
 private:
     I2C_T *i2c;
@@ -94,7 +97,7 @@ private:
     int16_t readR0();
     int16_t readR();
     float calcGas(int gas);
-    
+    char *error_desc;
 
 };
 

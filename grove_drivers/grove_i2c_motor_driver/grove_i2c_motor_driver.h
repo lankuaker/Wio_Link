@@ -52,10 +52,50 @@ class GroveI2CMotorDriver
 {
 public:
     GroveI2CMotorDriver(int pinsda, int pinscl);
+    
+    /**
+     * Change ths default I2C address, the default address is 0xf
+     * 
+     * @param addr_7bits the new 7bits i2c address
+     * 
+     * @return bool 
+     */
     bool write_i2c_address(uint8_t addr_7bits);
+    
+    /**
+     * To drive a stepper motor, we need to change the working mode of this driver into stepper mode.
+     * 
+     * @param direction - stepper direction, 0 or 1
+     * @param speed - defines the time interval the i2C motor driver change its output to drive the stepper, the actul interval time is : motorspeed * 4ms. that is , when motor speed is 10, the interval time would be 40 ms
+     * 
+     * @return bool 
+     */
     bool write_enable_stepper_mode(uint8_t direction, uint8_t speed);
+    
+    /**
+     * Disable the stepper driving mode, back to default DC motor driving mode
+     * 
+     * @return bool 
+     */
     bool write_disable_stepper_mode();
+    
+    /**
+     * Drive the stepper to move a few steps
+     * 
+     * @param steps - number of steps to move
+     * 
+     * @return bool 
+     */
     bool write_stepper_steps(uint8_t steps);
+    
+    /**
+     * Change the speed of DC motor, note that the initial speed is 0 when the module is powered on.
+     * 
+     * @param speed_m1 - 0~255
+     * @param speed_m2 - 0~255
+     * 
+     * @return bool 
+     */
     bool write_dcmotor_speed(uint8_t speed_m1, uint8_t speed_m2);
     bool write_dcmotor1_change_direction();
     bool write_dcmotor2_change_direction();

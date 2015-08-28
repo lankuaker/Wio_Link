@@ -40,6 +40,14 @@ class GroveButton
 {
 public:
     GroveButton(int pin);
+    
+    /**
+     * 
+     * 
+     * @param pressed - 1: pressed, 0: not
+     * 
+     * @return bool 
+     */
     bool read_pressed(uint8_t *pressed);
     EVENT_T * attach_event_reporter_for_button_pressed(CALLBACK_T reporter);
     EVENT_T *event;

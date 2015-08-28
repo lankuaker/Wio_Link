@@ -162,6 +162,7 @@ bool GroveDigitalLight::read_lux(uint32_t *lux)
 
     if(ch1 !=0 && ch0/ch1 < 2 && ch0 > 4900)
     {
+        error_desc = "The exposure value is out of range, the light is too strong.";
         return false;  //ch0 out of range, but ch1 not. the lux is not valid in this situation.
     }
     *lux = _calculateLux(0, 0, 0);  //T package, no gain, 13ms
