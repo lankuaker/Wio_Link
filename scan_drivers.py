@@ -163,8 +163,8 @@ def parse_class_header_file (file):
         doc[func[1]] = dict_paras
 
     ## event
-    # bool attach_event_reporter(CALLBACK_T handler);
-    event_attachments = re.findall(r'^\s+EVENT_T\s*\*\s*attach_event_reporter_for_(.*)\((.*)\);$', content, re.M)
+    #    EVENT_T * attach_event_reporter_for_ir_approached(CALLBACK_T reporter);
+    event_attachments = re.findall(r'EVENT_T\s*\*\s*attach_event_reporter_for_(.*)\((.*)\).*$', content, re.M)
     print event_attachments
     events = []
     for ev in event_attachments:
