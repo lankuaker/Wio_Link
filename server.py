@@ -71,6 +71,7 @@ class DeviceConnection(object):
         self.killed = False
         self.sn = ""
         self.private_key = ""
+        self.node_id = 0
         self.iv = None
         self.cipher = None
 
@@ -135,6 +136,7 @@ class DeviceConnection(object):
                 gen_log.info("valid hello packet from node")
                 self.sn = sn
                 self.private_key = key
+                self.node_id = node['node_id']
                 #remove the junk connection of the same sn
                 self.stream.io_loop.add_callback(self.device_server.remove_junk_connection, self)
                 #init aes
@@ -179,7 +181,7 @@ class DeviceConnection(object):
                     line = line[index+2:]
                     piece = piece.strip("\r\n")
                     json_obj = json.loads(piece)
-                    gen_log.info('recv json:'+ str(json_obj))
+                    gen_log.info('Node %d: recv json:' % (self.node_id, str(json_obj)))
 
                     try:
                         state = None
@@ -218,13 +220,13 @@ class DeviceConnection(object):
                         else:
                             self.recv_msg_queue.append(json_obj)
                     except Exception,e:
-                        gen_log.warn(e)
+                        gen_log.warn("Node %d: %s" % (self.node_id ,str(e)))
 
             except iostream.StreamClosedError:
                 self.kill_myself()
                 return
             except ValueError:
-                gen_log.error(piece+ " can not be decoded into json")
+                gen_log.error("Node %d: %s can not be decoded into json" % (self.node_id, piece))
 
             yield gen.moment
 
@@ -248,14 +250,14 @@ class DeviceConnection(object):
                 continue 
             self.idle_time += 1
             if self.idle_time == 60:
-                gen_log.info("heartbeat sent")
+                gen_log.info("heartbeat sent to node %d" % self.node_id)
                 try:
                     self.secure_write("##PING##")
                 except iostream.StreamClosedError:
                     gen_log.error("StreamClosedError when send ping to node")
                     self.kill_myself()
             if self.idle_time == 70:
-                gen_log.error("no answer from node, kill")
+                gen_log.error("no answer from node %d, kill" % self.node_id)
                 self.kill_myself()
 
 
@@ -306,7 +308,7 @@ class DeviceConnection(object):
                 yield gen.sleep(0.1)
                 timeout += 0.1
                 if timeout > timeout_sec:
-                    raise gen.Return((False, "timeout when waiting response from node"))
+                    raise gen.Return((False, "timeout when waiting response from node %d" % self.node_id))
             except gen.Return:
                 raise
             except Exception,e:

@@ -252,9 +252,9 @@ class UserRetrievePasswordHandler(BaseHandler):
         sender = 'no_reply@seeed.cc'
         receiver = email
 
-        message = """From: WiFi IOT Node <%s>
+        message = """From: Pion_One <%s>
 To: <%s>
-Subject: Password for your account of iot.seeed.cc has been retrieved
+Subject: The password for your account of iot.seeed.cc has been retrieved
 
 Dear User,
 
@@ -266,6 +266,7 @@ Please change it as soon as possible.
 Thank you!
 
 IOT Team from Seeed
+
 """ % (sender, receiver, new_password)
         try:
             s.sendmail(sender, receiver, message)
@@ -457,7 +458,7 @@ class NodeBaseHandler(BaseHandler):
                 token = token_str.replace("token ","")
             except:
                 token = None
-        gen_log.debug("node token:"+ token)
+        gen_log.debug("node token:"+ str(token))
         if token:
             try:
                 cur = self.application.cur
@@ -487,7 +488,7 @@ class NodeReadWriteHandler(NodeBaseHandler):
         gen_log.debug(ignore)
 
         uri = uri.split("?")[0]
-        gen_log.debug("get:"+ uri)
+        gen_log.debug("get:"+ str(uri))
 
 
         node = self.get_node()
@@ -513,7 +514,7 @@ class NodeReadWriteHandler(NodeBaseHandler):
     def post (self, ignore, uri):
 
         uri = uri.split("?")[0].rstrip("/")
-        gen_log.info("post to:"+ uri)
+        gen_log.info("post to:"+ str(uri))
 
         node = self.get_node()
         if not node:
@@ -527,7 +528,7 @@ class NodeReadWriteHandler(NodeBaseHandler):
         cmd_args = ""
 
         if json_obj:
-            gen_log.info("post request:"+ json_obj)
+            gen_log.info("post request:"+ str(json_obj))
 
             if not isinstance(json_obj, dict):
                 self.resp(400, "Bad format of json: must be key/value pair.")
