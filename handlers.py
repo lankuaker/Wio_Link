@@ -659,6 +659,8 @@ class NodeGetConfigHandler(NodeBaseHandler):
 
 class NodeGetResourcesHandler(NodeBaseHandler):
 
+    vhost_url_base = 'https://iot.seeed.cc'
+
     def prepare_data_for_template(self, node, grove_instance_name, grove, grove_doc):
 
         data = []
@@ -671,7 +673,7 @@ class NodeGetResourcesHandler(NodeBaseHandler):
             #build read arg
             arguments = []
             method_name = fun[0].replace('read_','')
-            url = server_config.vhost_url_base + '/v1/node/' + grove_instance_name + '/' + method_name
+            url = self.vhost_url_base + '/v1/node/' + grove_instance_name + '/' + method_name
             arg_list = [arg for arg in fun[1] if arg.find("*") < 0]  #find out the ones dont have "*"
             for arg in arg_list:
                 if not arg:
@@ -723,7 +725,7 @@ class NodeGetResourcesHandler(NodeBaseHandler):
             #build write arg
             arguments = []
             method_name = fun[0].replace('write_','')
-            url = server_config.vhost_url_base + '/v1/node/' + grove_instance_name + '/' + method_name
+            url = self.vhost_url_base + '/v1/node/' + grove_instance_name + '/' + method_name
             #arg_list = [arg for arg in fun[1] if arg.find("*")<0]  #find out the ones havent "*"
             arg_list = fun[1]
             for arg in arg_list:
@@ -846,6 +848,7 @@ class NodeGetResourcesHandler(NodeBaseHandler):
         #prepare resource data structs
         data = []
         events = []
+        self.vhost_url_base = server_config.vhost_url_base.rstrip('/')
 
         if config:
             for grove_instance_name in config.keys():
@@ -871,7 +874,7 @@ class NodeGetResourcesHandler(NodeBaseHandler):
 
         #render the template
         page = self.render_string('resources.html', node_name = node_name, events = events, data = data, 
-                                  node_sn = node['node_sn'] , url_base = server_config.vhost_url_base)
+                                  node_sn = node['node_sn'] , url_base = self.vhost_url_base)
 
         #store the page html into database
         try:
@@ -957,7 +960,9 @@ class FirmwareBuildingHandler(NodeBaseHandler):
 
         copy('%s/Makefile.template'%cur_dir, '%s/Makefile'%user_build_dir)
 
-        self.request.connection.stream.io_loop.add_callback(self.ota_process, user_id, node_name, node_sn)
+        server_ip = server_config.server_ip.replace('.', ',')
+
+        self.request.connection.stream.io_loop.add_callback(self.ota_process, user_id, node_name, node_sn, server_ip)
 
         #clear the possible old state recv during last ota process
         self.cur_conn.state_happened = []
@@ -976,7 +981,7 @@ class FirmwareBuildingHandler(NodeBaseHandler):
         self.resp(200,"",meta={'ota_status': "going", "ota_msg": "Building firmware.."})
 
 
-    def ota_process (self, user_id, node_name, node_sn):
+    def ota_process (self, user_id, node_name, node_sn, server_ip):
         thread_name = "build_thread-" + str(user_id)
         li = threading.enumerate()
         for l in li:
@@ -985,16 +990,16 @@ class FirmwareBuildingHandler(NodeBaseHandler):
                 return
 
         threading.Thread(target=self.build_thread, name=thread_name, 
-            args=(user_id, node_name, node_sn)).start()
+            args=(user_id, node_name, node_sn, server_ip)).start()
         
 
     # @gen.coroutine
-    def build_thread (self, user_id, node_name, node_sn):
+    def build_thread (self, user_id, node_name, node_sn, server_ip):
         if not self.cur_conn:
             self.resp(404, "Node is offline")
             return
 
-        if not gen_and_build(str(user_id), node_sn, node_name):
+        if not gen_and_build(str(user_id), node_sn, node_name, server_ip):
             error_msg = get_error_msg()
             gen_log.error(error_msg)
             #save state

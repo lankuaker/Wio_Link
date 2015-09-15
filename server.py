@@ -181,7 +181,7 @@ class DeviceConnection(object):
                     line = line[index+2:]
                     piece = piece.strip("\r\n")
                     json_obj = json.loads(piece)
-                    gen_log.info('Node %d: recv json:' % (self.node_id, str(json_obj)))
+                    gen_log.info('Node %d: recv json: %s' % (self.node_id, str(json_obj)))
 
                     try:
                         state = None

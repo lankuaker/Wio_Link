@@ -350,7 +350,7 @@ def gen_wrapper_registration (instance_name, info, arg_list):
 
 
 
-def gen_and_build (user_id, node_sn, node_name):
+def gen_and_build (user_id, node_sn, node_name, server_ip):
     global error_msg
     global GEN_DIR
     ###generate rpc wrapper and registration files
@@ -454,6 +454,9 @@ def gen_and_build (user_id, node_sn, node_name):
     os.putenv("SPI_SIZE_MAP","6")
     os.putenv("GROVES",grove_list)
     os.putenv("NODE_NAME",node_name)
+    if server_ip and re.match(r'\d+,\d+,\d+,\d+', server_ip):
+        os.putenv("SERVER_IP",server_ip)
+
     cmd = 'cd %s;make clean;make > build.log 2>error.log' % (user_build_dir)
     print cmd
     os.system(cmd)
@@ -502,7 +505,9 @@ if __name__ == '__main__':
     user_id = "local_user" if len(sys.argv) < 2 else sys.argv[1]
     node_sn = "00000000000000000000" if len(sys.argv) < 3 else sys.argv[2]
     node_name = "esp8266_node" if len(sys.argv) < 4 else sys.argv[3]
-    if not gen_and_build(user_id, node_sn, node_name):
+    server_ip = "" if len(sys.argv) < 5 else sys.argv[4]
+
+    if not gen_and_build(user_id, node_sn, node_name, server_ip):
         print get_error_msg()
 
 
