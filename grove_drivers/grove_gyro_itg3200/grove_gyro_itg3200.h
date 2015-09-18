@@ -61,8 +61,32 @@ class GroveGyroITG3200
 {
 public:
     GroveGyroITG3200(int pinsda, int pinscl);
+    
+    /**
+     * 
+     * 
+     * @param gx unit: deg/s
+     * @param gy unit: deg/s
+     * @param gz unit: deg/s
+     * 
+     * @return bool 
+     */
     bool read_gyro(float *gx, float *gy, float *gz);  //unit: deg/s
+    
+    /**
+     * 
+     * 
+     * @param temp unit: Celsius degree
+     * 
+     * @return bool 
+     */
     bool read_temperature(float *temp);  //unit: C
+    
+    /**
+     * Calibrate the static offsets, need to hold the sensor steadily.
+     * 
+     * @return bool 
+     */
     bool write_zerocalibrate();
 
 private:

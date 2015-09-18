@@ -109,7 +109,17 @@ class GroveDigitalLight
 {
 public:
     GroveDigitalLight(int pinsda, int pinscl);
+    
+    /**
+     * Reading the lucency of visable light
+     * 
+     * @param lux - the strength of illumination, unit: lux
+     * 
+     * @return bool 
+     */
     bool read_lux(uint32_t *lux);
+    
+    char *get_last_error() { return error_desc; };
 
 private:
     I2C_T *i2c;
@@ -127,6 +137,8 @@ private:
 
     void _getLux(I2C_T *i2c);
     unsigned long _calculateLux(unsigned int iGain, unsigned int tInt, int iType);
+    
+    char *error_desc;
 
 };
 

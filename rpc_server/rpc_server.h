@@ -43,15 +43,17 @@ typedef enum
 
 enum
 {
-    PARSE_REQ_TYPE, PARSE_GROVE_NAME, PARSE_METHOD, CHECK_ARGS, PRE_PARSE_ARGS, PARSE_ARGS, PARSE_CALL, DIVE_INTO_OTA, WAIT_OTA_DONE
+    PARSE_REQ_TYPE, PARSE_GROVE_NAME, PARSE_METHOD, CHECK_ARGS, PRE_PARSE_ARGS, PARSE_ARGS, PARSE_CALL, DIVE_INTO_OTA, WAIT_OTA_DONE, GET_APP_NUM
 };
 
 enum
 {
-    REQ_GET, REQ_POST, REQ_OTA
+    REQ_GET, REQ_POST, REQ_OTA, REQ_APP_NUM
 };
 
-typedef void (*method_ptr_t)(void *class_ptr, void *input);
+#define ARG_BUFFER_LEN                  256
+
+typedef bool (*method_ptr_t)(void *class_ptr, void *input);
 
 struct resource_s;
 

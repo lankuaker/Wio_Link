@@ -32,7 +32,7 @@
 
 #include "suli2.h"
 
-//GROVE_NAME        "Grove - Speaker"
+//GROVE_NAME        "Grove-Speaker"
 //IF_TYPE           GPIO
 //IMAGE_URL         http://www.seeedstudio.com/depot/images/product/Grove%20Speaker_01.jpg
 
@@ -41,9 +41,28 @@ class GroveSpeaker
 {
 public:
     GroveSpeaker(int pin);
-    bool write_sound(int freq, int duration);
+    
+    /**
+     * 
+     * 
+     * @param freq - Hz
+     * @param duration_ms - a duration of x microseconds during which the speaker will produce the sound 
+     * 
+     * @return bool 
+     */
+    bool write_sound_ms(int freq, int duration_ms);
+    
+    /**
+     * Start to produce sound with a specified frequency, and wont stop until you send the sound_stop command.
+     * 
+     * @param freq - Hz
+     * 
+     * @return bool 
+     */
+    bool write_sound_start(int freq);
+    bool write_sound_stop();
 private:
-    IO_T *io;
+    PWM_T *io;
 };
 
 

@@ -35,12 +35,14 @@
 
 enum
 {
-    WAIT_CONN_DONE, DIED_IN_CONN, CONNECTED, WAIT_HELLO_DONE, KEEP_ALIVE, DIED_IN_HELLO
+    WAIT_CONFIG, WAIT_GET_IP, DIED_IN_GET_IP, WAIT_CONN_DONE, DIED_IN_CONN, CONNECTED, WAIT_HELLO_DONE, KEEP_ALIVE, DIED_IN_HELLO
 };
 extern uint8_t main_conn_status;
 extern struct espconn main_conn;
 
-void establish_network();
+void network_setup();
+void network_normal_mode(int config_flag);
+void network_config_mode();
 void network_putc(char c);
 void network_puts(char *data, int len);
 

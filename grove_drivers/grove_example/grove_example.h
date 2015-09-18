@@ -50,6 +50,7 @@ public:
     bool write_float_value(float f);
     bool write_multi_value(int a, float b, uint32_t c);
     EVENT_T *attach_event_reporter_for_fire(CALLBACK_T reporter);
+    char *get_last_error() { return error_desc; };
 
     IO_T *pin;
     EVENT_T *event1;
@@ -57,6 +58,7 @@ public:
 private:
     I2C_T *i2c;
     void _internal_function(float x);
+    char *error_desc;
 };
 
 static void pin_interrupt_handler(void *para);

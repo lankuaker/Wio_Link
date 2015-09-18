@@ -76,9 +76,9 @@ void user_init(void)
 void pre_user_setup()
 {
     EEPROM.begin(4096);
-    pinMode(SMARTCONFIG_KEY, INPUT_PULLUP);
+    pinMode(FUNCTION_KEY, INPUT_PULLUP);
     pinMode(STATUS_LED, OUTPUT);
-    establish_network();
+    network_setup();
     rpc_server_init();
 }
 
@@ -93,7 +93,7 @@ void pre_user_loop()
     static bool smartconfig_pressed = false;
     static uint32_t smartconfig_pressed_time = 0;
 
-    uint8_t v = digitalRead(SMARTCONFIG_KEY);
+    uint8_t v = digitalRead(FUNCTION_KEY);
 
     if(v == 0 && !smartconfig_pressed)
     {
@@ -103,9 +103,9 @@ void pre_user_loop()
     {
         if(system_get_time() - smartconfig_pressed_time > 3000000)
         {
-            memset(EEPROM.getDataPtr() + EEP_OFFSET_SMARTCFG, 1, 1);  //set the smart config flag
+            memset(EEPROM.getDataPtr() + EEP_OFFSET_CFG_FLAG, 1, 1);  //set the smart config flag
             EEPROM.commit();
-            Serial1.println("will reboot to smartconfig mode");
+            Serial1.println("will reboot to config mode");
             digitalWrite(STATUS_LED, 0);
             delay(100);
             digitalWrite(STATUS_LED, 1);

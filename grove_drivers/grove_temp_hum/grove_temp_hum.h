@@ -56,8 +56,32 @@ class GroveTempHum
 {
 public:
     GroveTempHum(int pin);
+    
+    /**
+     * The basic temperature and humidity sensor will update the reading every 2 seconds.
+     * 
+     * @param temperature - unit: Celsius degree
+     * 
+     * @return bool 
+     */
     bool read_temperature(float *temperature);
+    
+    /**
+     * The basic temperature and humidity sensor will update the reading every 2 seconds.
+     * 
+     * @param temperature - Fahrenheit degree
+     * 
+     * @return bool 
+     */
     bool read_temperature_f(float *temperature);
+    
+    /**
+     * The basic temperature and humidity sensor will update the reading every 2 seconds.
+     * 
+     * @param humidity - 0~100(%)
+     * 
+     * @return bool 
+     */
     bool read_humidity(float *humidity);
 
 private:

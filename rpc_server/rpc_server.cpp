@@ -98,7 +98,7 @@ resource_t* __find_resource(char *name, char *method, int req_type)
     return NULL;
 }
 
-int __convert_arg(uint8_t *arg_buff, char **buff, int type)
+int __convert_arg(uint8_t *arg_buff, void *buff, int type)
 {
     int i;
     uint32_t ui;
@@ -106,7 +106,7 @@ int __convert_arg(uint8_t *arg_buff, char **buff, int type)
     {
         case TYPE_BOOL:
             {
-                i = atoi((const char *)(*buff));
+                i = atoi((const char *)(buff));
                 ui = abs(i);
                 memcpy(arg_buff, &ui, sizeof(bool));
                 return sizeof(bool);
@@ -114,7 +114,7 @@ int __convert_arg(uint8_t *arg_buff, char **buff, int type)
             }
         case TYPE_UINT8:
             {
-                i = atoi((const char *)(*buff));
+                i = atoi((const char *)(buff));
                 ui = abs(i);
                 memcpy(arg_buff, &ui, 1);
                 return 1;
@@ -122,7 +122,7 @@ int __convert_arg(uint8_t *arg_buff, char **buff, int type)
             }
         case TYPE_UINT16:
             {
-                i = atoi((const char *)(*buff));
+                i = atoi((const char *)(buff));
                 ui = abs(i);
                 memcpy(arg_buff, &ui, 2);
                 return 2;
@@ -130,7 +130,7 @@ int __convert_arg(uint8_t *arg_buff, char **buff, int type)
             }
         case TYPE_UINT32:
             {
-                int32_t l = atol((const char *)(*buff));
+                int32_t l = atol((const char *)(buff));
                 ui = abs(l);
                 memcpy(arg_buff, &ui, 4);
                 return 4;
@@ -138,7 +138,7 @@ int __convert_arg(uint8_t *arg_buff, char **buff, int type)
             }
         case TYPE_INT8:
             {
-                i = atoi((const char *)(*buff));
+                i = atoi((const char *)(buff));
                 char c = i;
                 memcpy(arg_buff, &c, 1);
                 return 1;
@@ -146,35 +146,36 @@ int __convert_arg(uint8_t *arg_buff, char **buff, int type)
             }
         case TYPE_INT16:
             {
-                i = atoi((const char *)(*buff));
+                i = atoi((const char *)(buff));
                 memcpy(arg_buff, &i, 2);
                 return 2;
                 break;
             }
         case TYPE_INT32:
             {
-                int32_t l = atol((const char *)(*buff));
+                int32_t l = atol((const char *)(buff));
                 memcpy(arg_buff, &l, 4);
                 return 4;
                 break;
             }
         case TYPE_INT:
             {
-                int l = atol((const char *)(*buff));
+                int l = atol((const char *)(buff));
                 memcpy(arg_buff, &l, sizeof(int));
                 return sizeof(int);
                 break;
             }
         case TYPE_FLOAT:
             {
-                float f = atof((const char *)(*buff));
+                float f = atof((const char *)(buff));
                 memcpy(arg_buff, &f, sizeof(float));
                 return sizeof(float);
                 break;
             }
         case TYPE_STRING:
             {
-                memcpy(arg_buff, buff, 4);
+                uint32_t ptr = (uint32_t)buff;
+                memcpy(arg_buff, &ptr, 4);
                 return 4;
                 break;
             }
@@ -186,7 +187,7 @@ int __convert_arg(uint8_t *arg_buff, char **buff, int type)
 
 static int req_type;
 
-static char buff[33];
+static char buff[ARG_BUFFER_LEN+1];
 static int  offset = 0;
 static int  arg_index = 0;
 static char grove_name[33];
@@ -232,7 +233,7 @@ void rpc_server_loop()
 #endif
 
     //writer_print(TYPE_INT, &parse_stage);
-    while (stream_available() > 0)
+    while (stream_available() > 0 || parse_stage == PARSE_CALL)
     {
         switch (parse_stage)
         {
@@ -269,6 +270,15 @@ void rpc_server_loop()
                         break;
                     }
 
+                    if (memcmp(buff, "APP", 3) == 0 || memcmp(buff, "app", 3) == 0)
+                    {
+                        req_type = REQ_APP_NUM;
+                        parsed_req_type = true;
+                        parse_stage = GET_APP_NUM;
+                        response_msg_open("resp_app");
+                        break;
+                    }
+
                     if (parsed_req_type)
                     {
                         ch = stream_read();
@@ -291,7 +301,6 @@ void rpc_server_loop()
                     ch = stream_read();
                     if (ch == '\r' || ch == '\n')
                     {
-                        //TODO: get /.well-known
                         buff[offset] = '\0';
                         if (strcmp(buff, ".well-known") == 0)
                         {
@@ -305,7 +314,7 @@ void rpc_server_loop()
                             response_msg_close();
                             parse_stage = PARSE_REQ_TYPE;
                         }
-                    } else if (ch != '/' && offset <= 31)
+                    } else if (ch != '/' && offset < ARG_BUFFER_LEN)
                     {
                         buff[offset++] = ch;
                     } else
@@ -334,7 +343,7 @@ void rpc_server_loop()
                         buff[offset] = '\0';
                         memcpy(method_name, buff, offset + 1);
                         parse_stage = PRE_PARSE_ARGS;
-                    } else if (offset >= 32)
+                    } else if (offset >= ARG_BUFFER_LEN)
                     {
                         buff[offset] = '\0';
                         memcpy(method_name, buff, offset + 1);
@@ -388,18 +397,19 @@ void rpc_server_loop()
                 }
             case PARSE_ARGS:
                 {
+                    bool overlen = false;
                     ch = stream_read();
                     if (ch == '\r' || ch == '\n' || ch == '/')
                     {
                         buff[offset] = '\0';
-                    } else if (offset >= 32)
+                    } else if (offset >= ARG_BUFFER_LEN)
                     {
                         buff[offset] = '\0';
                         while (ch != '/' && ch != '\r' && ch != '\n')
                         {
                             ch = stream_read();
                         }
-
+                        overlen = true;
                     } else
                     {
                         buff[offset++] = ch;
@@ -408,11 +418,11 @@ void rpc_server_loop()
                     if (ch == '/')
                     {
                         char *p = buff;
-                        int len = __convert_arg(arg_buff + arg_offset, &p, p_resource->arg_types[arg_index++]);
+                        int len = __convert_arg(arg_buff + arg_offset, p, p_resource->arg_types[arg_index++]);
                         arg_offset += len;
                         offset = 0;
                     }
-                    if (ch == '\r' || ch == '\n')
+                    if (ch == '\r' || ch == '\n' || overlen)
                     {
                         if ((arg_index < 3 && p_resource->arg_types[arg_index + 1] != TYPE_NONE) ||
                             (arg_index <= 3 && p_resource->arg_types[arg_index] != TYPE_NONE && strlen(buff) < 1))
@@ -423,7 +433,7 @@ void rpc_server_loop()
                             break;
                         }
                         char *p = buff;
-                        int len = __convert_arg(arg_buff + arg_offset, &p, p_resource->arg_types[arg_index++]);
+                        int len = __convert_arg(arg_buff + arg_offset, p, p_resource->arg_types[arg_index++]);
                         arg_offset += len;
                         offset = 0;
                         parse_stage = PARSE_CALL;
@@ -442,7 +452,7 @@ void rpc_server_loop()
                         break;
                     }
                     //writer_print(TYPE_STRING, "{");
-                    p_resource->method_ptr(p_resource->class_ptr, arg_buff);
+                    if (false == p_resource->method_ptr(p_resource->class_ptr, arg_buff)) response_msg_append_205();
                     //writer_print(TYPE_STRING, "}");
                     response_msg_close();
 
@@ -466,6 +476,32 @@ void rpc_server_loop()
                         delay(100);
                         keepalive_last_recv_time = millis();  //to prevent online check and offline-reconnect during ota
                     }
+                    break;
+                }
+            case GET_APP_NUM:
+                {
+                    ch = stream_read();
+                    while (ch != '\r' && ch != '\n')
+                    {
+                        ch = stream_read();
+                    }
+                    parse_stage = PARSE_REQ_TYPE;
+                    
+                    int bin_num = 1;
+                    if(system_upgrade_userbin_check() == UPGRADE_FW_BIN1)
+                    {
+                        Serial1.printf("Running user1.bin \r\n\r\n");
+                        //os_memcpy(user_bin, "user2.bin", 10);
+                        bin_num = 1;
+                    } else if(system_upgrade_userbin_check() == UPGRADE_FW_BIN2)
+                    {
+                        Serial1.printf("Running user2.bin \r\n\r\n");
+                        //os_memcpy(user_bin, "user1.bin", 10);
+                        bin_num = 2;
+                    }
+                    writer_print(TYPE_INT, &bin_num);
+                    response_msg_close();
+                    
                     break;
                 }
 

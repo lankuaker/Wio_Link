@@ -44,8 +44,32 @@ class GroveBaroBMP085
 {
 public:
     GroveBaroBMP085(int pinsda, int pinscl);
+    
+    /**
+     * Read a rough temperature value of the envirenment
+     * 
+     * @param temperature - unit: Celsius degree
+     * 
+     * @return bool 
+     */
     bool read_temperature(float *temperature);
+    
+    /**
+     * 
+     * 
+     * @param pressure - unit: Pa
+     * 
+     * @return bool 
+     */
     bool read_pressure(int32_t *pressure);
+    
+    /**
+     * 
+     * 
+     * @param altitude - the absolute altitude, unit: m
+     * 
+     * @return bool 
+     */
     bool read_altitude(float *altitude);
 private:
     I2C_T *i2c;

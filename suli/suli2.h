@@ -252,7 +252,8 @@ inline void suli_pwm_frequency(PWM_T *pwm, uint32_t hz)
 }
 
 /**
- * void suli_pwm_output(PWM_T *, float percent)
+ * void suli_pwm_output(PWM_T *, float percent) 
+ * percent: 0.0 ~ 1.0f 
  */
 inline void suli_pwm_output(PWM_T *pwm, float percent)
 {

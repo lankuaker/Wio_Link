@@ -56,8 +56,33 @@ class GroveTempHumPro
 {
 public:
     GroveTempHumPro(int pin);
+    
+    /**
+     * 
+     * 
+     * @param temperature - unit: Celsius degree
+     * 
+     * @return bool 
+     */
     bool read_temperature(float *temperature);
+    
+    /**
+     * 
+     * 
+     * @param temperature - Fahrenheit degree
+     * 
+     * @return bool 
+     */
     bool read_temperature_f(float *temperature);
+    
+    /**
+     * 
+     * 
+     * @param humidity - 0~100(%)
+     * 
+     * @return bool 
+     */
+    
     bool read_humidity(float *humidity);
 
 private:

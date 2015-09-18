@@ -68,13 +68,34 @@ And also we need more grove drivers commit from community if you know Arduino an
   * 所有read/write函数返回类型为bool
   * 所有read函数的输出数值均通过指针向外透出, 参数个数不限
   * 所有write函数参数个数不能超过4个
-  * class封装中成员方法的参数数值类型仅支持{int, float, char, int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t}及他们的指针型
+  * class封装中所有对外开放成员方法的参数数值类型支持{int, float, int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t}及他们的指针型，指针类型是输出型参数（如read方法的输出），非指针类型是输入型参数（如read方法的输入参数和write方法的输入参数）
+  * class封装中所有对外开放的写方法的参数数据类型还（实验性）支持字符串类型“char *“，但限制为：只能有1个字串参数，且是最后一个参数，字串长度最大256
   * 事件绑定函数的命名格式必须为EVENT_T * attach_event_reporter_for_\[event_name\](CALLBACK_T), 才能被脚本扫到
   * 事件绑定函数EVENT_T * attach_event_reporter_for_\[event_name\]必须返回事件变量的指针
+  * 异常原因查询函数格式为：char *get_last_error()，若驱动中实现了此函数，当读写函数调用因异常而返回false时，会将此函数返回值所指向的字符串作为出错信息返回给云端调用，需要注意的是，字符串需要存储在RAM中。
+  
+* read/write函数的注释
+  * 按规范书写的函数注释将会被扫描脚本扫到，并在节点resource资源页打印
+  * 函数注释的主要作用是解释函数的作用及每个参数的含义及取值范围
+  * 正确的注释如下所示，需要注意的是：
+    - @para 参数解释需在一行内完成
+    - 注释以/**开始， 以\*/结束
+    - description可多行
+    
+>     /**
+>      * set or reset or clear the led strip with a specified color
+>      * multiline description is allowed
+>      * 
+>      * @param total_led_cnt - the total count of this strip, max: 60(too many leds will cause the power unstable)
+>      * @param rgb_hex_string - a rgb value in hex format, e.g. AA55CC (without # or 0x)
+>      * 
+>      * @return bool 
+>      */
+    
+
   
 * 构造函数参数
   * GPIO类型: 参数为(int pin)
-  * PWM类型: 参数为(int pin)
   * ANALOG类型: 参数为(int pin)
   * I2C类型: 参数为(int pinsda, int pinscl)
   * UART类型: 参数为(int pintx, int pinrx)

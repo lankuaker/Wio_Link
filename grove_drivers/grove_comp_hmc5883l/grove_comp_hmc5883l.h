@@ -56,6 +56,14 @@ class GroveCompass
 {
 public:
     GroveCompass(int pinsda, int pinscl);
+    
+    /**
+     * 
+     * 
+     * @param heading_deg - the angle of heading relative to the north, unit: degree
+     * 
+     * @return bool 
+     */
     bool read_compass_heading(float *heading_deg);
 private:
     I2C_T *i2c;
