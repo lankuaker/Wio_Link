@@ -961,9 +961,22 @@ class FirmwareBuildingHandler(NodeBaseHandler):
 
         copy('%s/Makefile.template'%cur_dir, '%s/Makefile'%user_build_dir)
 
+        #try to get the current running app number
+        app_num = 'ALL'
+        try:
+            cmd = "APP\r\n"
+            ok, resp = yield conn.submit_and_wait_resp (cmd, "resp_app")
+            if ok and resp['msg'] in [1,2,'1','2']:
+                app_num = '1' if resp['msg'] in [2,'2'] else '2'
+                gen_log.info('Get to know node %d is running app %s' % (node_id, resp['msg']))
+            else:
+                gen_log.warn('Failed while getting app number for node %d: %s' % (node_id, str(resp)))
+        except Exception,e:
+            gen_log.error(e)
+
         server_ip = server_config.server_ip.replace('.', ',')
 
-        self.request.connection.stream.io_loop.add_callback(self.ota_process, user_id, node_name, node_sn, server_ip)
+        self.request.connection.stream.io_loop.add_callback(self.ota_process, app_num, user_id, node_name, node_sn, server_ip)
 
         #clear the possible old state recv during last ota process
         self.cur_conn.state_happened = []
@@ -982,7 +995,7 @@ class FirmwareBuildingHandler(NodeBaseHandler):
         self.resp(200,"",meta={'ota_status': "going", "ota_msg": "Building firmware.."})
 
 
-    def ota_process (self, user_id, node_name, node_sn, server_ip):
+    def ota_process (self, app_num, user_id, node_name, node_sn, server_ip):
         thread_name = "build_thread_" + node_sn
         li = threading.enumerate()
         for l in li:
@@ -997,16 +1010,16 @@ class FirmwareBuildingHandler(NodeBaseHandler):
                 return
 
         threading.Thread(target=self.build_thread, name=thread_name, 
-            args=(user_id, node_name, node_sn, server_ip)).start()
+            args=(app_num, user_id, node_name, node_sn, server_ip)).start()
         
 
     # @gen.coroutine
-    def build_thread (self, user_id, node_name, node_sn, server_ip):
-        if not self.cur_conn:
+    def build_thread (self, app_num, user_id, node_name, node_sn, server_ip):
+        if not self.cur_conn or self.cur_conn not in self.conns:
             gen_log.info('Node is offline, sn: %s, name: %s' % (node_sn, node_name))
             return
 
-        if not gen_and_build(str(user_id), node_sn, node_name, server_ip):
+        if not gen_and_build(app_num, str(user_id), node_sn, node_name, server_ip):
             error_msg = get_error_msg()
             gen_log.error(error_msg)
             #save state

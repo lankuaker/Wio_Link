@@ -763,7 +763,7 @@ void network_setup()
     Serial1.println("\n\n"); 
 #endif
 
-    if (!rx_stream_buffer) rx_stream_buffer = new CircularBuffer(256);
+    if (!rx_stream_buffer) rx_stream_buffer = new CircularBuffer(512);
     if (!tx_stream_buffer) tx_stream_buffer = new CircularBuffer(1024);
 
     struct rst_info *reason = system_get_rst_info();

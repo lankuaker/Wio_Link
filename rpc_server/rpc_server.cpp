@@ -270,6 +270,15 @@ void rpc_server_loop()
                         break;
                     }
 
+                    if (memcmp(buff, "APP", 3) == 0 || memcmp(buff, "app", 3) == 0)
+                    {
+                        req_type = REQ_APP_NUM;
+                        parsed_req_type = true;
+                        parse_stage = GET_APP_NUM;
+                        response_msg_open("resp_app");
+                        break;
+                    }
+
                     if (parsed_req_type)
                     {
                         ch = stream_read();
@@ -388,6 +397,7 @@ void rpc_server_loop()
                 }
             case PARSE_ARGS:
                 {
+                    bool overlen = false;
                     ch = stream_read();
                     if (ch == '\r' || ch == '\n' || ch == '/')
                     {
@@ -399,7 +409,7 @@ void rpc_server_loop()
                         {
                             ch = stream_read();
                         }
-
+                        overlen = true;
                     } else
                     {
                         buff[offset++] = ch;
@@ -412,7 +422,7 @@ void rpc_server_loop()
                         arg_offset += len;
                         offset = 0;
                     }
-                    if (ch == '\r' || ch == '\n')
+                    if (ch == '\r' || ch == '\n' || overlen)
                     {
                         if ((arg_index < 3 && p_resource->arg_types[arg_index + 1] != TYPE_NONE) ||
                             (arg_index <= 3 && p_resource->arg_types[arg_index] != TYPE_NONE && strlen(buff) < 1))
@@ -466,6 +476,32 @@ void rpc_server_loop()
                         delay(100);
                         keepalive_last_recv_time = millis();  //to prevent online check and offline-reconnect during ota
                     }
+                    break;
+                }
+            case GET_APP_NUM:
+                {
+                    ch = stream_read();
+                    while (ch != '\r' && ch != '\n')
+                    {
+                        ch = stream_read();
+                    }
+                    parse_stage = PARSE_REQ_TYPE;
+                    
+                    int bin_num = 1;
+                    if(system_upgrade_userbin_check() == UPGRADE_FW_BIN1)
+                    {
+                        Serial1.printf("Running user1.bin \r\n\r\n");
+                        //os_memcpy(user_bin, "user2.bin", 10);
+                        bin_num = 1;
+                    } else if(system_upgrade_userbin_check() == UPGRADE_FW_BIN2)
+                    {
+                        Serial1.printf("Running user2.bin \r\n\r\n");
+                        //os_memcpy(user_bin, "user1.bin", 10);
+                        bin_num = 2;
+                    }
+                    writer_print(TYPE_INT, &bin_num);
+                    response_msg_close();
+                    
                     break;
                 }
 
