@@ -41,6 +41,7 @@ from shutil import copy
 from build_firmware import *
 import yaml
 import threading
+import time
 import smtplib
 import config as server_config
 
@@ -982,11 +983,17 @@ class FirmwareBuildingHandler(NodeBaseHandler):
 
 
     def ota_process (self, user_id, node_name, node_sn, server_ip):
-        thread_name = "build_thread-" + str(user_id)
+        thread_name = "build_thread_" + node_sn
         li = threading.enumerate()
         for l in li:
             if l.getName() == thread_name:
-                gen_log.info('INFO: Skip same request!')
+                msg = 'Skip the building request from the same node, sn %s' % node_sn
+                gen_log.info(msg)
+                state = ("error", msg)
+                if len(self.cur_conn.state_waiters) == 0:
+                    self.cur_conn.state_happened.append(state)
+                else:
+                    self.cur_conn.state_waiters.pop(0).set_result(state)
                 return
 
         threading.Thread(target=self.build_thread, name=thread_name, 
@@ -996,45 +1003,63 @@ class FirmwareBuildingHandler(NodeBaseHandler):
     # @gen.coroutine
     def build_thread (self, user_id, node_name, node_sn, server_ip):
         if not self.cur_conn:
-            self.resp(404, "Node is offline")
+            gen_log.info('Node is offline, sn: %s, name: %s' % (node_sn, node_name))
             return
 
         if not gen_and_build(str(user_id), node_sn, node_name, server_ip):
             error_msg = get_error_msg()
             gen_log.error(error_msg)
             #save state
-            state = ("error", "build error: "+error_msg)
-            if len(self.cur_conn.state_waiters) == 0:
-                self.cur_conn.state_happened.append(state)
-            else:
-                self.cur_conn.state_waiters.pop(0).set_result(state)
+            state = ("error", "Build error: "+error_msg)
+            self.send_notification(state)
 
             return
 
-        #save state
-        state = ("going", "Notifing the node...")
-        gen_log.info(state)
+        #query the connection status again
+        if not self.cur_conn:
+            gen_log.info('Node is offline, sn: %s, name: %s' % (node_sn, node_name))
+            return
+
+        # go OTA
+        retries = 0
+        while(retries < 6 and not self.cur_conn.killed):
+            try:
+                state = ("going", "Notifying the node...[%d]" % retries)
+                self.send_notification(state)
+                cmd = "OTA\r\n"
+                cmd = cmd.encode("ascii")
+                self.cur_conn.submit_cmd (cmd)
+                succeed = False
+                for i in xrange(10):
+                    if self.cur_conn.ota_ing:
+                        succeed = True
+                        break
+                    elif self.cur_conn.killed:
+                        return
+                    else:
+                        time.sleep(1)
+                if succeed:
+                    break
+            except Exception,e:
+                gen_log.error(e)
+                #save state
+                state = ("error", "notify error: "+str(e))
+                self.send_notification(state)
+                return
+            retries = retries + 1
+        
+        if retries >= 6:  
+            state = ("error", "Time out in notifying the node.")
+            gen_log.info(state[1])
+            self.send_notification(state)
+        else:
+            gen_log.info("Succeed in notifying node %d." % self.cur_conn.node_id)
+
+    def send_notification(self, state):
         if len(self.cur_conn.state_waiters) == 0:
             self.cur_conn.state_happened.append(state)
         else:
             self.cur_conn.state_waiters.pop(0).set_result(state)
-
-        # go OTA
-        try:
-            cmd = "OTA\r\n"
-            cmd = cmd.encode("ascii")
-            self.cur_conn.submit_cmd (cmd)
-            # todo: sometiome no answer too long, but no error prompt
-        except Exception,e:
-            gen_log.error(e)
-            #save state
-            state = ("error", "notify error: "+str(e))
-            if len(self.cur_conn.state_waiters) == 0:
-                self.cur_conn.state_happened.append(state)
-            else:
-                self.cur_conn.state_waiters.pop(0).set_result(state)
-
-        return
 
 
 
@@ -1052,19 +1077,26 @@ class OTAStatusReportingHandler(NodeBaseHandler):
             return
 
         cur_conn = None
-
         for conn in self.conns:
             if conn.private_key == node['private_key'] and not conn.killed:
                 cur_conn = conn
                 break
 
         if not cur_conn:
-            self.resp(404, "Node is offline")
+            self.resp(404, "Node is offline or lost its connection.")
             return
 
         self.cur_conn = cur_conn
 
-        state = yield self.wait_ota_status_change()
+        #state = yield self.wait_ota_status_change()
+        state_future = self.wait_ota_status_change()
+        try:
+            state = yield gen.with_timeout(timedelta(seconds=300), state_future, io_loop=self.request.connection.stream.io_loop)
+        except gen.TimeoutError:
+            state = ("error", "Time out.")
+        except:
+            pass
+
         gen_log.info("+++post state to app:"+ str(state))
 
         if self.request.connection.stream.closed():
@@ -1085,10 +1117,6 @@ class OTAStatusReportingHandler(NodeBaseHandler):
             self.cur_conn.state_waiters.append(result_future)
 
         return result_future
-
-
-
-
 
 
 class OTAFirmwareSendingHandler(BaseHandler):

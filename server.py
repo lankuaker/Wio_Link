@@ -37,6 +37,7 @@ import md5
 import hashlib
 import hmac
 import binascii
+import threading
 from Crypto.Cipher import AES
 from Crypto import Random
 
@@ -59,10 +60,10 @@ unpad = lambda s : s.rstrip(chr(0))
 
 class DeviceConnection(object):
 
-    recv_msg_queue = []
-    send_msg_queue = []
 
     def __init__ (self, device_server, stream, address):
+        self.recv_msg_queue = []
+        self.send_msg_queue = []
         self.device_server = device_server
         self.stream = stream
         self.address = address
@@ -82,6 +83,7 @@ class DeviceConnection(object):
         self.event_happened = []
 
         self.ota_ing = False
+        self.post_ota = False
 
     def secure_write (self, data):
         if self.cipher:
@@ -133,10 +135,10 @@ class DeviceConnection(object):
 
             if sig0 == sig:
                 #send IV + AES Key
-                gen_log.info("valid hello packet from node")
                 self.sn = sn
                 self.private_key = key
                 self.node_id = node['node_id']
+                gen_log.info("valid hello packet from node %d" % self.node_id)
                 #remove the junk connection of the same sn
                 self.stream.io_loop.add_callback(self.device_server.remove_junk_connection, self)
                 #init aes
@@ -194,11 +196,13 @@ class DeviceConnection(object):
                                 state = ('going', 'Node is downloading the binary...')
                             else:
                                 state = ('error', 'Node failed to start the downloading.')
+                                self.post_ota = True
                         elif json_obj['msg_type'] == 'ota_result':
                             if json_obj['msg'] == 'success':
-                                state = ('done', 'Upgrade done')
+                                state = ('done', 'Firmware updated.')
                             else:
-                                state = ('error', 'Upgrade failed, please reboot the node and retry')
+                                state = ('error', 'Update failed. Please reboot the node and retry.')
+                            self.post_ota = True
                             self.ota_ing = False
                         elif json_obj['msg_type'] == 'event':
                             event = json_obj
@@ -223,12 +227,22 @@ class DeviceConnection(object):
                         gen_log.warn("Node %d: %s" % (self.node_id ,str(e)))
 
             except iostream.StreamClosedError:
+                gen_log.error("StreamClosedError when write to node %d" % self.node_id)
                 self.kill_myself()
                 return
             except ValueError:
-                gen_log.error("Node %d: %s can not be decoded into json" % (self.node_id, piece))
+                gen_log.warn("Node %d: %s can not be decoded into json" % (self.node_id, piece))
+            except Exception,e:
+                gen_log.error("Node %d: %s" % (self.node_id ,str(e)))
+                self.kill_myself()
+                return
 
             yield gen.moment
+
+            if self.post_ota:
+                gen_log.error("Node %d OTA finished, will reboot, kill the connection" % self.node_id )
+                self.kill_myself()
+                return
 
     @gen.coroutine
     def _loop_sending_cmd (self):
@@ -254,7 +268,7 @@ class DeviceConnection(object):
                 try:
                     self.secure_write("##PING##")
                 except iostream.StreamClosedError:
-                    gen_log.error("StreamClosedError when send ping to node")
+                    gen_log.error("StreamClosedError when send ping to node %d" % self.node_id)
                     self.kill_myself()
             if self.idle_time == 70:
                 gen_log.error("no answer from node %d, kill" % self.node_id)
@@ -335,6 +349,9 @@ class DeviceServer(TCPServer):
     def remove_connection (self, conn):
         gen_log.info("will remove connection: "+ str(conn))
         try:
+            while len(conn.state_waiters) > 0:
+                gen_log.debug("xxxxxxxxxxxxxxxx")
+                conn.state_waiters.pop(0).set_result(('error', 'Node lost its current connection.'))
             self.accepted_conns.remove(conn)
             del conn
         except:
@@ -345,12 +362,17 @@ class DeviceServer(TCPServer):
             for c in self.accepted_conns:
                 if c.sn == conn.sn and c != conn :
                     c.killed = True
+                    #clear waiting futures
+                    while len(c.state_waiters) > 0:
+                        gen_log.debug("rrrrrrrrrrrrrrrr")
+                        c.state_waiters.pop(0).set_result(('error', 'Node lost its current connection.'))
                     gen_log.info("removed one junk connection of same sn: "+ c.sn)
                     self.accepted_conns.remove(c)
                     del c
                     break
         except:
             pass
+
 
 
 class myApplication(web.Application):

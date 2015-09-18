@@ -10,7 +10,7 @@
 #endif
 
 #ifndef SERVER_IP
-#define SERVER_IP                   {45,79,111,86}
+#define SERVER_IP                   {45,79,4,239}
 #endif
 
 #define SERVER_PORT                 8000
