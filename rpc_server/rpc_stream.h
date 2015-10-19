@@ -33,18 +33,25 @@
 #include "suli2.h"
 #include "rpc_server.h"
 
-void stream_init();
+enum
+{
+    STREAM_DATA, STREAM_CMD
+};
 
-char stream_read();
+void stream_init(int stream_num);
 
-bool stream_write(char c);
+char stream_read(int stream_num);
 
-int stream_available();
+bool stream_write(int stream_num, char c);
+bool stream_write_string(int stream_num, char *str, int len);
 
-void writer_print(type_t type, const void *data, bool append_comma = false);
+int stream_available(int stream_num);
 
-void response_msg_open(char *msg_type);
-void response_msg_append_205();
-void response_msg_close();
+void stream_print(int stream_num, type_t type, const void *data, bool append_comma = false);
+void writer_print(type_t type, const void *data, bool append_comma = false);  //data stream print
+
+void response_msg_open(int stream_num, char *msg_type);
+void response_msg_append_205(int stream_num);
+void response_msg_close(int stream_num);
 
 #endif

@@ -40,18 +40,21 @@ resource_t *p_cur_resource;
 event_t *p_event_queue_head;
 event_t *p_event_queue_tail;
 
-static int parse_stage;
+static int parse_stage_data;
+static int parse_stage_cmd;
 
 extern void print_well_known();
 
 void rpc_server_init()
 {
     //init rpc stream
-    stream_init();
+    stream_init(STREAM_DATA);
+    stream_init(STREAM_CMD);
     //init rpc server
     p_first_resource = p_cur_resource = NULL;
     p_event_queue_head = p_event_queue_tail = NULL;
-    parse_stage = PARSE_REQ_TYPE;
+    parse_stage_data = PARSE_REQ_TYPE;
+    parse_stage_cmd = PARSE_REQ_TYPE;
 
     rpc_server_register_resources();
     printf("rpc server init done!\n");
@@ -185,6 +188,24 @@ int __convert_arg(uint8_t *arg_buff, void *buff, int type)
     return 0;
 }
 
+
+static event_t event;
+
+void drain_event_queue()
+{
+    /* report event if event queue is not empty */
+    while (rpc_server_event_queue_pop(&event))
+    {
+        response_msg_open(STREAM_DATA,"event");
+        writer_print(TYPE_STRING, "{\"");
+        writer_print(TYPE_STRING, event.event_name);
+        writer_print(TYPE_STRING, "\":\"");
+        writer_print(TYPE_UINT32, &event.event_data);
+        writer_print(TYPE_STRING, "\"}");
+        response_msg_close(STREAM_DATA);
+    }
+}
+
 static int req_type;
 
 static char buff[ARG_BUFFER_LEN+1];
@@ -196,100 +217,47 @@ static char ch;
 static uint8_t arg_buff[4 * MAX_INPUT_ARG_LEN];
 static int arg_offset;
 static resource_t *p_resource;
-static event_t event;
 
-void rpc_server_loop()
+void process_data_stream()
 {
-    /* report event if event queue is not empty */
-    while (rpc_server_event_queue_pop(&event))
+    //writer_print(TYPE_INT, &parse_stage_data);
+    while (stream_available(STREAM_DATA) > 0 || parse_stage_data == PARSE_CALL)
     {
-        response_msg_open("event");
-        writer_print(TYPE_STRING, "{\"");
-        writer_print(TYPE_STRING, event.event_name);
-        writer_print(TYPE_STRING, "\":\"");
-        writer_print(TYPE_UINT32, &event.event_data);
-        writer_print(TYPE_STRING, "\"}");
-        response_msg_close();
-    }
-
-#if 0
-    //Serial1.printf("rpc_server_loop\r\n");
-    const char *str = "1234567890abcdefghijklmnopqrstuvwxyz";
-    rx_stream_buffer1->write("1234567890abcdefghijklmnopqrstuvwxyz", 36);
-    while (*str++)
-    {
-        rx_stream_buffer->write(*str);
-    }
-    //Serial1.println(stream_available());
-    while (rx_stream_buffer1->size() > 0)
-    {
-        char c;
-        rx_stream_buffer1->read(&c, 1);
-        Serial1.println(rx_stream_buffer1->size());
-        delay(1);
-    }
-
-    return;
-#endif
-
-    //writer_print(TYPE_INT, &parse_stage);
-    while (stream_available() > 0 || parse_stage == PARSE_CALL)
-    {
-        switch (parse_stage)
+        switch (parse_stage_data)
         {
             case PARSE_REQ_TYPE:
                 {
                     bool parsed_req_type = false;
 
                     buff[0] = buff[1]; buff[1] = buff[2]; buff[2] = buff[3];
-                    buff[3] = stream_read();
+                    buff[3] = stream_read(STREAM_DATA);
 
                     if (memcmp(buff, "GET", 3) == 0 || memcmp(buff, "get", 3) == 0)
                     {
                         req_type = REQ_GET;
                         parsed_req_type = true;
-                        response_msg_open("resp_get");
+                        response_msg_open(STREAM_DATA, "resp_get");
                     }
 
                     if (memcmp(buff, "POST", 4) == 0 || memcmp(buff, "post", 4) == 0)
                     {
                         req_type = REQ_POST;
                         parsed_req_type = true;
-                        stream_read();  //read " " out
-                        response_msg_open("resp_post");
-                    }
-
-                    if (memcmp(buff, "OTA", 3) == 0 || memcmp(buff, "ota", 3) == 0)
-                    {
-                        req_type = REQ_OTA;
-                        parsed_req_type = true;
-                        parse_stage = DIVE_INTO_OTA;
-                        response_msg_open("ota_trig_ack");
-                        writer_print(TYPE_STRING, "null");
-                        response_msg_close();
-                        break;
-                    }
-
-                    if (memcmp(buff, "APP", 3) == 0 || memcmp(buff, "app", 3) == 0)
-                    {
-                        req_type = REQ_APP_NUM;
-                        parsed_req_type = true;
-                        parse_stage = GET_APP_NUM;
-                        response_msg_open("resp_app");
-                        break;
+                        stream_read(STREAM_DATA);  //read " " out
+                        response_msg_open(STREAM_DATA,"resp_post");
                     }
 
                     if (parsed_req_type)
                     {
-                        ch = stream_read();
+                        ch = stream_read(STREAM_DATA);
                         if (ch != '/')
                         {
                             //error request format
                             writer_print(TYPE_STRING, "\"BAD REQUEST: missing root:'/'.\"");
-                            response_msg_close();
+                            response_msg_close(STREAM_DATA);
                         } else
                         {
-                            parse_stage = PARSE_GROVE_NAME;
+                            parse_stage_data = PARSE_GROVE_NAME;
                             p_resource = NULL;
                             offset = 0;
                         }
@@ -298,7 +266,7 @@ void rpc_server_loop()
                 }
             case PARSE_GROVE_NAME:
                 {
-                    ch = stream_read();
+                    ch = stream_read(STREAM_DATA);
                     if (ch == '\r' || ch == '\n')
                     {
                         buff[offset] = '\0';
@@ -306,13 +274,13 @@ void rpc_server_loop()
                         {
                             //writer_print(TYPE_STRING, "\"/.well-known is not implemented\"");
                             print_well_known();
-                            response_msg_close();
-                            parse_stage = PARSE_REQ_TYPE;
+                            response_msg_close(STREAM_DATA);
+                            parse_stage_data = PARSE_REQ_TYPE;
                         } else
                         {
                             writer_print(TYPE_STRING, "\"BAD REQUEST: missing method name.\"");
-                            response_msg_close();
-                            parse_stage = PARSE_REQ_TYPE;
+                            response_msg_close(STREAM_DATA);
+                            parse_stage_data = PARSE_REQ_TYPE;
                         }
                     } else if (ch != '/' && offset < ARG_BUFFER_LEN)
                     {
@@ -323,36 +291,36 @@ void rpc_server_loop()
                         memcpy(grove_name, buff, offset + 1);
                         while (ch != '/')
                         {
-                            ch = stream_read();
+                            ch = stream_read(STREAM_DATA);
                         }
-                        parse_stage = PARSE_METHOD;
+                        parse_stage_data = PARSE_METHOD;
                         offset = 0;
                     }
                     break;
                 }
             case PARSE_METHOD:
                 {
-                    ch = stream_read();
+                    ch = stream_read(STREAM_DATA);
                     if (ch == '\r' || ch == '\n')
                     {
                         buff[offset] = '\0';
                         memcpy(method_name, buff, offset + 1);
-                        parse_stage = CHECK_ARGS;  //to check if req missing arg
+                        parse_stage_data = CHECK_ARGS;  //to check if req missing arg
                     } else if (ch == '/')
                     {
                         buff[offset] = '\0';
                         memcpy(method_name, buff, offset + 1);
-                        parse_stage = PRE_PARSE_ARGS;
+                        parse_stage_data = PRE_PARSE_ARGS;
                     } else if (offset >= ARG_BUFFER_LEN)
                     {
                         buff[offset] = '\0';
                         memcpy(method_name, buff, offset + 1);
                         while (ch != '/' && ch != '\r' && ch != '\n')
                         {
-                            ch = stream_read();
+                            ch = stream_read(STREAM_DATA);
                         }
-                        if (ch == '\r' || ch == '\n') parse_stage = CHECK_ARGS;
-                        else parse_stage = PRE_PARSE_ARGS;
+                        if (ch == '\r' || ch == '\n') parse_stage_data = CHECK_ARGS;
+                        else parse_stage_data = PRE_PARSE_ARGS;
                     } else
                     {
                         buff[offset++] = ch;
@@ -365,18 +333,18 @@ void rpc_server_loop()
                     if (!p_resource)
                     {
                         writer_print(TYPE_STRING, "\"GROVE OR METHOD NOT FOUND WHEN CHECK POST ARGS\"");
-                        response_msg_close();
-                        parse_stage = PARSE_REQ_TYPE;
+                        response_msg_close(STREAM_DATA);
+                        parse_stage_data = PARSE_REQ_TYPE;
                         break;
                     }
                     if (p_resource->arg_types[0] != TYPE_NONE)
                     {
                         writer_print(TYPE_STRING, "\"MISSING ARGS\"");
-                        response_msg_close();
-                        parse_stage = PARSE_REQ_TYPE;
+                        response_msg_close(STREAM_DATA);
+                        parse_stage_data = PARSE_REQ_TYPE;
                         break;
                     }
-                    parse_stage = PARSE_CALL;
+                    parse_stage_data = PARSE_CALL;
                     break;
                 }
             case PRE_PARSE_ARGS:
@@ -385,11 +353,11 @@ void rpc_server_loop()
                     if (!p_resource)
                     {
                         writer_print(TYPE_STRING, "\"GROVE OR METHOD NOT FOUND WHEN PRE-PARSE ARGS\"");
-                        response_msg_close();
-                        parse_stage = PARSE_REQ_TYPE;
+                        response_msg_close(STREAM_DATA);
+                        parse_stage_data = PARSE_REQ_TYPE;
                         break;
                     }
-                    parse_stage = PARSE_ARGS;
+                    parse_stage_data = PARSE_ARGS;
                     arg_index = 0;
                     arg_offset = 0;
                     offset = 0;
@@ -398,7 +366,7 @@ void rpc_server_loop()
             case PARSE_ARGS:
                 {
                     bool overlen = false;
-                    ch = stream_read();
+                    ch = stream_read(STREAM_DATA);
                     if (ch == '\r' || ch == '\n' || ch == '/')
                     {
                         buff[offset] = '\0';
@@ -407,7 +375,7 @@ void rpc_server_loop()
                         buff[offset] = '\0';
                         while (ch != '/' && ch != '\r' && ch != '\n')
                         {
-                            ch = stream_read();
+                            ch = stream_read(STREAM_DATA);
                         }
                         overlen = true;
                     } else
@@ -428,15 +396,15 @@ void rpc_server_loop()
                             (arg_index <= 3 && p_resource->arg_types[arg_index] != TYPE_NONE && strlen(buff) < 1))
                         {
                             writer_print(TYPE_STRING, "\"MISSING ARGS\"");
-                            response_msg_close();
-                            parse_stage = PARSE_REQ_TYPE;
+                            response_msg_close(STREAM_DATA);
+                            parse_stage_data = PARSE_REQ_TYPE;
                             break;
                         }
                         char *p = buff;
                         int len = __convert_arg(arg_buff + arg_offset, p, p_resource->arg_types[arg_index++]);
                         arg_offset += len;
                         offset = 0;
-                        parse_stage = PARSE_CALL;
+                        parse_stage_data = PARSE_CALL;
                     }
                     break;
                 }
@@ -447,45 +415,86 @@ void rpc_server_loop()
                     if (!p_resource)
                     {
                         writer_print(TYPE_STRING, "\"GROVE OR METHOD NOT FOUND WHEN CALL\"");
-                        response_msg_close();
-                        parse_stage = PARSE_REQ_TYPE;
+                        response_msg_close(STREAM_DATA);
+                        parse_stage_data = PARSE_REQ_TYPE;
                         break;
                     }
                     //writer_print(TYPE_STRING, "{");
-                    if (false == p_resource->method_ptr(p_resource->class_ptr, arg_buff)) response_msg_append_205();
+                    if (false == p_resource->method_ptr(p_resource->class_ptr, arg_buff)) response_msg_append_205(STREAM_DATA);
                     //writer_print(TYPE_STRING, "}");
-                    response_msg_close();
+                    response_msg_close(STREAM_DATA);
 
-                    parse_stage = PARSE_REQ_TYPE;
+                    parse_stage_data = PARSE_REQ_TYPE;
                     break;
                 }
+
+            default:
+                break;
+        }
+        delay(0);  //yield the cpu for critical use or the watch dog will be hungry enough to trigger the reset.
+    }
+}
+
+static char buff_cmd[8];
+
+void process_cmd_stream()
+{
+    //writer_print(TYPE_INT, &parse_stage);
+    while (stream_available(STREAM_CMD) > 0)
+    {
+        switch (parse_stage_cmd)
+        {
+            case PARSE_REQ_TYPE:
+                {
+                    buff_cmd[0] = buff_cmd[1]; buff_cmd[1] = buff_cmd[2]; buff_cmd[2] = buff_cmd[3];
+                    buff_cmd[3] = stream_read(STREAM_CMD);
+
+                    if (memcmp(buff_cmd, "OTA", 3) == 0 || memcmp(buff_cmd, "ota", 3) == 0)
+                    {
+                        parse_stage_cmd = DIVE_INTO_OTA;
+                        response_msg_open(STREAM_CMD, "ota_trig_ack");
+                        stream_print(STREAM_CMD, TYPE_STRING, "null");
+                        response_msg_close(STREAM_CMD);
+                        break;
+                    }
+
+                    if (memcmp(buff_cmd, "APP", 3) == 0 || memcmp(buff_cmd, "app", 3) == 0)
+                    {
+                        parse_stage_cmd = GET_APP_NUM;
+                        response_msg_open(STREAM_CMD, "resp_app");
+                        break;
+                    }
+
+                    break;
+                }
+
             case DIVE_INTO_OTA:
                 {
                     //TODO: refer to the ota related code here
-                    ch = stream_read();
+                    ch = stream_read(STREAM_CMD);
                     while (ch != '\r' && ch != '\n')
                     {
-                        ch = stream_read();
+                        ch = stream_read(STREAM_CMD);
                     }
-                    //espconn_disconnect(&main_conn);
-                    parse_stage = PARSE_REQ_TYPE;
+                    //espconn_disconnect(&tcp_conn[0]);
+                    parse_stage_cmd = PARSE_REQ_TYPE;
                     ota_start();
                     while (!ota_fini)
                     {
                         digitalWrite(STATUS_LED, ~digitalRead(STATUS_LED));
                         delay(100);
-                        keepalive_last_recv_time = millis();  //to prevent online check and offline-reconnect during ota
+                        keepalive_last_recv_time[0] = keepalive_last_recv_time[1] = millis();  //to prevent online check and offline-reconnect during ota
                     }
                     break;
                 }
             case GET_APP_NUM:
                 {
-                    ch = stream_read();
+                    ch = stream_read(STREAM_CMD);
                     while (ch != '\r' && ch != '\n')
                     {
-                        ch = stream_read();
+                        ch = stream_read(STREAM_CMD);
                     }
-                    parse_stage = PARSE_REQ_TYPE;
+                    parse_stage_cmd = PARSE_REQ_TYPE;
                     
                     int bin_num = 1;
                     if(system_upgrade_userbin_check() == UPGRADE_FW_BIN1)
@@ -499,8 +508,8 @@ void rpc_server_loop()
                         //os_memcpy(user_bin, "user1.bin", 10);
                         bin_num = 2;
                     }
-                    writer_print(TYPE_INT, &bin_num);
-                    response_msg_close();
+                    stream_print(STREAM_CMD, TYPE_INT, &bin_num);
+                    response_msg_close(STREAM_CMD);
                     
                     break;
                 }
@@ -510,6 +519,13 @@ void rpc_server_loop()
         }
         delay(0);  //yield the cpu for critical use or the watch dog will be hungry enough to trigger the reset.
     }
+}
+
+void rpc_server_loop()
+{
+    drain_event_queue();
+    process_data_stream();
+    process_cmd_stream();
 }
 
 

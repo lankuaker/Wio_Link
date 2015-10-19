@@ -31,48 +31,55 @@
 
 //extern Serial pc;
 
-void stream_init()
+void stream_init(int stream_num)
 {
 
 }
 
-char stream_read()
+char stream_read(int stream_num)
 {
-    if (rx_stream_buffer->size() > 0)
+    CircularBuffer *rx_buffer = (stream_num == STREAM_DATA) ? data_stream_rx_buffer : ota_stream_rx_buffer;
+    
+    if (rx_buffer->size() > 0)
     {
         char c;
         noInterrupts();
-        rx_stream_buffer->read(&c,1);
+        rx_buffer->read(&c,1);
         interrupts();
         return c;
     } else return NULL;
 }
 
-bool stream_write(char c)
+bool stream_write(int stream_num, char c)
 {
-    network_putc(c);
+    CircularBuffer *tx_buffer = (stream_num == STREAM_DATA) ? data_stream_tx_buffer : ota_stream_tx_buffer;
+    network_putc(tx_buffer, c);
     return true;
 }
 
-int stream_available()
+int stream_available(int stream_num)
 {
+    CircularBuffer *rx_buffer = (stream_num == STREAM_DATA) ? data_stream_rx_buffer : ota_stream_rx_buffer;
+    
     noInterrupts();
-    size_t sz = rx_stream_buffer->size();
+    size_t sz = rx_buffer->size();
     interrupts();
     return sz;
 }
 
-bool stream_write_string(char *str, int len)
+bool stream_write_string(int stream_num, char *str, int len)
 {
+    CircularBuffer *tx_buffer = (stream_num == STREAM_DATA) ? data_stream_tx_buffer : ota_stream_tx_buffer;
+    
     /*for (int i = 0; str[i] && i < len; i++)
     {
         stream_write(str[i]);
     }*/
-    network_puts(str, len);
+    network_puts(tx_buffer, str, len);
     return true;
 }
 
-void writer_print(type_t type, const void *data, bool append_comma)
+void stream_print(int stream_num, type_t type, const void *data, bool append_comma)
 {
     char buff[32];
     switch (type)
@@ -104,35 +111,40 @@ void writer_print(type_t type, const void *data, bool append_comma)
             dtostrf((*(float *)data), NULL, 2, buff);
             break;
         case TYPE_STRING:
-            stream_write_string((char *)data, strlen(data));
+            stream_write_string(stream_num, (char *)data, strlen(data));
             return;
         default:
             break;
     }
-    stream_write_string(buff, strlen(buff));
-    if(append_comma) stream_write(',');
+    stream_write_string(stream_num, buff, strlen(buff));
+    if(append_comma) stream_write(stream_num, ',');
 }
 
-void response_msg_open(char *msg_type)
+void writer_print(type_t type, const void *data, bool append_comma)
+{
+    stream_print(STREAM_DATA, type, data, append_comma);
+}
+
+void response_msg_open(int stream_num, char *msg_type)
 {
     char *msg1 = "{\"msg_type\":\"";
     char *msg2 = "\", \"msg\":";
 
-    stream_write_string(msg1, strlen(msg1));
-    stream_write_string(msg_type, strlen(msg_type));
-    stream_write_string(msg2, strlen(msg2));
+    stream_write_string(stream_num, msg1, strlen(msg1));
+    stream_write_string(stream_num, msg_type, strlen(msg_type));
+    stream_write_string(stream_num, msg2, strlen(msg2));
 }
 
-void response_msg_append_205()
+void response_msg_append_205(int stream_num)
 {
     char *msg = ", \"status\": 205";
-    stream_write_string(msg, strlen(msg));
+    stream_write_string(stream_num, msg, strlen(msg));
 }
 
-void response_msg_close()
+void response_msg_close(int stream_num)
 {
     char *msg3 = "}\r\n";
 
-    stream_write_string(msg3, strlen(msg3));
+    stream_write_string(stream_num, msg3, strlen(msg3));
 }
 

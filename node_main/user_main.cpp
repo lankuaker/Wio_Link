@@ -119,7 +119,7 @@ void pre_user_loop()
         smartconfig_pressed = false;
     }
 
-    if(main_conn_status == KEEP_ALIVE)
+    if(conn_status[0] == KEEP_ALIVE)
     {
         rpc_server_loop();
     }

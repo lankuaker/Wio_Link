@@ -9,12 +9,9 @@
 #define NODE_NAME                   "Pion One 001"
 #endif
 
-#ifndef SERVER_IP
-#define SERVER_IP                   {45,79,4,239}
-#endif
-
-#define SERVER_PORT                 8000
-#define OTA_SERVER_PORT             80
+#define DATA_SERVER_PORT            8000
+#define OTA_SERVER_PORT             8001
+#define OTA_DOWNLOAD_PORT           8081
 #ifndef OTA_SERVER_URL_PREFIX
 #define OTA_SERVER_URL_PREFIX       "/v1"
 #endif
@@ -27,6 +24,9 @@
 #define EEP_OFFSET_CFG_FLAG         200
 #define EEP_OFFSET_SSID             204
 #define EEP_OFFSET_PASSWORD         300
+#define EEP_DATA_SERVER_IP          400
+#define EEP_OTA_SERVER_IP           432
+#define EEP_OTA_RESULT_FLAG         464
 
 
 #endif

@@ -32,6 +32,7 @@
 #include "rpc_stream.h"
 #include "base64.h"
 #include "eeprom.h"
+#include "network.h"
 
 #define pheadbuffer "Connection: keep-alive\r\n\
 Cache-Control: no-cache\r\n\
@@ -59,29 +60,29 @@ void ota_response(void *arg)
     {
         Serial1.println("device_upgrade_success\r\n");
         ota_succ = true;
-        os_timer_setfn(&timer_reboot, timer_reboot_proc, NULL);
-        os_timer_arm(&timer_reboot, 3000, false);
-        for (int i = 0; i < 3;i++)
-        {
-            response_msg_open("ota_result");
-            writer_print(TYPE_STRING, "\"success\"");
-            response_msg_close();           
-        }
+        
+        memset(EEPROM.getDataPtr() + EEP_OTA_RESULT_FLAG, 1, 1);
+        
+        
     } else
     {
         Serial1.println("device_upgrade_failed\r\n");
-        response_msg_open("ota_result");
-        writer_print(TYPE_STRING, "\"fail\"");
-        response_msg_close();
         ota_succ = false;
+        
+        memset(EEPROM.getDataPtr() + EEP_OTA_RESULT_FLAG, 2, 1);
     }
 
+    EEPROM.commit();
+    
     os_free(server->url);
     server->url = NULL;
     os_free(server);
     server = NULL;
 
     ota_fini = true;
+    
+    os_timer_setfn(&timer_reboot, timer_reboot_proc, NULL);
+    os_timer_arm(&timer_reboot, 1000, false);
 }
 
 void ota_start()
@@ -94,10 +95,10 @@ void ota_start()
     struct upgrade_server_info *upServer = (struct upgrade_server_info *)os_zalloc(sizeof(struct upgrade_server_info));
 
     upServer->pespconn = NULL;
-    const char esp_server_ip[4] = SERVER_IP;
+    char *esp_server_ip = (EEPROM.getDataPtr() + EEP_OTA_SERVER_IP);
     os_memcpy(upServer->ip, esp_server_ip, 4);
 
-    upServer->port = OTA_SERVER_PORT;
+    upServer->port = OTA_DOWNLOAD_PORT;
 
     upServer->check_cb = ota_response;
     upServer->check_times = 300000;
@@ -130,19 +131,20 @@ void ota_start()
     os_strcpy(sn + len, "NiNz");
     os_sprintf(upServer->url,
                "GET %s/ota/bin?app=%d&sn=%s HTTP/1.1\r\nHost: " IPSTR ":%d\r\n" pheadbuffer "",
-               OTA_SERVER_URL_PREFIX, bin_num, sn, IP2STR(upServer->ip), OTA_SERVER_PORT);
+               OTA_SERVER_URL_PREFIX, bin_num, sn, IP2STR(upServer->ip), OTA_DOWNLOAD_PORT);
 
+    Serial1.println("Upgrade started");
+    response_msg_open(STREAM_CMD,"ota_status");
+    stream_print(STREAM_CMD,TYPE_STRING, "\"started\"");
+    response_msg_close(STREAM_CMD);
+    
+    delay(100);
+    
+    espconn_disconnect(&tcp_conn[0]);
+    espconn_disconnect(&tcp_conn[1]);
+        
     if(system_upgrade_start(upServer) == false)
     {
         Serial1.println("Upgrade already started.");
-        response_msg_open("ota_status");
-        writer_print(TYPE_STRING, "\"already started\"");
-        response_msg_close();
-    } else
-    {
-        Serial1.println("Upgrade started");
-        response_msg_open("ota_status");
-        writer_print(TYPE_STRING, "\"started\"");
-        response_msg_close();
-    }
+    } 
 }

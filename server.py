@@ -32,12 +32,9 @@ import socket
 import json
 import sqlite3 as lite
 import re
-import jwt
-import md5
 import hashlib
 import hmac
 import binascii
-import threading
 from Crypto.Cipher import AES
 from Crypto import Random
 
@@ -49,17 +46,19 @@ from tornado import iostream
 from tornado import web
 from tornado.options import define, options
 from tornado.log import *
+from tornado.concurrent import Future
 
 
 from handlers import *
 
-TOKEN_SECRET = "!@#$%^&*RG)))))))JM<==TTTT==>((((((&^HVFT767JJH"
 BS = AES.block_size
 pad = lambda s: s if (len(s) % BS == 0) else (s + (BS - len(s) % BS) * chr(0) )
 unpad = lambda s : s.rstrip(chr(0))
 
 class DeviceConnection(object):
 
+    state_waiters = {}
+    state_happened = {}
 
     def __init__ (self, device_server, stream, address):
         self.recv_msg_queue = []
@@ -76,14 +75,16 @@ class DeviceConnection(object):
         self.iv = None
         self.cipher = None
 
-        self.state_waiters = []
-        self.state_happened = []
+        #self.state_waiters = []
+        #self.state_happened = []
 
         self.event_waiters = []
         self.event_happened = []
 
         self.ota_ing = False
+        self.ota_notify_done_future = None
         self.post_ota = False
+        self.online_status = True
 
     def secure_write (self, data):
         if self.cipher:
@@ -188,14 +189,22 @@ class DeviceConnection(object):
                     try:
                         state = None
                         event = None
-                        if json_obj['msg_type'] == 'ota_trig_ack':
+                        if json_obj['msg_type'] == 'online_status':
+                            if json_obj['msg'] in ['1',1,True]:
+                                self.online_status = True
+                            else:
+                                self.online_status = False
+                            continue
+                        elif json_obj['msg_type'] == 'ota_trig_ack':
                             state = ('going', 'Node has been notified...')
                             self.ota_ing = True
+                            if self.ota_notify_done_future:
+                                self.ota_notify_done_future.set_result(1)
                         elif json_obj['msg_type'] == 'ota_status':
                             if json_obj['msg'] == 'started':
-                                state = ('going', 'Node is downloading the binary...')
+                                state = ('going', 'Downloading the firmware...')
                             else:
-                                state = ('error', 'Node failed to start the downloading.')
+                                state = ('error', 'Failed to start the downloading.')
                                 self.post_ota = True
                         elif json_obj['msg_type'] == 'ota_result':
                             if json_obj['msg'] == 'success':
@@ -210,10 +219,17 @@ class DeviceConnection(object):
                         gen_log.debug(state)
                         gen_log.debug(event)
                         if state:
-                            if len(self.state_waiters) == 0:
-                                self.state_happened.append(state)
+                            #print self.state_waiters
+                            #print self.state_happened
+                            if self.state_waiters and self.sn in self.state_waiters and len(self.state_waiters[self.sn]) > 0:
+                                f = self.state_waiters[self.sn].pop(0)
+                                f.set_result(state)
+                                if len(self.state_waiters[self.sn]) == 0:
+                                    del self.state_waiters[self.sn]
+                            elif self.state_happened and self.sn in self.state_happened:
+                                self.state_happened[self.sn].append(state)
                             else:
-                                self.state_waiters.pop(0).set_result(state)
+                                self.state_happened[self.sn] = [state]
                         elif event:
                             if len(self.event_waiters) == 0:
                                 self.event_happened.append(event)
@@ -227,7 +243,7 @@ class DeviceConnection(object):
                         gen_log.warn("Node %d: %s" % (self.node_id ,str(e)))
 
             except iostream.StreamClosedError:
-                gen_log.error("StreamClosedError when write to node %d" % self.node_id)
+                gen_log.error("StreamClosedError when reading from node %d" % self.node_id)
                 self.kill_myself()
                 return
             except ValueError:
@@ -239,10 +255,10 @@ class DeviceConnection(object):
 
             yield gen.moment
 
-            if self.post_ota:
-                gen_log.error("Node %d OTA finished, will reboot, kill the connection" % self.node_id )
-                self.kill_myself()
-                return
+            #if self.post_ota:
+            #    gen_log.error("Node %d OTA finished, will reboot, kill the connection" % self.node_id )
+            #    self.kill_myself()
+            #    return
 
     @gen.coroutine
     def _loop_sending_cmd (self):
@@ -332,42 +348,50 @@ class DeviceConnection(object):
 
 class DeviceServer(TCPServer):
 
-    accepted_conns = []
+    accepted_xchange_conns = []
+    accepted_ota_conns = []
 
-    def __init__ (self, db_conn, cursor):
+    def __init__ (self, db_conn, cursor, role):
         self.conn = db_conn
         self.cur = cursor
+        self.role = role
         TCPServer.__init__(self)
 
 
     def handle_stream(self, stream, address):
         conn = DeviceConnection(self, stream,address)
-        self.accepted_conns.append(conn)
+
+        if self.role == 'ota':
+            self.accepted_ota_conns.append(conn)
+            gen_log.info("%s device server accepted conns: %d"% (self.role, len(self.accepted_ota_conns)))
+        else:
+            self.accepted_xchange_conns.append(conn)
+            gen_log.info("%s device server accepted conns: %d"% (self.role, len(self.accepted_xchange_conns)))
+
         conn.start_serving()
-        gen_log.info("accepted conns: %d"% len(self.accepted_conns))
 
     def remove_connection (self, conn):
-        gen_log.info("will remove connection: "+ str(conn))
+        gen_log.info("%s device server will remove connection: %s" % (self.role, str(conn)))
         try:
-            while len(conn.state_waiters) > 0:
-                gen_log.debug("xxxxxxxxxxxxxxxx")
-                conn.state_waiters.pop(0).set_result(('error', 'Node lost its current connection.'))
-            self.accepted_conns.remove(conn)
+            if self.role == 'ota':
+                self.accepted_ota_conns.remove(conn)
+            else:
+                self.accepted_xchange_conns.remove(conn)
             del conn
         except:
             pass
 
     def remove_junk_connection (self, conn):
         try:
-            for c in self.accepted_conns:
+            connections = self.accepted_xchange_conns
+            if self.role == 'ota':
+                connections = self.accepted_ota_conns
+            for c in connections:
                 if c.sn == conn.sn and c != conn :
                     c.killed = True
                     #clear waiting futures
-                    while len(c.state_waiters) > 0:
-                        gen_log.debug("rrrrrrrrrrrrrrrr")
-                        c.state_waiters.pop(0).set_result(('error', 'Node lost its current connection.'))
-                    gen_log.info("removed one junk connection of same sn: "+ c.sn)
-                    self.accepted_conns.remove(c)
+                    gen_log.info("%s device server removed one junk connection of same sn: %s"% (self.role, c.sn))
+                    connections.remove(c)
                     del c
                     break
         except:
@@ -388,22 +412,36 @@ class myApplication(web.Application):
         (r"/v1/scan/drivers[/]?", DriversHandler),
         (r"/v1/scan/status[/]?", DriversStatusHandler),
         (r"/v1/nodes/create[/]?", NodeCreateHandler),
-        (r"/v1/nodes/list[/]?", NodeListHandler, dict(conns=DeviceServer.accepted_conns)),
+        (r"/v1/nodes/list[/]?", NodeListHandler, dict(conns=DeviceServer.accepted_ota_conns)),
         (r"/v1/nodes/rename[/]?", NodeRenameHandler),
         (r"/v1/nodes/delete[/]?", NodeDeleteHandler),
-        (r"(?!.*(event|config|resources))/v1/node/(.+)", NodeReadWriteHandler, dict(conns=DeviceServer.accepted_conns)),
-        (r"/v1/node/event[/]?", NodeEventHandler,dict(conns=DeviceServer.accepted_conns)),
-        (r"/v1/node/config[/]?", NodeGetConfigHandler,dict(conns=DeviceServer.accepted_conns)),
-        (r"/v1/node/resources[/]?", NodeGetResourcesHandler,dict(conns=DeviceServer.accepted_conns)),
-        (r"/v1/user/download[/]?", FirmwareBuildingHandler, dict(conns=DeviceServer.accepted_conns)),
-        (r"/v1/ota/bin", OTAFirmwareSendingHandler, dict(conns=DeviceServer.accepted_conns)),
-        (r"/v1/ota/status[/]?", OTAStatusReportingHandler, dict(conns=DeviceServer.accepted_conns)),
+        (r"(?!.*(event|config|resources))/v1/node/(.+)", NodeReadWriteHandler, dict(conns=DeviceServer.accepted_xchange_conns, state_waiters=DeviceConnection.state_waiters, state_happened=DeviceConnection.state_happened)),
+        (r"/v1/node/event[/]?", NodeEventHandler,dict(conns=DeviceServer.accepted_xchange_conns)),
+        (r"/v1/node/config[/]?", NodeGetConfigHandler,dict(conns=DeviceServer.accepted_ota_conns, state_waiters=DeviceConnection.state_waiters, state_happened=DeviceConnection.state_happened)),
+        (r"/v1/node/resources[/]?", NodeGetResourcesHandler,dict(conns=DeviceServer.accepted_ota_conns, state_waiters=DeviceConnection.state_waiters, state_happened=DeviceConnection.state_happened)),
+        (r"/v1/user/download[/]?", FirmwareBuildingHandler, dict(conns=DeviceServer.accepted_ota_conns, state_waiters=DeviceConnection.state_waiters, state_happened=DeviceConnection.state_happened)),
+        (r"/v1/ota/status[/]?", OTAStatusReportingHandler, dict(conns=DeviceServer.accepted_ota_conns, state_waiters=DeviceConnection.state_waiters, state_happened=DeviceConnection.state_happened)),
         ]
+
         self.conn = db_conn
         self.cur = cursor
 
         web.Application.__init__(self, handlers, debug=True, login_url="/v1/user/login",
-            template_path = 'templates',)
+            template_path = 'templates')
+
+class myApplication_OTA(web.Application):
+
+    def __init__(self,db_conn,cursor):
+        handlers = [
+        (r"/v1[/]?", IndexHandler),
+        (r"/v1/test[/]?", TestHandler),
+        (r"/v1/ota/bin", OTAFirmwareSendingHandler, dict(conns=DeviceServer.accepted_ota_conns, state_waiters=DeviceConnection.state_waiters, state_happened=DeviceConnection.state_happened))
+        ]
+        self.conn = db_conn
+        self.cur = cursor
+
+        web.Application.__init__(self, handlers, debug=True)
+
 
 def main():
 
@@ -429,8 +467,16 @@ def main():
     http_server = HTTPServer(app)
     http_server.listen(8080)
 
-    tcp_server = DeviceServer(conn, cur)
+    app2 = myApplication_OTA(conn, cur)
+    http_server2 = HTTPServer(app2)
+    http_server2.listen(8081)
+
+
+    tcp_server = DeviceServer(conn, cur, 'xchange')
     tcp_server.listen(8000)
+
+    tcp_server2 = DeviceServer(conn, cur, 'ota')
+    tcp_server2.listen(8001)
 
     ioloop.IOLoop.current().start()
 

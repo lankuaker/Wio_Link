@@ -71,7 +71,7 @@ void GroveAccMMA7660::_getxyz(int8_t *x, int8_t *y, int8_t *z)
     *z = ((int8_t)(val[2] << 2)) / 4;
 }
 
-bool GroveAccMMA7660::read_accelerometer(float *ax, float *ay, float *az)
+bool GroveAccMMA7660::read_acceleration(float *ax, float *ay, float *az)
 {
     int8_t x,y,z;
     _getxyz(&x,&y,&z);

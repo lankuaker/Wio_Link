@@ -37,17 +37,21 @@ enum
 {
     WAIT_CONFIG, WAIT_GET_IP, DIED_IN_GET_IP, WAIT_CONN_DONE, DIED_IN_CONN, CONNECTED, WAIT_HELLO_DONE, KEEP_ALIVE, DIED_IN_HELLO
 };
-extern uint8_t main_conn_status;
-extern struct espconn main_conn;
+extern uint8_t conn_status[2];
+extern struct espconn tcp_conn[2];
 
 void network_setup();
 void network_normal_mode(int config_flag);
 void network_config_mode();
-void network_putc(char c);
-void network_puts(char *data, int len);
+void network_putc(CircularBuffer *tx_buffer, char c);
+void network_puts(CircularBuffer *tx_buffer, char *data, int len);
 
-extern CircularBuffer *rx_stream_buffer;
-extern uint32_t keepalive_last_recv_time;
+extern CircularBuffer *data_stream_rx_buffer;
+extern CircularBuffer *data_stream_tx_buffer;
+extern CircularBuffer *ota_stream_rx_buffer ;
+extern CircularBuffer *ota_stream_tx_buffer ;
+
+extern uint32_t keepalive_last_recv_time[2];
 
 
 #endif

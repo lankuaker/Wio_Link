@@ -35,48 +35,47 @@
 #include "sha256.h"
 #include "aes.h"
 
-enum
-{
-    WAIT_SMARTCONFIG_DONE, SMARTCONFIG_DONE
-};
+#define KEY_LEN             32
+#define SN_LEN              32
 
+uint8_t conn_status[2] = { WAIT_GET_IP, WAIT_GET_IP };
+static int conn_retry_cnt[2] = {0};
+static uint8_t get_hello[2] = {0};
+static uint8_t confirm_hello_retry_cnt[2] = {0};
+uint32_t keepalive_last_recv_time[2] = {0};
 
-static uint8_t smartconfig_status = WAIT_SMARTCONFIG_DONE;
-uint8_t main_conn_status = WAIT_GET_IP;
-static int main_conn_retry_cnt = 0;
-static uint8_t get_hello = 0;
-static uint8_t confirm_hello_retry_cnt = 0;
-uint32_t keepalive_last_recv_time = 0;
+static struct espconn udp_conn;
+struct espconn tcp_conn[2];
+static struct _esp_tcp tcp_conn_tcp_s[2];
+static os_timer_t timer_conn[2];
+static os_timer_t timer_network_status_indicate[2];
+static os_timer_t timer_confirm_hello[2];
+static os_timer_t timer_tx[2];
+static os_timer_t timer_keepalive_check[2];
+const char *conn_name[2] = {"data", "ota" };
 
 const char *device_find_request = "Node?";
 const char *blank_device_find_request = "Blank?";
 const char *device_keysn_write_req = "KeySN: ";
 const char *ap_config_req = "APCFG: ";
-#define KEY_LEN             32
-#define SN_LEN              32
-static struct espconn udp_conn;
-struct espconn main_conn;
-static struct _esp_tcp user_tcp;
-static os_timer_t timer_main_conn;
-static os_timer_t timer_main_conn_reconn;
-static os_timer_t timer_network_status_indicate;
-static os_timer_t timer_confirm_hello;
-static os_timer_t timer_tx;
-static os_timer_t timer_keepalive_check;
+const char *reboot_req = "REBOOT";
 
-CircularBuffer *rx_stream_buffer = NULL;
-CircularBuffer *tx_stream_buffer = NULL;
+CircularBuffer *data_stream_rx_buffer = NULL;
+CircularBuffer *data_stream_tx_buffer = NULL;
+CircularBuffer *ota_stream_rx_buffer = NULL;
+CircularBuffer *ota_stream_tx_buffer = NULL;
 
-static aes_context aes_ctx;
-static int iv_offset = 0;
-static unsigned char iv[16];
-static bool txing = false;
+static aes_context aes_ctx[2];
+static int iv_offset[2] = {0};
+static unsigned char iv[2][16];
+static bool txing[2] = {false};
 
 extern "C" struct rst_info* system_get_rst_info(void);
-void main_connection_init(void *arg);
-void main_connection_send_hello(void *arg);
-void main_connection_reconnect_callback(void *arg, int8_t err);
+void connection_init(void *arg);
+void connection_send_hello(void *arg);
+void connection_reconnect_callback(void *arg, int8_t err);
 void network_status_indicate_timer_fn(void *arg);
+void ota_conn_status_indicate_timer_fn(void *arg);
 
 //////////////////////////////////////////////////////////////////////////////////////////
  
@@ -108,7 +107,7 @@ static void format_sn(uint8_t *input, uint8_t *output)
  */
 static uint8_t *extract_substr(uint8_t *input, uint8_t *output)
 {
-    uint8_t *ptr = os_strstr(input, "\t");
+    uint8_t *ptr = os_strchr(input, '\t');
     if (ptr == NULL)
     {
         return NULL;
@@ -125,6 +124,55 @@ static uint8_t *extract_substr(uint8_t *input, uint8_t *output)
         os_memset(output + (ptr - input), 0, 1);
     }
     return ptr;
+}
+
+/**
+ * extract parts of ip v4 from a string
+ * 
+ * @param input 
+ * @param output 
+ * 
+ * @return bool 
+ */
+bool extract_ip(uint8_t *input, uint8_t *output)
+{
+    uint8_t *ptr;
+    char num[4];
+    int i = 0;
+    
+    while ((ptr = os_strchr(input, '.')) != NULL)
+    {
+        i++;
+        os_memset(num, 0, 4);
+        os_memcpy(num, input, (ptr - input));
+        *output++ = atoi((const char *)num);
+        input = ptr + 1;
+    }
+    
+    if (i<3)
+    {
+        return false;
+    } else
+    {
+        *output = atoi((const char *)input);
+        return true;
+    }
+}
+
+/**
+ * print the data socket online status to ota socket stream
+ */
+void print_online_status()
+{
+    network_puts(ota_stream_tx_buffer, "{\"msg_type\":\"online_status\",\"msg\":", 34);
+    if (conn_status[0] == KEEP_ALIVE)
+    {
+        network_puts(ota_stream_tx_buffer, "1", 1);
+    } else
+    {
+        network_puts(ota_stream_tx_buffer, "0", 1);
+    }
+    network_puts(ota_stream_tx_buffer, "}\r\n", 3);
 }
 
 /**
@@ -195,6 +243,12 @@ static void user_devicefind_recv(void *arg, char *pusrdata, unsigned short lengt
         delete[] device_desc;
         delete[] buff_sn;
     }
+    else if ((pkey = os_strstr(pusrdata, reboot_req)) != NULL && config_flag == 2)
+    {
+        os_timer_disarm(&timer_conn[0]);
+        os_timer_setfn(&timer_conn[0], fire_reboot, NULL);
+        os_timer_arm(&timer_conn[0], 1, 0);
+    }
     else if ((pkey = os_strstr(pusrdata, ap_config_req)) != NULL && config_flag == 2)
     {
         //ssid
@@ -248,6 +302,39 @@ static void user_devicefind_recv(void *arg, char *pusrdata, unsigned short lengt
             return;
         }
         
+        //ip data
+        ptr = extract_substr(ptr + 1, EEPROM.getDataPtr() + EEP_DATA_SERVER_IP+4);
+        
+        if (ptr)
+        {
+            Serial1.printf("Recv data server ip: %s\r\n", EEPROM.getDataPtr() + EEP_DATA_SERVER_IP+4);
+            if (!extract_ip(EEPROM.getDataPtr() + EEP_DATA_SERVER_IP + 4, EEPROM.getDataPtr() + EEP_DATA_SERVER_IP))
+            {
+                Serial1.printf("Fail to extract data server ip.\r\n");
+            }
+        } else
+        {
+            Serial1.printf("Bad format: can not find data server ip.\r\n");
+            return;
+        }
+
+        //ip ota
+        ptr = extract_substr(ptr + 1, EEPROM.getDataPtr() + EEP_OTA_SERVER_IP+4);
+        
+        if (ptr)
+        {
+            Serial1.printf("Recv ota server ip: %s\r\n", EEPROM.getDataPtr() + EEP_OTA_SERVER_IP+4);
+            if (!extract_ip(EEPROM.getDataPtr() + EEP_OTA_SERVER_IP + 4, EEPROM.getDataPtr() + EEP_OTA_SERVER_IP))
+            {
+                Serial1.printf("Fail to extract data server ip.\r\n");
+            }
+        } else
+        {
+            Serial1.printf("Bad format: can not find ota server ip.\r\n");
+            return;
+        }
+        
+        
         
         config_flag = 3;
         memset(EEPROM.getDataPtr() + EEP_OFFSET_CFG_FLAG, config_flag, 1);  //set the config flag
@@ -258,9 +345,9 @@ static void user_devicefind_recv(void *arg, char *pusrdata, unsigned short lengt
         espconn_sent(conn, "ok\r\n", 4);
         espconn_sent(conn, "ok\r\n", 4);
         
-        os_timer_disarm(&timer_main_conn);
-        os_timer_setfn(&timer_main_conn, fire_reboot, NULL);
-        os_timer_arm(&timer_main_conn, 1000, 0);
+        os_timer_disarm(&timer_conn[0]);
+        os_timer_setfn(&timer_conn[0], fire_reboot, NULL);
+        os_timer_arm(&timer_conn[0], 1000, 0);
         
     }
 #if 0
@@ -293,11 +380,11 @@ static void user_devicefind_recv(void *arg, char *pusrdata, unsigned short lengt
             espconn_sent(conn, "ok\r\n", 4);
             
 
-            //if (main_conn_status == DIED_IN_CONN || main_conn_status == DIED_IN_HELLO || main_conn_status == KEEP_ALIVE)
+            //if (conn_status[0] == DIED_IN_CONN || conn_status[0] == DIED_IN_HELLO || conn_status[0] == KEEP_ALIVE)
             {
-                os_timer_disarm(&timer_main_conn);
-                os_timer_setfn(&timer_main_conn, fire_reboot, NULL);
-                os_timer_arm(&timer_main_conn, 1000, 0);
+                os_timer_disarm(&timer_conn[0]);
+                os_timer_setfn(&timer_conn[0], fire_reboot, NULL);
+                os_timer_arm(&timer_conn[0], 1000, 0);
             }
         }
     }
@@ -307,7 +394,7 @@ static void user_devicefind_recv(void *arg, char *pusrdata, unsigned short lengt
 /**
  * init UDP socket
  */
-void user_devicefind_init(void)
+void local_udp_config_port_init(void)
 {
     udp_conn.type = ESPCONN_UDP;
     udp_conn.proto.udp = (esp_udp *)os_zalloc(sizeof(esp_udp));
@@ -323,51 +410,63 @@ void user_devicefind_init(void)
  * @param pusrdata 
  * @param length 
  */
-static void main_connection_recv_cb(void *arg, char *pusrdata, unsigned short length)
+static void connection_recv_cb(void *arg, char *pusrdata, unsigned short length)
 {
-    struct espconn *pespconn = arg;
+    struct espconn *pespconn = (struct espconn *)arg;
+    int index = (pespconn == (&tcp_conn[0])) ? 0 : 1;
+    CircularBuffer *rx_buffer = (index == 0) ? data_stream_rx_buffer : ota_stream_rx_buffer;
+    CircularBuffer *tx_buffer = (index == 0) ? data_stream_tx_buffer : ota_stream_tx_buffer;
+    
     char *pstr = NULL;
     size_t room;
 
-    switch (main_conn_status)
+    switch (conn_status[index])
     {
     case WAIT_HELLO_DONE:
         if ((pstr = strstr(pusrdata, "sorry")) != NULL)
         {
-            get_hello = 2;
+            get_hello[index] = 2;
         } else
         {
-            aes_init(&aes_ctx);
-            aes_setkey_enc(&aes_ctx, EEPROM.getDataPtr() + EEP_OFFSET_KEY, KEY_LEN*8);
-            memcpy(iv, pusrdata, 16);
-            aes_crypt_cfb128(&aes_ctx, AES_DECRYPT, length - 16, &iv_offset, iv, pusrdata + 16, pusrdata);
+            aes_init(&aes_ctx[index]);
+            aes_setkey_enc(&aes_ctx[index], EEPROM.getDataPtr() + EEP_OFFSET_KEY, KEY_LEN*8);
+            memcpy(iv[index], pusrdata, 16);
+            aes_crypt_cfb128(&aes_ctx[index], AES_DECRYPT, length - 16, &iv_offset[index], iv[index], pusrdata + 16, pusrdata);
             if (os_strncmp(pusrdata, "hello", 5) == 0)
             {
-                get_hello = 1;
+                get_hello[index] = 1;
             }
         }
 
         break;
     case KEEP_ALIVE:
-        aes_crypt_cfb128(&aes_ctx, AES_DECRYPT, length, &iv_offset, iv, pusrdata, pusrdata);
+        aes_crypt_cfb128(&aes_ctx[index], AES_DECRYPT, length, &iv_offset[index], iv[index], pusrdata, pusrdata);
 
+        Serial1.printf("%s conn: ", conn_name[index]);
         Serial1.println(pusrdata);
-        keepalive_last_recv_time = millis();
+        keepalive_last_recv_time[index] = millis();
 
-        if (os_strncmp(pusrdata, "##PING##", 8) == 0 && tx_stream_buffer)
+        if (os_strncmp(pusrdata, "##PING##", 8) == 0 && rx_buffer)
         {
-            network_puts("##ALIVE##\r\n", 11);
+            if (index == 0)
+            {
+                network_puts(tx_buffer, "##ALIVE##\r\n", 11);
+            } else
+            {
+                print_online_status();
+            }
+
             return;
         }
 
-        if (!rx_stream_buffer) return;
+        if (!rx_buffer) return;
 
         //Serial1.printf("recv %d data\n", length);
-        room = rx_stream_buffer->capacity()-rx_stream_buffer->size();
+        room = rx_buffer->capacity()-rx_buffer->size();
         length = os_strlen(pusrdata);  //filter out the padding 0s
         if ( room > 0 )
         {
-            rx_stream_buffer->write(pusrdata, (room>length?length:room));
+            rx_buffer->write(pusrdata, (room>length?length:room));
         }
         break;
     default:
@@ -380,7 +479,7 @@ static void main_connection_recv_cb(void *arg, char *pusrdata, unsigned short le
  * 
  * @param arg 
  */
-static void main_connection_sent_cb(void *arg)
+static void connection_sent_cb(void *arg)
 {
 
 }
@@ -390,28 +489,31 @@ static void main_connection_sent_cb(void *arg)
  * 
  * @param arg 
  */
-static void main_connection_tx_write_finish_cb(void *arg)
+static void connection_tx_write_finish_cb(void *arg)
 {
-    struct espconn *pespconn = arg;
+    struct espconn *p_conn = (struct espconn *)arg;
+    int index = (p_conn == (&tcp_conn[0])) ? 0 : 1;
+    
+    CircularBuffer *tx_buffer = (index == 0) ? data_stream_tx_buffer : ota_stream_tx_buffer;
 
-    if (!tx_stream_buffer) return;
+    if (!tx_buffer) return;
 
-    size_t size = tx_stream_buffer->size();
+    size_t size = tx_buffer->size();
 
     size_t size2 = size;
     if (size > 0)
     {
-        txing = true;
+        txing[index] = true;
         size2 = (((size % 16) == 0) ? (size) : (size + (16 - size % 16)));  //damn, the python crypto library only supports 16*n block length
         char *data = (char *)malloc(size2);
         os_memset(data, 0, size2);
-        tx_stream_buffer->read(data, size);
-        aes_crypt_cfb128(&aes_ctx, AES_ENCRYPT, size2, &iv_offset, iv, data, data);
-        espconn_sent(pespconn, data, size2);
+        tx_buffer->read(data, size);
+        aes_crypt_cfb128(&aes_ctx[index], AES_ENCRYPT, size2, &iv_offset[index], iv[index], data, data);
+        espconn_sent(p_conn, data, size2);
         free(data);
     } else
     {
-        txing = false;
+        txing[index] = false;
     }
 }
 
@@ -420,9 +522,9 @@ static void main_connection_tx_write_finish_cb(void *arg)
  * 
  * @param c - char to send
  */
-void network_putc(char c)
+void network_putc(CircularBuffer *tx_buffer, char c)
 {
-    network_puts(&c, 1);
+    network_puts(tx_buffer, &c, 1);
 }
 
 /**
@@ -431,33 +533,36 @@ void network_putc(char c)
  * @param data 
  * @param len 
  */
-void network_puts(char *data, int len)
+void network_puts(CircularBuffer *tx_buffer, char *data, int len)
 {
-    if (main_conn_status != KEEP_ALIVE || !tx_stream_buffer) return;
-    if (main_conn.state > ESPCONN_NONE)
+    int index = (tx_buffer == data_stream_tx_buffer) ? 0 : 1;
+    int tx_threshold = (index == 0) ? 512 : 32;
+    
+    if (conn_status[index] != KEEP_ALIVE || !tx_buffer) return;
+    if (tcp_conn[index].state > ESPCONN_NONE)
     {
         noInterrupts();
-        size_t room = tx_stream_buffer->capacity() - tx_stream_buffer->size();
+        size_t room = tx_buffer->capacity() - tx_buffer->size();
         interrupts();
         
         while (room < len)
         {
             delay(10);
             noInterrupts();
-            room = tx_stream_buffer->capacity() - tx_stream_buffer->size();
+            room = tx_buffer->capacity() - tx_buffer->size();
             interrupts();
         }
 
         noInterrupts();
-        tx_stream_buffer->write(data, len);
+        tx_buffer->write(data, len);
         interrupts();
 
-        if ((strchr(data, '\r') || strchr(data, '\n') || tx_stream_buffer->size() > 512) && !txing)
+        if ((strchr(data, '\r') || strchr(data, '\n') || tx_buffer->size() > tx_threshold) && !txing[index])
         {
             //os_timer_disarm(&timer_tx);
-            //os_timer_setfn(&timer_tx, main_connection_sent_cb, &main_conn);
+            //os_timer_setfn(&timer_tx, main_connection_sent_cb, &tcp_conn[0]);
             //os_timer_arm(&timer_tx, 1, 0);
-            main_connection_tx_write_finish_cb(&main_conn);
+            connection_tx_write_finish_cb(&tcp_conn[index]);
         }
     }
 }
@@ -468,13 +573,16 @@ void network_puts(char *data, int len)
  */
 static void keepalive_check_timer_fn(void *arg)
 {
-    if (millis() - keepalive_last_recv_time > 70000)
+    struct espconn *p_conn = (struct espconn *)arg;
+    int index = (p_conn == (&tcp_conn[0])) ? 0 : 1;
+    
+    if (millis() - keepalive_last_recv_time[index] > 70000)
     {
-        Serial1.println("No longer alive, reconnect...");
-        main_connection_reconnect_callback(NULL, 0);
+        Serial1.printf("%s conn no longer alive, reconnect...\r\n", conn_name[index]);
+        connection_reconnect_callback(p_conn, 0);
     } else
     {
-        os_timer_arm(&timer_keepalive_check, 1000, 0);
+        os_timer_arm(&timer_keepalive_check[index], 1000, 0);
     }
 }
 
@@ -483,40 +591,60 @@ static void keepalive_check_timer_fn(void *arg)
  * 
  * @param arg 
  */
-static void confirm_hello(void *arg)
+static void connection_confirm_hello(void *arg)
 {
-    Serial1.printf("confirm hello: %d \n", get_hello);
+    struct espconn *p_conn = (struct espconn *)arg;
+    int index = (p_conn == (&tcp_conn[0])) ? 0 : 1;
+    
+    Serial1.printf("%s conn confirm hello: %d \n", conn_name[index], get_hello[index]);
 
-    if (get_hello == 1)
+    if (get_hello[index] == 1)
     {
-        Serial1.printf("handshake done, keep-alive\n");
-        main_conn_status = KEEP_ALIVE;
-        keepalive_last_recv_time = millis();
-        os_timer_disarm(&timer_keepalive_check);
-        os_timer_setfn(&timer_keepalive_check, keepalive_check_timer_fn, NULL);
-        os_timer_arm(&timer_keepalive_check, 1000, 0);
+        Serial1.printf("%s conn handshake done, keep-alive\n", conn_name[index]);
+        conn_status[index] = KEEP_ALIVE;
+        keepalive_last_recv_time[index] = millis();
+        os_timer_disarm(&timer_keepalive_check[index]);
+        os_timer_setfn(&timer_keepalive_check[index], keepalive_check_timer_fn, p_conn);
+        os_timer_arm(&timer_keepalive_check[index], 1000, 0);
         
-    } else if (get_hello == 2)
+        uint8_t ota_result_flag = *(EEPROM.getDataPtr() + EEP_OTA_RESULT_FLAG);
+        
+        if (ota_result_flag == 1 && index == 1)
+        {
+            memset(EEPROM.getDataPtr() + EEP_OTA_RESULT_FLAG, 0, 1);
+            EEPROM.commit();
+            for (int i = 0; i < 2;i++)
+            {
+                network_puts(ota_stream_tx_buffer, "{\"msg_type\":\"ota_result\",\"msg\":\"success\"}\r\n", 43);
+            }
+        } else if(ota_result_flag == 2 && index == 1)
+        {
+            memset(EEPROM.getDataPtr() + EEP_OTA_RESULT_FLAG, 0, 1);
+            EEPROM.commit();
+            network_puts(ota_stream_tx_buffer, "{\"msg_type\":\"ota_result\",\"msg\":\"fail\"}\r\n", 40);
+        }
+
+    } else if (get_hello[index] == 2)
     {
-        Serial1.printf("handshake: sorry from server\n");
-        main_conn_status = DIED_IN_HELLO;
+        Serial1.printf("%s conn handshake: sorry from server\n", conn_name[index]);
+        conn_status[index] = DIED_IN_HELLO;
     } else
     {
-        if (++confirm_hello_retry_cnt > 60)
+        if (++confirm_hello_retry_cnt[index] > 60)
         {
-            main_conn_status = DIED_IN_HELLO;
+            conn_status[index] = DIED_IN_HELLO;
             return;
         } else
         {
-            if (confirm_hello_retry_cnt % 10 == 0)
+            if (confirm_hello_retry_cnt[index] % 10 == 0)
             {
-                os_timer_setfn(&timer_confirm_hello, main_connection_send_hello, &main_conn);
+                os_timer_setfn(&timer_confirm_hello[index], connection_send_hello, p_conn);
             } else
             {
-                os_timer_setfn(&timer_confirm_hello, confirm_hello, NULL);
+                os_timer_setfn(&timer_confirm_hello[index], connection_confirm_hello, p_conn);
             }
 
-            os_timer_arm(&timer_confirm_hello, 1000, 0);
+            os_timer_arm(&timer_confirm_hello[index], 1000, 0);
         }
     }
 }
@@ -527,15 +655,17 @@ static void confirm_hello(void *arg)
  * its private key to server
  * @param
  */
-void main_connection_send_hello(void *arg)
+void connection_send_hello(void *arg)
 {
     struct espconn *pespconn = (struct espconn *)arg;
+    int index = (pespconn == (&tcp_conn[0])) ? 0 : 1;
+    
     uint8_t hmac_hash[32];
 
     uint8_t *buff = os_malloc(SN_LEN + 32);
     if (!buff)
     {
-        main_conn_status = DIED_IN_HELLO;
+        conn_status[index] = DIED_IN_HELLO;
         return;
     }
     //EEPROM.getDataPtr() + EEP_OFFSET_SN
@@ -549,101 +679,116 @@ void main_connection_send_hello(void *arg)
 
     os_free(buff);
 
-    get_hello = 0;
-    os_timer_disarm(&timer_confirm_hello);
-    os_timer_setfn(&timer_confirm_hello, confirm_hello, NULL);
-    os_timer_arm(&timer_confirm_hello, 100, 0);
+    get_hello[index] = 0;
+    os_timer_disarm(&timer_confirm_hello[index]);
+    os_timer_setfn(&timer_confirm_hello[index], connection_confirm_hello, pespconn);
+    os_timer_arm(&timer_confirm_hello[index], 100, 0);
 }
 
+
 /**
- * The callback when main TCP socket has been open and connected with server
+ * The callback when the TCP socket has been open and connected with server
  * 
  * @param arg 
  */
-void main_connection_connected_callback(void *arg)
+void connection_connected_callback(void *arg)
 {
-    struct espconn *pespconn = (struct espconn *)arg;
+    struct espconn *p_conn = (struct espconn *)arg;
+    int index = (p_conn == (&tcp_conn[0])) ? 0 : 1;
 
-    Serial1.println("main conn connected");
-    main_conn_status = CONNECTED;
-    main_conn_retry_cnt = 0;
-    espconn_regist_recvcb(pespconn, main_connection_recv_cb);
-    espconn_regist_sentcb(pespconn, main_connection_sent_cb);
+    Serial1.printf("%s conn connected\r\n", conn_name[index]);
+    conn_retry_cnt[index] = 0;
+    espconn_regist_recvcb(p_conn, connection_recv_cb);
+    espconn_regist_sentcb(p_conn, connection_sent_cb);
 
-    espconn_set_opt(pespconn, 0x0c);  //enable the 2920 write buffer, enable keep-alive detection
+    espconn_set_opt(p_conn, 0x0c);  //enable the 2920 write buffer, enable keep-alive detection
 
-    espconn_regist_write_finish(pespconn, main_connection_tx_write_finish_cb); // register write finish callback
+    espconn_regist_write_finish(p_conn, connection_tx_write_finish_cb); // register write finish callback
 
     /* send hello */
-    confirm_hello_retry_cnt = 0;
-    main_connection_send_hello(arg);
-    main_conn_status = WAIT_HELLO_DONE;
+    confirm_hello_retry_cnt[index] = 0;
+    connection_send_hello(p_conn);
+    conn_status[index] = WAIT_HELLO_DONE;
 
 }
 
+
 /**
- * The callback when some error or exception happened with the main TCP socket
+ * The callback when some error or exception happened with the TCP socket
  * 
  * @param arg 
  * @param err 
  */
-void main_connection_reconnect_callback(void *arg, int8_t err)
+void connection_reconnect_callback(void *arg, int8_t err)
 {
-    Serial1.printf("main conn re-conn, err: %d\n", err);
+    struct espconn *p_conn = (struct espconn *)arg;
+    int index = (p_conn == (&tcp_conn[0])) ? 0 : 1;
+    
+    Serial1.printf("%s conn re-conn, err: %d\n", conn_name[index], err);
 
-    os_timer_disarm(&timer_main_conn);
-    os_timer_setfn(&timer_main_conn, main_connection_init, NULL);
-    os_timer_arm(&timer_main_conn, 1000, 0);
-    main_conn_status = WAIT_CONN_DONE;
+    os_timer_disarm(&timer_conn[index]);
+    os_timer_setfn(&timer_conn[index], connection_init, &tcp_conn[index]);
+    os_timer_arm(&timer_conn[index], 1000, 0);
+    conn_status[index] = WAIT_CONN_DONE;
 }
 
+
 /**
- * confirm main connection is connected
+ * confirm the connection is connected
  */
-static void main_connection_confirm_timer_fn(void *arg)
+static void connection_confirm_timer_fn(void *arg)
 {
-    if (main_conn_status == WAIT_CONN_DONE)
+    struct espconn *p_conn = (struct espconn *)arg;
+    int index = (p_conn == (&tcp_conn[0])) ? 0 : 1;
+    
+    if (conn_status[index] == WAIT_CONN_DONE)
     {
-        espconn_disconnect(&main_conn);
-        os_timer_disarm(&timer_main_conn_reconn);
-        os_timer_setfn(&timer_main_conn_reconn, main_connection_init, NULL);
-        os_timer_arm(&timer_main_conn_reconn, 1, 0);
+        espconn_disconnect(&tcp_conn[index]);
+        os_timer_disarm(&timer_conn[index]);
+        os_timer_setfn(&timer_conn[index], connection_init, &tcp_conn[index]);
+        os_timer_arm(&timer_conn[index], 1, 0);
     }
 }
 
 /**
- * init the main TCP socket
+ * init the TCP socket
  */
-void main_connection_init(void *arg)
+void connection_init(void *arg)
 {
-    Serial1.printf("main_connection_init.\r\n");
+    struct espconn *p_conn = (struct espconn *)arg;
+    int index = (p_conn == (&tcp_conn[0])) ? 0 : 1;
+    char *server_ip = (index == 0) ? (EEPROM.getDataPtr() + EEP_DATA_SERVER_IP) : (EEPROM.getDataPtr() + EEP_OTA_SERVER_IP);
+    
+    Serial1.printf("%s connection init.\r\n", conn_name[index]);
     
     //cant connect to server after 1min, maybe should re-join the router to renew the IP too.
-    if (++main_conn_retry_cnt >= 60)
+    if (++conn_retry_cnt[index] >= 60)
     {
-        main_conn_status = DIED_IN_CONN;
+        conn_status[index] = DIED_IN_CONN;
         
-        os_timer_disarm(&timer_main_conn);
-        os_timer_setfn(&timer_main_conn, fire_reboot, NULL);
-        os_timer_arm(&timer_main_conn, 1000, 0);
-        
-        return;
+        if (index == 0)
+        {
+            os_timer_disarm(&timer_conn[0]);
+            os_timer_setfn(&timer_conn[0], fire_reboot, &tcp_conn[index]);
+            os_timer_arm(&timer_conn[0], 1000, 0);
+            return;
+        }
     }
 
-    main_conn.type = ESPCONN_TCP;
-    main_conn.state = ESPCONN_NONE;
-    main_conn.proto.tcp = &user_tcp;
-    const char server_ip[4] = SERVER_IP;
-    os_memcpy(main_conn.proto.tcp->remote_ip, server_ip, 4);
-    main_conn.proto.tcp->remote_port = SERVER_PORT;
-    main_conn.proto.tcp->local_port = espconn_port();
-    espconn_regist_connectcb(&main_conn, main_connection_connected_callback);
-    espconn_regist_reconcb(&main_conn, main_connection_reconnect_callback);
-    espconn_connect(&main_conn);
+    tcp_conn[index].type = ESPCONN_TCP;
+    tcp_conn[index].state = ESPCONN_NONE;
+    tcp_conn[index].proto.tcp = &tcp_conn_tcp_s[index];
+    //const char server_ip[4] = SERVER_IP;
+    os_memcpy(tcp_conn[index].proto.tcp->remote_ip, server_ip, 4);
+    tcp_conn[index].proto.tcp->remote_port = (index == 0) ? DATA_SERVER_PORT : OTA_SERVER_PORT;
+    tcp_conn[index].proto.tcp->local_port = espconn_port();
+    espconn_regist_connectcb(&tcp_conn[index], connection_connected_callback);
+    espconn_regist_reconcb(&tcp_conn[index], connection_reconnect_callback);
+    espconn_connect(&tcp_conn[index]);
         
-    os_timer_disarm(&timer_main_conn_reconn);
-    os_timer_setfn(&timer_main_conn_reconn, main_connection_confirm_timer_fn, NULL);
-    os_timer_arm(&timer_main_conn_reconn, 10000, 0);
+    os_timer_disarm(&timer_conn[index]);
+    os_timer_setfn(&timer_conn[index], connection_confirm_timer_fn, &tcp_conn[index]);
+    os_timer_arm(&timer_conn[index], 10000, 0);
 }
 
 
@@ -698,7 +843,7 @@ void network_normal_mode(int config_flag)
 
         if (++wait_sec > 60)
         {
-            main_conn_status = DIED_IN_GET_IP;
+            conn_status[0] = DIED_IN_GET_IP;
             return;
         }
         if (digitalRead(FUNCTION_KEY) == 0)  //user pressed the function key to enter config mode
@@ -711,13 +856,15 @@ void network_normal_mode(int config_flag)
     wifi_get_ip_info(STATION_IF, &ip);
     Serial1.printf("Done. IP: " IPSTR "\r\n", IP2STR(&ip.ip));
 
-    /* register a device-find responder at UDP port 1025 */
-    user_devicefind_init();
+    /* open the config interface at UDP port 1025 */
+    local_udp_config_port_init();
 
-    main_conn_status = WAIT_CONN_DONE;
+    conn_status[0] = WAIT_CONN_DONE;
+    conn_status[1] = WAIT_CONN_DONE;
 
     /* establish the connection with server */
-    main_connection_init(NULL);
+    connection_init(&tcp_conn[0]);
+    connection_init(&tcp_conn[1]);
 }
 
 
@@ -746,8 +893,8 @@ void network_config_mode()
     
     Serial1.printf("SSID: %s\r\n", config->ssid);
 
-    /* register a device-find responder at UDP port 1025 */
-    user_devicefind_init();
+    /* open the config interface at UDP port 1025 */
+    local_udp_config_port_init();
     
 }
 
@@ -761,10 +908,16 @@ void network_setup()
     Serial1.begin(74880);
     //Serial1.setDebugOutput(true);
     Serial1.println("\n\n"); 
+#else
+    pinMode(STATUS_LED_TXD1, OUTPUT);
+    digitalWrite(STATUS_LED_TXD1, 1);
 #endif
 
-    if (!rx_stream_buffer) rx_stream_buffer = new CircularBuffer(512);
-    if (!tx_stream_buffer) tx_stream_buffer = new CircularBuffer(1024);
+    if (!data_stream_rx_buffer) data_stream_rx_buffer = new CircularBuffer(512);
+    if (!data_stream_tx_buffer) data_stream_tx_buffer = new CircularBuffer(1024);
+
+    if (!ota_stream_rx_buffer) ota_stream_rx_buffer = new CircularBuffer(8);
+    if (!ota_stream_tx_buffer) ota_stream_tx_buffer = new CircularBuffer(64);
 
     struct rst_info *reason = system_get_rst_info();
     Serial1.printf("Boot reason: %d\n", reason->flag);
@@ -785,24 +938,38 @@ void network_setup()
     format_sn(EEPROM.getDataPtr() + EEP_OFFSET_SN, (uint8_t *)buff);
     Serial1.printf("Node SN: %s\n", buff);
     
+    //
+    Serial1.printf("Data server: " IPSTR "\r\n", IP2STR((uint32 *)(EEPROM.getDataPtr() + EEP_DATA_SERVER_IP)));
+
+    Serial1.printf("OTA server: " IPSTR "\r\n", IP2STR((uint32 *)(EEPROM.getDataPtr() + EEP_OTA_SERVER_IP)));
+    
+    Serial1.printf("OTA result flag: %d\r\n", *(EEPROM.getDataPtr() + EEP_OTA_RESULT_FLAG));
+    
     Serial1.flush();
     delay(1000);  //should delay some time to wait all settled before wifi_* API calls.
     
     //start the forever timer to drive the status leds
-    os_timer_disarm(&timer_network_status_indicate);
-    os_timer_setfn(&timer_network_status_indicate, network_status_indicate_timer_fn, NULL);
-    os_timer_arm(&timer_network_status_indicate, 1, false);
+    os_timer_disarm(&timer_network_status_indicate[0]);
+    os_timer_setfn(&timer_network_status_indicate[0], network_status_indicate_timer_fn, NULL);
+    os_timer_arm(&timer_network_status_indicate[0], 1, false);
+    
+#if !ENABLE_DEBUG_ON_UART1
+    os_timer_disarm(&timer_network_status_indicate[1]);
+    os_timer_setfn(&timer_network_status_indicate[1], ota_conn_status_indicate_timer_fn, NULL);
+    os_timer_arm(&timer_network_status_indicate[1], 1, false);
+#endif    
 
     /* get the smart config flag */
     uint8_t config_flag = *(EEPROM.getDataPtr() + EEP_OFFSET_CFG_FLAG);
 
     if (config_flag == 1)
     {
-        main_conn_status = WAIT_CONFIG;
+        conn_status[0] = WAIT_CONFIG;
         network_config_mode();
     } else
     {
-        main_conn_status = WAIT_GET_IP;
+        conn_status[0] = WAIT_GET_IP;
+        conn_status[1] = WAIT_GET_IP;
         network_normal_mode(config_flag);
     }
 }
@@ -812,17 +979,17 @@ void network_setup()
  */
 void network_status_indicate_timer_fn(void *arg)
 {
-    static uint8_t last_main_conn_status = 0xff;
+    static uint8_t last_main_status = 0xff;
     static uint16_t blink_pattern_cnt = 0;
     static uint8_t brightness_dir = 0;
 
-    switch (main_conn_status)
+    switch (conn_status[0])
     {
     case WAIT_CONFIG:
-        //os_timer_arm(&timer_network_status_indicate, 100, false);
+        //os_timer_arm(&timer_network_status_indicate[0], 100, false);
         //digitalWrite(STATUS_LED, ~digitalRead(STATUS_LED));
-        os_timer_arm(&timer_network_status_indicate, 60, false);
-        if (main_conn_status != last_main_conn_status)
+        os_timer_arm(&timer_network_status_indicate[0], 60, false);
+        if (conn_status[0] != last_main_status)
         {
             blink_pattern_cnt = 0;
             brightness_dir = 0;
@@ -848,9 +1015,9 @@ void network_status_indicate_timer_fn(void *arg)
         analogWrite(STATUS_LED, blink_pattern_cnt);
         break;
     case WAIT_GET_IP:
-        if (main_conn_status != last_main_conn_status)
+        if (conn_status[0] != last_main_status)
         {
-            os_timer_arm(&timer_network_status_indicate, 50, false);
+            os_timer_arm(&timer_network_status_indicate[0], 50, false);
             digitalWrite(STATUS_LED, 1);
             blink_pattern_cnt = 1;
         }else
@@ -861,7 +1028,7 @@ void network_status_indicate_timer_fn(void *arg)
                 timeout = 1000;
                 blink_pattern_cnt = 0;
             }
-            os_timer_arm(&timer_network_status_indicate, timeout, false);
+            os_timer_arm(&timer_network_status_indicate[0], timeout, false);
             digitalWrite(STATUS_LED, ~digitalRead(STATUS_LED));
         }
         break;
@@ -872,14 +1039,14 @@ void network_status_indicate_timer_fn(void *arg)
         break;
     case WAIT_CONN_DONE:
     case WAIT_HELLO_DONE:
-        if (main_conn_status != last_main_conn_status)
+        if (conn_status[0] != last_main_status)
         {
-            os_timer_arm(&timer_network_status_indicate, 50, false);
+            os_timer_arm(&timer_network_status_indicate[0], 50, false);
             analogWrite(STATUS_LED, 0);
             digitalWrite(STATUS_LED, 1);
         }else
         {
-            os_timer_arm(&timer_network_status_indicate,(digitalRead(STATUS_LED) > 0 ? 1000 : 50), false);
+            os_timer_arm(&timer_network_status_indicate[0],(digitalRead(STATUS_LED) > 0 ? 1000 : 50), false);
             digitalWrite(STATUS_LED, ~digitalRead(STATUS_LED));
         }
         break;
@@ -899,15 +1066,55 @@ void network_status_indicate_timer_fn(void *arg)
         break;
     case CONNECTED:
     case KEEP_ALIVE:
-        os_timer_arm(&timer_network_status_indicate, 1000, false);
+        os_timer_arm(&timer_network_status_indicate[0], 1000, false);
         digitalWrite(STATUS_LED, ~digitalRead(STATUS_LED));
         break;
     default:
         break;
     }
 
-    last_main_conn_status = main_conn_status;
+    last_main_status = conn_status[0];
 }
+
+void ota_conn_status_indicate_timer_fn(void *arg)
+{
+#if !ENABLE_DEBUG_ON_UART1
+    static uint8_t last_ota_conn_status = 0xff;
+
+    switch (conn_status[1] )
+    {
+    case WAIT_CONN_DONE:
+    case WAIT_HELLO_DONE:
+        if (conn_status[1] != last_ota_conn_status)
+        {
+            os_timer_arm(&timer_network_status_indicate[1], 50, false);
+            digitalWrite(STATUS_LED_TXD1, 0);
+        }else
+        {
+            os_timer_arm(&timer_network_status_indicate[1],(digitalRead(STATUS_LED_TXD1) > 0 ? 50 : 1000), false);
+            digitalWrite(STATUS_LED_TXD1, ~digitalRead(STATUS_LED_TXD1));
+        }
+        break;
+    case DIED_IN_CONN:
+    case DIED_IN_HELLO:
+        os_timer_arm(&timer_network_status_indicate[1], 50, false);
+        digitalWrite(STATUS_LED_TXD1, 0);
+        break;
+    case CONNECTED:
+    case KEEP_ALIVE:
+        os_timer_arm(&timer_network_status_indicate[1], 1000, false);
+        digitalWrite(STATUS_LED_TXD1, ~digitalRead(STATUS_LED_TXD1));
+        break;
+    default:
+        os_timer_arm(&timer_network_status_indicate[1], 50, false);
+        break;
+    }
+
+    last_ota_conn_status = conn_status[1] ;
+#endif
+}
+
+
 
 
 
