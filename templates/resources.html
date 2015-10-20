@@ -144,7 +144,7 @@
 {% if events %}
 <div class="am-panel am-panel-default">
   <div class="am-panel-hd">
-    <h3 class="am-panel-title">wss://iot.seeed.cc/v1/node/event</h3>
+    <h3 class="am-panel-title">{{domain}}/v1/node/event</h3>
   </div>
   <div class="am-panel-bd">
     <h5>Request method: websocket</h5>
@@ -160,7 +160,7 @@
     <h5>Example:</h5>
     <pre>
 &lt;script&gt;
-var ws = new WebSocket('wss://iot.seeed.cc/v1/node/event');
+var ws = new WebSocket('{{domain}}/v1/node/event');
 ws.onopen = function() {
 &nbsp;&nbsp;&nbsp;&nbsp;ws.send("{{node_sn}}");
 };

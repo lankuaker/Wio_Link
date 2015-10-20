@@ -852,6 +852,10 @@ class NodeGetResourcesHandler(NodeBaseHandler):
         data = []
         events = []
         self.vhost_url_base = server_config.vhost_url_base.rstrip('/')
+        #self.vhost_url_base = self.get_argument("data_server", server_config.vhost_url_base.rstrip('/'))
+        #if self.vhost_url_base.find('http') < 0:
+        #    self.vhost_url_base = 'https://'+self.vhost_url_base
+        #print self.vhost_url_base
 
         if config:
             for grove_instance_name in config.keys():
@@ -876,8 +880,10 @@ class NodeGetResourcesHandler(NodeBaseHandler):
                     return
 
         #render the template
+        domain = self.vhost_url_base.replace('https:', 'wss:')
+        domain = domain.replace('http:', 'ws:')
         page = self.render_string('resources.html', node_name = node_name, events = events, data = data, 
-                                  node_sn = node['node_sn'] , url_base = self.vhost_url_base)
+                                  node_sn = node['node_sn'] , url_base = self.vhost_url_base, domain=domain)
 
         #store the page html into database
         try:
