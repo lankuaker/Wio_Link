@@ -99,7 +99,7 @@ class BaseHandler(web.RequestHandler):
     '''
     def resp (self, status, msg="",meta={}):
         response = {"status":status,"msg":msg}
-        response = dict(response, **meta);
+        response = dict(response, **meta)
         self.write(response)
 
     def write_error(self, status_code, **kwargs):
@@ -477,7 +477,7 @@ class NodeBaseHandler(BaseHandler):
         if not node:
             self.resp(403,"Please attach the valid node token (not the user token)")
         else:
-            gen_log.info("get current node:"+ node["name"]+ str(node))
+            gen_log.info("get current node, id: %d, name: %s" % (node['node_id'],node["name"]))
 
         return node
 
@@ -564,7 +564,10 @@ class NodeReadWriteHandler(NodeBaseHandler):
                     cmd = "POST %s\r\n"%(cmd)
                     cmd = cmd.encode("ascii")
                     ok, resp = yield conn.submit_and_wait_resp (cmd, "resp_post")
-                    self.resp(200,resp)
+                    if 'status' in resp:
+                        self.resp(resp['status'],resp['msg'])
+                    else:
+                        self.resp(200,resp['msg'])
                 except Exception,e:
                     gen_log.error(e)
                 return
