@@ -246,7 +246,6 @@ class DeviceConnection(object):
                         else:
                             self.recv_msg = json_obj
                             self.recv_msg_cond.notify()
-                            self.pending_request_cnt -= 1
                             yield gen.moment
                     except Exception,e:
                         gen_log.warn("Node %d: %s" % (self.node_id ,str(e)))
@@ -353,9 +352,7 @@ class DeviceConnection(object):
             raise gen.Return((False, {"status":205, "msg":"Node %d: %s" % (self.node_id, str(e))}))
         finally:
             self.send_msg_sem.release()  #inc the semaphore value to 1
-
-
-        
+            self.pending_request_cnt -= 1
 
 
 class DeviceServer(TCPServer):
