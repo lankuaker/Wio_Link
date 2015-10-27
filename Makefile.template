@@ -309,7 +309,7 @@ $(OUTPUT).bin: $(OUTPUT).elf
 	@echo " Gen Sections' Binary"
 	@echo "**********************"
 ifeq ($(boot), new)
-	@export COMPILE=$(COMPILE) && python $(SDK_DIR)/tools/gen_appbin.py $< 2 $(mode) $(freqdiv) $(size_map)
+	@export COMPILE=$(COMPILE) && python $(SDK_DIR)/tools/gen_appbin.py $< 2 $(mode) $(freqdiv) $(size_map) $(app)
 
     ifeq ($(size_map), 6)
 	@echo "Support boot_v1.4 and +"
@@ -321,7 +321,7 @@ ifeq ($(boot), new)
         endif
     endif
 else
-	@export COMPILE=$(COMPILE) && python $(SDK_DIR)/tools/gen_appbin.py $< 1 $(mode) $(freqdiv) $(size_map)
+	@export COMPILE=$(COMPILE) && python $(SDK_DIR)/tools/gen_appbin.py $< 1 $(mode) $(freqdiv) $(size_map) $(app)
 	@echo "Support boot_v1.1 and +"
 endif
 	@mv -f eagle.app.flash.bin $(OUTPUT).bin

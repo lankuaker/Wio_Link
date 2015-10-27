@@ -48,8 +48,15 @@ os_timer_t timer_reboot;
 
 static void timer_reboot_proc(void *arg)
 {
+    bool res = *(bool *)arg;
     wifi_station_disconnect();
-    system_upgrade_reboot();
+    if (res)
+    {
+        system_upgrade_reboot();
+    } else
+    {
+        system_restart(); 
+    }
 }
 
 void ota_response(void *arg)
@@ -81,7 +88,7 @@ void ota_response(void *arg)
 
     ota_fini = true;
     
-    os_timer_setfn(&timer_reboot, timer_reboot_proc, NULL);
+    os_timer_setfn(&timer_reboot, timer_reboot_proc, &ota_succ);
     os_timer_arm(&timer_reboot, 1000, false);
 }
 

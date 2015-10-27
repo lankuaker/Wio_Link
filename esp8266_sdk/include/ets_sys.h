@@ -51,6 +51,9 @@ typedef struct _ETSTIMER_ {
 #define ETS_FRC_TIMER1_INTR_ATTACH(func, arg) \
     ets_isr_attach(ETS_FRC_TIMER1_INUM, (func), (void *)(arg))
 
+#define ETS_FRC_TIMER1_NMI_INTR_ATTACH(func) \
+	NmiTimSetFunc(func)
+
 #define ETS_GPIO_INTR_ATTACH(func, arg) \
     ets_isr_attach(ETS_GPIO_INUM, (func), (void *)(arg))
 
@@ -89,12 +92,12 @@ typedef struct _ETSTIMER_ {
 
 typedef void (*int_handler_t)(void*);
 
-void* pvPortMalloc(size_t xWantedSize) __attribute__((malloc, alloc_size(1)));
-void *pvPortZalloc(size_t xWantedSize) __attribute__((malloc, alloc_size(1)));
-void *pvPortRealloc(void* ptr, size_t xWantedSize) __attribute__((alloc_size(2)));
-void pvPortFree(void *ptr);
-void *vPortMalloc(size_t xWantedSize) __attribute__((malloc, alloc_size(1)));
-void vPortFree(void *ptr);
+void *pvPortMalloc(size_t xWantedSize, const char *file, int line);
+void *pvPortZalloc(size_t, const char *file, int line);
+void* pvPortRealloc(void *ptr, size_t xWantedSize, const char *file, int line);
+void vPortFree(void *ptr, const char *file, int line);
+void *vPortMalloc(size_t xWantedSize, const char *file, int line);
+void pvPortFree(void *ptr, const char *file, int line);
 void *ets_memcpy(void *dest, const void *src, size_t n);
 void *ets_memset(void *s, int c, size_t n);
 void ets_timer_arm_new(ETSTimer *a, int b, int c, int isMstimer);

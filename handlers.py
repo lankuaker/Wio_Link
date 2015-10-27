@@ -1204,6 +1204,32 @@ class OTAFirmwareSendingHandler(BaseHandler):
 
 
     @gen.coroutine
+    def head(self):
+        app = self.get_argument("app","")
+        if not app or app not in [1,2,"1","2"]:
+            gen_log.error("ota bin request has no app number provided")
+            return
+
+        node = self.get_node()
+        if not node:
+            return
+
+        node_sn = node['node_sn']
+        user_id = node['user_id']
+        node_id = node['node_id']
+        self.node_sn = node_sn
+
+        #get the user dir and path of bin
+        bin_path = os.path.join("users_build/",str(user_id) + '_' + str(node_sn), "user%s.bin"%str(app))
+
+        #put user*.bin out
+        self.set_header("Content-Type","application/octet-stream")
+        self.set_header("Content-Transfer-Encoding", "binary")
+        self.set_header("Content-Length", os.path.getsize(bin_path))
+
+        self.flush()
+
+    @gen.coroutine
     def get(self):
         app = self.get_argument("app","")
         if not app or app not in [1,2,"1","2"]:
@@ -1236,7 +1262,9 @@ class OTAFirmwareSendingHandler(BaseHandler):
                         self.write(chunk)
                         yield self.flush()
                     else:
-                        gen_log.info("firmware bin sent done.")
+                        gen_log.info("Node %d: firmware bin sent done." % node_id)
+                        state = ('going', 'Verifying the firmware...')
+                        self.send_notification(state)
                         break  
                 except Exception,e:
                     gen_log.error('node %d error when sending binary file: %s' % (node_id, str(e)))

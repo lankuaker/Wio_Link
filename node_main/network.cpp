@@ -202,7 +202,20 @@ static void user_devicefind_recv(void *arg, char *pusrdata, unsigned short lengt
     char hwaddr[6];
 
     struct ip_info ipconfig;
+    
+    remot_info *premot = NULL;
 
+    espconn_get_connection_info(conn, &premot, 0);  // get sender data (source IP)
+    os_memcpy(udp_conn.proto.udp->remote_ip, premot->remote_ip, 4);
+    udp_conn.proto.udp->remote_port = premot->remote_port;
+    
+    // shows correct source IP
+    Serial1.printf("UDP remote: " IPSTR ":%d\n",  IP2STR(udp_conn.proto.udp->remote_ip), udp_conn.proto.udp->remote_port);
+    
+    // shows always the current device IP; never a broadcast address
+    Serial1.printf("UDP local:  " IPSTR ":%d\n",  IP2STR(conn->proto.udp->local_ip), conn->proto.udp->local_port);
+
+#if 0
     if (wifi_get_opmode() != STATION_MODE) {
         wifi_get_ip_info(SOFTAP_IF, &ipconfig);
         wifi_get_macaddr(SOFTAP_IF, hwaddr);
@@ -216,7 +229,7 @@ static void user_devicefind_recv(void *arg, char *pusrdata, unsigned short lengt
         wifi_get_ip_info(STATION_IF, &ipconfig);
         wifi_get_macaddr(STATION_IF, hwaddr);
     }
-
+#endif
     if (pusrdata == NULL) {
         return;
     }
@@ -234,11 +247,11 @@ static void user_devicefind_recv(void *arg, char *pusrdata, unsigned short lengt
         char *buff_sn = new char[33];
         format_sn(EEPROM.getDataPtr() + EEP_OFFSET_SN, (uint8_t *)buff_sn);
         os_sprintf(device_desc, "Node: %s," MACSTR "," IPSTR "\r\n",
-                   buff_sn, MAC2STR(hwaddr), IP2STR(&ipconfig.ip));
+                   buff_sn, MAC2STR(hwaddr), IP2STR(conn->proto.udp->local_ip));
 
         Serial1.printf("%s", device_desc);
         length = os_strlen(device_desc);
-        espconn_sent(conn, device_desc, length);
+        espconn_sendto(&udp_conn, device_desc, length);
         
         delete[] device_desc;
         delete[] buff_sn;
@@ -341,54 +354,15 @@ static void user_devicefind_recv(void *arg, char *pusrdata, unsigned short lengt
         EEPROM.commit();
         
         
-        espconn_sent(conn, "ok\r\n", 4);
-        espconn_sent(conn, "ok\r\n", 4);
-        espconn_sent(conn, "ok\r\n", 4);
+        espconn_sendto(&udp_conn, "ok\r\n", 4);
+        espconn_sendto(&udp_conn, "ok\r\n", 4);
+        espconn_sendto(&udp_conn, "ok\r\n", 4);
         
         os_timer_disarm(&timer_conn[0]);
         os_timer_setfn(&timer_conn[0], fire_reboot, NULL);
         os_timer_arm(&timer_conn[0], 1000, 0);
         
     }
-#if 0
-    else if ((pkey=os_strstr(pusrdata, device_keysn_write_req)) != NULL)
-    {
-        /* prevent bad guy from flashing your node without your permission */
-        if ((pusrdata + length - pkey - os_strlen(device_keysn_write_req)) >= (KEY_LEN+SN_LEN) && config_flag == 2)
-        {
-            pkey += os_strlen(device_keysn_write_req);
-
-            char *keybuf = new char[KEY_LEN *2];
-
-            os_memcpy(keybuf, pkey, KEY_LEN);
-            keybuf[KEY_LEN] = 0;
-            os_memcpy(EEPROM.getDataPtr() + EEP_OFFSET_KEY, keybuf, KEY_LEN + 1);
-            Serial1.printf("write key: %s\n", keybuf);
-
-            pkey += (KEY_LEN + 1);
-
-            os_memcpy(keybuf, pkey, SN_LEN);
-            keybuf[SN_LEN] = 0;
-            os_memcpy(EEPROM.getDataPtr() + EEP_OFFSET_SN, keybuf, SN_LEN + 1);
-            Serial1.printf("write sn: %s\n", keybuf);
-
-            EEPROM.commit();
-
-            delete [] keybuf;
-            espconn_sent(conn, "ok\r\n", 4);
-            espconn_sent(conn, "ok\r\n", 4);
-            espconn_sent(conn, "ok\r\n", 4);
-            
-
-            //if (conn_status[0] == DIED_IN_CONN || conn_status[0] == DIED_IN_HELLO || conn_status[0] == KEEP_ALIVE)
-            {
-                os_timer_disarm(&timer_conn[0]);
-                os_timer_setfn(&timer_conn[0], fire_reboot, NULL);
-                os_timer_arm(&timer_conn[0], 1000, 0);
-            }
-        }
-    }
-#endif
 }
 
 /**
@@ -509,7 +483,7 @@ static void connection_tx_write_finish_cb(void *arg)
         os_memset(data, 0, size2);
         tx_buffer->read(data, size);
         aes_crypt_cfb128(&aes_ctx[index], AES_ENCRYPT, size2, &iv_offset[index], iv[index], data, data);
-        espconn_sent(p_conn, data, size2);
+        espconn_send(p_conn, data, size2);
         free(data);
     } else
     {
@@ -688,7 +662,7 @@ void connection_send_hello(void *arg)
 
     os_memcpy(buff + SN_LEN, hmac_hash, 32);
 
-    espconn_sent(pespconn, buff, SN_LEN+32);
+    espconn_send(pespconn, buff, SN_LEN+32);
 
     os_free(buff);
 
@@ -936,7 +910,16 @@ void network_setup()
     if (!ota_stream_tx_buffer) ota_stream_tx_buffer = new CircularBuffer(64);
 
     struct rst_info *reason = system_get_rst_info();
-    Serial1.printf("Boot reason: %d\n", reason->flag);
+    const char *boot_reason_desc[7] = {
+        "DEFAULT",
+        "WDT",
+        "EXCEPTION",
+        "SOFT_WDT",
+        "SOFT_RESTART",
+        "DEEP_SLEEP_AWAKE",
+        "EXT_SYS"
+    }; 
+    Serial1.printf("Boot reason: %s\n", boot_reason_desc[reason->reason]);
     Serial1.printf("Node name: %s\n", NODE_NAME);
     Serial1.printf("Chip id: 0x%08x\n", system_get_chip_id());
     
