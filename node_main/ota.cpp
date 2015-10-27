@@ -101,7 +101,7 @@ void ota_start()
     upServer->port = OTA_DOWNLOAD_PORT;
 
     upServer->check_cb = ota_response;
-    upServer->check_times = 300000;
+    upServer->check_times = 180000;
 
     if(upServer->url == NULL)
     {

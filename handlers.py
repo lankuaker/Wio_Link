@@ -60,6 +60,9 @@ TOKEN_SECRET = "!@#$%^&*RG)))))))JM<==TTTT==>((((((&^HVFT767JJH"
 
 
 class BaseHandler(web.RequestHandler):
+    def set_default_headers(self):
+        self.set_header("Access-Control-Allow-Origin", "*")
+
     def get_current_user(self):
         user = None
         token = self.get_argument("access_token","")
@@ -82,7 +85,7 @@ class BaseHandler(web.RequestHandler):
         else:
             user = None
 
-        gen_log.info("get current user"+ str(user))
+        gen_log.info("get current user, id: %d, email: %s" % (user['user_id'], user['email']))
         if not user:
             self.resp(403,"Please login to get the token")
         return user
@@ -118,7 +121,7 @@ class IndexHandler(BaseHandler):
     @web.authenticated
     def get(self):
         #DeviceServer.accepted_conns[0].submit_cmd("OTA\r\n")
-        self.resp(400,msg = "Please specify the url as this format: /node_id/grove_name/property")
+        self.resp(400,msg = "Please specify the url as this format: /v1/node/grove_name/property")
 
 class TestHandler(web.RequestHandler):
     def get(self):
@@ -775,6 +778,7 @@ class NodeGetResourcesHandler(NodeBaseHandler):
         node_name = node["name"]
         node_id = node['node_id']
         node_sn = node['node_sn']
+        node_key = node['private_key']
 
         cur_dir = os.path.split(os.path.realpath(__file__))[0]
         user_build_dir = cur_dir + '/users_build/' + str(user_id) + '_' + node_sn
@@ -886,7 +890,7 @@ class NodeGetResourcesHandler(NodeBaseHandler):
         domain = self.vhost_url_base.replace('https:', 'wss:')
         domain = domain.replace('http:', 'ws:')
         page = self.render_string('resources.html', node_name = node_name, events = events, data = data, 
-                                  node_sn = node['node_sn'] , url_base = self.vhost_url_base, domain=domain)
+                                  node_key = node_key , url_base = self.vhost_url_base, domain=domain)
 
         #store the page html into database
         try:
@@ -1031,6 +1035,10 @@ class FirmwareBuildingHandler(NodeBaseHandler):
     @gen.coroutine
     def build_thread (self, app_num, user_id, node_name, node_sn, server_ip):
 
+        node_name = node_name.encode('unicode_escape').replace('\\u', 'x')
+
+        gen_log.debug('build_thread for node %s app %s' % (node_name, app_num))
+
         if not gen_and_build(app_num, str(user_id), node_sn, node_name, server_ip):
             error_msg = get_error_msg()
             gen_log.error(error_msg)
@@ -1115,21 +1123,8 @@ class OTAStatusReportingHandler(NodeBaseHandler):
         if not node:
             return
 
-        #cur_conn = None
-        #for conn in self.conns:
-        #    if conn.private_key == node['private_key'] and not conn.killed:
-        #        cur_conn = conn
-        #        break
-        #
-        #if not cur_conn:
-        #    self.resp(404, "Node is offline or lost its connection.")
-        #    return
-        #
-        #self.cur_conn = cur_conn
         self.node_sn = node['node_sn']
 
-        #state = yield self.wait_ota_status_change()
-        #state_future = self.wait_ota_status_change()
         state = None
         state_future = None
         if self.state_happened and self.node_sn in self.state_happened and len(self.state_happened[self.node_sn]) > 0:
@@ -1147,9 +1142,9 @@ class OTAStatusReportingHandler(NodeBaseHandler):
         if not state and state_future:
             #print state_future
             try:
-                state = yield gen.with_timeout(timedelta(seconds=300), state_future, io_loop=self.request.connection.stream.io_loop)
+                state = yield gen.with_timeout(timedelta(seconds=180), state_future, io_loop=self.request.connection.stream.io_loop)
             except gen.TimeoutError:
-                state = ("error", "Time out.")
+                state = ("error", "Time out when waiting new status.")
             except:
                 pass
 

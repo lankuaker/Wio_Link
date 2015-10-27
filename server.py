@@ -47,6 +47,8 @@ from tornado import web
 from tornado.options import define, options
 from tornado.log import *
 from tornado.concurrent import Future
+from tornado.queues import Queue
+from tornado.locks import Semaphore, Condition
 
 
 from handlers import *
@@ -55,14 +57,18 @@ BS = AES.block_size
 pad = lambda s: s if (len(s) % BS == 0) else (s + (BS - len(s) % BS) * chr(0) )
 unpad = lambda s : s.rstrip(chr(0))
 
+PENDING_REQ_CNT = 10
+
 class DeviceConnection(object):
 
     state_waiters = {}
     state_happened = {}
 
     def __init__ (self, device_server, stream, address):
-        self.recv_msg_queue = []
-        self.send_msg_queue = []
+        self.recv_msg_cond = Condition()
+        self.recv_msg = {}
+        self.send_msg_sem = Semaphore(1)
+        self.pending_request_cnt = 0
         self.device_server = device_server
         self.stream = stream
         self.address = address
@@ -86,11 +92,11 @@ class DeviceConnection(object):
         self.post_ota = False
         self.online_status = True
 
+    @gen.coroutine
     def secure_write (self, data):
         if self.cipher:
             cipher_text = self.cipher.encrypt(pad(data))
-            self.stream.write(cipher_text)
-            return cipher_text
+            yield self.stream.write(cipher_text)
 
     @gen.coroutine
     def wait_hello (self):
@@ -238,7 +244,10 @@ class DeviceConnection(object):
                                     future.set_result(event)
                                 self.event_waiters = []
                         else:
-                            self.recv_msg_queue.append(json_obj)
+                            self.recv_msg = json_obj
+                            self.recv_msg_cond.notify()
+                            self.pending_request_cnt -= 1
+                            yield gen.moment
                     except Exception,e:
                         gen_log.warn("Node %d: %s" % (self.node_id ,str(e)))
 
@@ -261,18 +270,6 @@ class DeviceConnection(object):
             #    return
 
     @gen.coroutine
-    def _loop_sending_cmd (self):
-        while not self.killed:
-            if len(self.send_msg_queue) > 0:
-                try:
-                    cmd = self.send_msg_queue.pop(0)
-                    self.secure_write(cmd)
-                except Exception, e:
-                    yield gen.moment
-            else:
-                yield gen.sleep(0.1)
-
-    @gen.coroutine
     def _online_check (self):
         while not self.killed:
             yield gen.sleep(1)
@@ -282,7 +279,7 @@ class DeviceConnection(object):
             if self.idle_time == 60:
                 gen_log.info("heartbeat sent to node %d" % self.node_id)
                 try:
-                    self.secure_write("##PING##")
+                    yield self.secure_write("##PING##")
                 except iostream.StreamClosedError:
                     gen_log.error("StreamClosedError when send ping to node %d" % self.node_id)
                     self.kill_myself()
@@ -309,7 +306,6 @@ class DeviceConnection(object):
 
         ## loop reading the stream input
         self._loop_reading_input()
-        self._loop_sending_cmd()
         self._online_check()
 
     def kill_myself (self):
@@ -320,30 +316,46 @@ class DeviceConnection(object):
         self.stream.close()
         self.killed = True
 
+    @gen.coroutine
     def submit_cmd (self, cmd):
-        self.send_msg_queue.append(cmd)
+        yield self.send_msg_sem.acquire()
+        try:
+            yield self.secure_write(cmd)
+        finally:
+            self.send_msg_sem.release()
 
     @gen.coroutine
-    def submit_and_wait_resp (self, cmd, target_resp, timeout_sec=10):
-        self.submit_cmd(cmd)
-        timeout = 0
-        while True:
-            try:
-                for msg in self.recv_msg_queue:
-                    if msg['msg_type'] == target_resp:
-                        tmp = msg
-                        self.recv_msg_queue.remove(msg)
-                        del tmp['msg_type']
-                        raise gen.Return((True, tmp))
-                yield gen.sleep(0.1)
-                timeout += 0.1
-                if timeout > timeout_sec:
-                    raise gen.Return((False, "timeout when waiting response from node %d" % self.node_id))
-            except gen.Return:
-                raise
-            except Exception,e:
-                gen_log.error(e)
+    def submit_and_wait_resp (self, cmd, target_resp, timeout_sec=2):
 
+        self.pending_request_cnt += 1
+        if self.pending_request_cnt > PENDING_REQ_CNT:
+            self.pending_request_cnt = PENDING_REQ_CNT
+            gen_log.warn('Node %d: request too fast' % self.node_id)
+            raise gen.Return((False, {"status":403, "msg":"request too fast"}))
+
+        yield self.send_msg_sem.acquire()
+        try:
+            yield self.secure_write(cmd)
+            yield self.recv_msg_cond.wait(timeout=timedelta(seconds=timeout_sec))
+            msg = self.recv_msg
+            if msg['msg_type'] == target_resp:
+                tmp = msg
+                del tmp['msg_type']
+                raise gen.Return((True, tmp))
+            else:
+                raise gen.Return((False, {"status":205, "msg":"bad response"}))
+        except gen.Return:
+            raise
+        except gen.TimeoutError:
+            raise gen.Return((False, {"status":205, "msg":"timeout when waiting response from Node %d" % self.node_id}))
+        except Exception,e:
+            gen_log.error(e)
+            raise gen.Return((False, {"status":205, "msg":"Node %d: %s" % (self.node_id, str(e))}))
+        finally:
+            self.send_msg_sem.release()  #inc the semaphore value to 1
+
+
+        
 
 
 class DeviceServer(TCPServer):

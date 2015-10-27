@@ -162,7 +162,7 @@
 &lt;script&gt;
 var ws = new WebSocket('{{domain}}/v1/node/event');
 ws.onopen = function() {
-&nbsp;&nbsp;&nbsp;&nbsp;ws.send("{{node_sn}}");
+&nbsp;&nbsp;&nbsp;&nbsp;ws.send("{{node_key}}");
 };
 ws.onmessage = function (evt) {
 &nbsp;&nbsp;&nbsp;&nbsp;alert(evt.data);

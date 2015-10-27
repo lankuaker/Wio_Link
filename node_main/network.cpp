@@ -632,20 +632,33 @@ static void connection_confirm_hello(void *arg)
     {
         if (++confirm_hello_retry_cnt[index] > 60)
         {
-            conn_status[index] = DIED_IN_HELLO;
-            return;
+            if (index == 0)
+            {
+                conn_status[0] = DIED_IN_HELLO;
+                os_timer_disarm(&timer_conn[0]);
+                os_timer_setfn(&timer_conn[0], fire_reboot, &tcp_conn[0]);
+                os_timer_arm(&timer_conn[0], 1000, 0);
+                return;
+            }
+            else
+            {
+                conn_status[1] = WAIT_CONN_DONE;
+                os_timer_disarm(&timer_conn[1]);
+                os_timer_setfn(&timer_conn[1], connection_init, &tcp_conn[1]);
+                os_timer_arm(&timer_conn[1], 1000, 0);
+                return;
+            }
+        } 
+        
+        if (confirm_hello_retry_cnt[index] % 10 == 0)
+        {
+            os_timer_setfn(&timer_confirm_hello[index], connection_send_hello, p_conn);
         } else
         {
-            if (confirm_hello_retry_cnt[index] % 10 == 0)
-            {
-                os_timer_setfn(&timer_confirm_hello[index], connection_send_hello, p_conn);
-            } else
-            {
-                os_timer_setfn(&timer_confirm_hello[index], connection_confirm_hello, p_conn);
-            }
-
-            os_timer_arm(&timer_confirm_hello[index], 1000, 0);
+            os_timer_setfn(&timer_confirm_hello[index], connection_confirm_hello, p_conn);
         }
+
+        os_timer_arm(&timer_confirm_hello[index], 1000, 0);
     }
 }
 
@@ -844,6 +857,9 @@ void network_normal_mode(int config_flag)
         if (++wait_sec > 60)
         {
             conn_status[0] = DIED_IN_GET_IP;
+            os_timer_disarm(&timer_conn[0]);
+            os_timer_setfn(&timer_conn[0], fire_reboot, &tcp_conn[0]);
+            os_timer_arm(&timer_conn[0], 1, 0);
             return;
         }
         if (digitalRead(FUNCTION_KEY) == 0)  //user pressed the function key to enter config mode
