@@ -1,5 +1,4 @@
-vhost_url_base = 'https://iot.seeed.cc'
-server_ip = '45.79.4.239'
+vhost_url_base = 'https://your_domain_or_ip_here'
 
 smtp_server = 'smtp.sendgrid.net'
 smtp_user = 'yours'

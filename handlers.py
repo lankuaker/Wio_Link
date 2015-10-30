@@ -993,10 +993,8 @@ class FirmwareBuildingHandler(NodeBaseHandler):
         except Exception,e:
             gen_log.error(e)
 
-        server_ip = server_config.server_ip.replace('.', ',')
-
         self.ioloop = self.request.connection.stream.io_loop
-        self.request.connection.stream.io_loop.add_callback(self.ota_process, app_num, user_id, node_name, node_sn, server_ip)
+        self.request.connection.stream.io_loop.add_callback(self.ota_process, app_num, user_id, node_name, node_sn)
 
         #clear the possible old state recv during last ota process
         try:
@@ -1019,7 +1017,7 @@ class FirmwareBuildingHandler(NodeBaseHandler):
         self.resp(200,"",meta={'ota_status': "going", "ota_msg": "Building the firmware.."})
 
 
-    def ota_process (self, app_num, user_id, node_name, node_sn, server_ip):
+    def ota_process (self, app_num, user_id, node_name, node_sn):
         thread_name = "build_thread_" + node_sn
         li = threading.enumerate()
         for l in li:
@@ -1031,17 +1029,17 @@ class FirmwareBuildingHandler(NodeBaseHandler):
                 return
 
         threading.Thread(target=self.build_thread, name=thread_name, 
-            args=(app_num, user_id, node_name, node_sn, server_ip)).start()
+            args=(app_num, user_id, node_name, node_sn)).start()
         
 
     @gen.coroutine
-    def build_thread (self, app_num, user_id, node_name, node_sn, server_ip):
+    def build_thread (self, app_num, user_id, node_name, node_sn):
 
         node_name = node_name.encode('unicode_escape').replace('\\u', 'x')
 
         gen_log.debug('build_thread for node %s app %s' % (node_name, app_num))
 
-        if not gen_and_build(app_num, str(user_id), node_sn, node_name, server_ip):
+        if not gen_and_build(app_num, str(user_id), node_sn, node_name, ''):
             error_msg = get_error_msg()
             gen_log.error(error_msg)
             #save state
