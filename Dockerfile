@@ -9,7 +9,7 @@ ENV PATH /opt/xtensa-lx106-elf/bin:$PATH
 
 #install python modules
 RUN apt-get update && \
-    apt-get install -qqy --force-yes python-dev supervisor
+    apt-get install -qqy --force-yes python-dev supervisor vim
 
 RUN pip install tornado
 RUN pip install PyJWT
