@@ -324,7 +324,7 @@ class DeviceConnection(object):
             self.send_msg_sem.release()
 
     @gen.coroutine
-    def submit_and_wait_resp (self, cmd, target_resp, timeout_sec=2):
+    def submit_and_wait_resp (self, cmd, target_resp, timeout_sec=5):
 
         self.pending_request_cnt += 1
         if self.pending_request_cnt > PENDING_REQ_CNT:
@@ -335,7 +335,11 @@ class DeviceConnection(object):
         yield self.send_msg_sem.acquire()
         try:
             yield self.secure_write(cmd)
-            yield self.recv_msg_cond.wait(timeout=timedelta(seconds=timeout_sec))
+            ok = yield self.recv_msg_cond.wait(timeout=timedelta(seconds=timeout_sec))
+            if not ok:
+                gen_log.error("timeout when waiting response from Node %d" % self.node_id)
+                raise gen.Return((False, {"status":205, "msg":"timeout when waiting response from Node %d" % self.node_id}))
+
             msg = self.recv_msg
             if msg['msg_type'] == target_resp:
                 tmp = msg
@@ -344,9 +348,7 @@ class DeviceConnection(object):
             else:
                 raise gen.Return((False, {"status":205, "msg":"bad response"}))
         except gen.Return:
-            raise
-        except gen.TimeoutError:
-            raise gen.Return((False, {"status":205, "msg":"timeout when waiting response from Node %d" % self.node_id}))
+            raise            
         except Exception,e:
             gen_log.error(e)
             raise gen.Return((False, {"status":205, "msg":"Node %d: %s" % (self.node_id, str(e))}))

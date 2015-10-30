@@ -85,9 +85,11 @@ class BaseHandler(web.RequestHandler):
         else:
             user = None
 
-        gen_log.info("get current user, id: %d, email: %s" % (user['user_id'], user['email']))
         if not user:
             self.resp(403,"Please login to get the token")
+        else:
+            gen_log.info("get current user, id: %d, email: %s" % (user['user_id'], user['email']))
+
         return user
 
 
@@ -1197,9 +1199,11 @@ class OTAFirmwareSendingHandler(BaseHandler):
         else:
             node = None
 
-        gen_log.info("get current node:"+ str(node))
         if not node:
-            gen_log.error("can not find the specified node for ota bin request")
+            self.resp(403,"Please attach the valid node sn")
+        else:
+            gen_log.info("get current node, id: %d, name: %s" % (node['node_id'],node["name"]))
+
         return node
 
 
