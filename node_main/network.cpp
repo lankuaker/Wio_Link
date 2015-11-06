@@ -886,6 +886,19 @@ void network_config_mode()
     /* open the config interface at UDP port 1025 */
     local_udp_config_port_init();
     
+    /* list connected devices */
+    struct station_info * station;
+    while (1)
+    {
+        station = wifi_softap_get_station_info();
+        while(station)
+        {
+            Serial1.printf("bssid : " MACSTR ", ip : " IPSTR "",   MAC2STR(station->bssid), IP2STR(&station->ip)); 
+            station = STAILQ_NEXT(station, next);  
+        }
+        wifi_softap_free_station_info();    // Free it by calling functions
+        delay(2000);
+    }
 }
 
 
