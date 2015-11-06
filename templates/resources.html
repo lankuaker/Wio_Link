@@ -5,7 +5,7 @@
     <title>Resources of {{node_name}}</title>
     <style>
         html {
-          font-size: 10px;
+          font-size: 14px;
           -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
         }
         body {
@@ -15,7 +15,6 @@
           font-weight: normal;
           line-height: 1.2;
           color: #333333;
-          font-size: 1.6rem;
         }
         
         .am-panel {
@@ -40,7 +39,7 @@
         }
         .am-panel-title {
           margin: 0;
-          font-size: 80%;
+          font-size: 14px;
           color: inherit;
           word-wrap: break-word; 
           word-break: normal; 
@@ -75,22 +74,24 @@
           margin: 0px;
         }
         li {
-          font-size: 1.4rem;
+          font-size: 14px;
           font-style:italic;
         }
         h5 {
           margin-top: 5px;
           margin-bottom: 0px;
-          font-size: 1.4rem;
+          font-size: 14px;
         }
         p,pre{
             margin: 5px;
-            font-size: 80%;
+            font-size: 14px;
             display:inline-block;
             white-space:pre
         }
-        p.description{
-            font-size: 90%
+        .description{
+            font-size: 14px;
+            word-wrap: break-word; 
+            word-break: normal; 
         }
     </style>
 </head>
@@ -106,7 +107,7 @@
   </div>
   <div class="am-panel-bd">
     {% if item['brief'] %}
-    <p class="description">{{item['brief']}}</p>
+    <div class="description">{{item['brief']}}</div>
     {% end %}
     <h5>Request method: {{item['type']}}</h5>
 
