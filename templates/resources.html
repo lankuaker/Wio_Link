@@ -153,11 +153,11 @@
     <h5>Events:</h5>
       <ul>
         {% for ev in events %}
-        <li>{"{{ev}}": event data}</li>
+        <li>{"{{ev}}": event_pin}</li>
         {% end %}
       </ul>
     <h5>Note:</h5>
-    <p>Events are in JSON format, and the event data is usually the IO pin.</p>
+    <p>Events are in JSON format, and the event data is usually the IO pin on which the event happened.</p>
     <h5>Example:</h5>
     <pre>
 &lt;script&gt;

@@ -261,12 +261,12 @@ def gen_wrapper_registration (instance_name, info, arg_list):
     #read functions
 
     for fun in info['Outputs'].items():
-        fp_wrapper_h.write('bool __%s_%s(void *class_ptr, void *input);\r\n' % (grove_name, fun[0]))
+        fp_wrapper_h.write('bool __%s_%s(void *class_ptr, void *input_pack);\r\n' % (grove_name, fun[0]))
 
-        fp_wrapper_cpp.write('bool __%s_%s(void *class_ptr, void *input)\r\n' % (grove_name, fun[0]))
+        fp_wrapper_cpp.write('bool __%s_%s(void *class_ptr, void *input_pack)\r\n' % (grove_name, fun[0]))
         fp_wrapper_cpp.write('{\r\n')
         fp_wrapper_cpp.write('    %s *grove = (%s *)class_ptr;\r\n' % (info['ClassName'], info['ClassName']))
-        fp_wrapper_cpp.write('    uint8_t *arg_ptr = (uint8_t *)input;\r\n')
+        fp_wrapper_cpp.write('    uint8_t *arg_ptr = (uint8_t *)input_pack;\r\n')
         fp_wrapper_cpp.write('    %s\r\n'%declare_read_vars(fun[1]))
         fp_wrapper_cpp.write(build_read_unpack_vars(fun[1]))
         fp_wrapper_cpp.write('\r\n')
@@ -298,12 +298,12 @@ def gen_wrapper_registration (instance_name, info, arg_list):
 
     #write functions
     for fun in info['Inputs'].items():
-        fp_wrapper_h.write('bool __%s_%s(void *class_ptr, void *input);\r\n' % (grove_name, fun[0]))
+        fp_wrapper_h.write('bool __%s_%s(void *class_ptr, void *input_pack);\r\n' % (grove_name, fun[0]))
 
-        fp_wrapper_cpp.write('bool __%s_%s(void *class_ptr, void *input)\r\n' % (grove_name, fun[0]))
+        fp_wrapper_cpp.write('bool __%s_%s(void *class_ptr, void *input_pack)\r\n' % (grove_name, fun[0]))
         fp_wrapper_cpp.write('{\r\n')
         fp_wrapper_cpp.write('    %s *grove = (%s *)class_ptr;\r\n' % (info['ClassName'], info['ClassName']))
-        fp_wrapper_cpp.write('    uint8_t *arg_ptr = (uint8_t *)input;\r\n')
+        fp_wrapper_cpp.write('    uint8_t *arg_ptr = (uint8_t *)input_pack;\r\n')
         fp_wrapper_cpp.write('    %s\r\n' % declare_write_vars(fun[1]))
         fp_wrapper_cpp.write(build_write_unpack_vars(fun[1]))
         fp_wrapper_cpp.write('\r\n')
@@ -436,7 +436,7 @@ def gen_and_build (app_num, user_id, node_sn, node_name, server_ip):
     find_cpp = False
     find_makefile = False
     for f in os.listdir(user_build_dir):
-        if f.find("Demo.cpp") > -1:
+        if f.find("Main.cpp") > -1:
             find_cpp = True
             break
     for f in os.listdir(user_build_dir):
@@ -444,7 +444,7 @@ def gen_and_build (app_num, user_id, node_sn, node_name, server_ip):
             find_makefile = True
             break
     if not find_cpp:
-        os.system('cd %s;cp -f ../../Demo.cpp.template ./Demo.cpp ' % user_build_dir)
+        os.system('cd %s;cp -f ../../Main.cpp.template ./Main.cpp ' % user_build_dir)
     if not find_makefile:
         os.system('cd %s;cp -f ../../Makefile.template ./Makefile ' % user_build_dir)
 
@@ -467,7 +467,10 @@ def gen_and_build (app_num, user_id, node_sn, node_name, server_ip):
     if app_num in [1,'1','ALL'] or developing:
         os.putenv("APP","1")
 
-        cmd = 'cd %s;make clean;make > build.log 2>error.log' % (user_build_dir)
+        if developing:
+            cmd = 'cd %s;make clean;make 2>error.log|tee build.log' % (user_build_dir)
+        else:
+            cmd = 'cd %s;make clean;make > build.log 2>error.log' % (user_build_dir)
         print '---- start to build app 1 ---'
         print cmd
         os.system(cmd)
@@ -475,6 +478,8 @@ def gen_and_build (app_num, user_id, node_sn, node_name, server_ip):
         content = open(user_build_dir+"/error.log", 'r').readlines()
         for line in content:
             if line.find("error:") > -1 or line.find("make:") > -1:
+                if developing:
+                    print content
                 error_msg = line
                 return False
 

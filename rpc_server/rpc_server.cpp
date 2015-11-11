@@ -203,6 +203,7 @@ void drain_event_queue()
         writer_print(TYPE_UINT32, &event.event_data);
         writer_print(TYPE_STRING, "\"}");
         response_msg_close(STREAM_DATA);
+        optimistic_yield(100);
     }
 }
 
@@ -531,21 +532,34 @@ void rpc_server_loop()
 
 void rpc_server_event_report(char *event_name, uint32_t event_data)
 {
-    //noInterrupts();
-    event_t *ev = (event_t *)malloc(sizeof(event_t));
-    ev->event_name = event_name;
-    ev->event_data = event_data;
-    if (p_event_queue_tail == NULL)
+    noInterrupts();
+    int cnt = 0;
+    event_t *tmp = p_event_queue_head;
+    while (tmp)
     {
-        p_event_queue_head = ev;
-    } else
-    {
-        p_event_queue_tail->next = ev;
+        tmp = tmp->next;
+        cnt++;
     }
-    ev->prev = p_event_queue_tail;
-    ev->next = NULL;
-    p_event_queue_tail = ev;
-    //interrupts();
+    if (cnt <= 100)
+    {
+        event_t *ev = (event_t *)malloc(sizeof(event_t));
+        if (ev)
+        {
+            ev->event_name = event_name;
+            ev->event_data = event_data;
+            if (p_event_queue_tail == NULL)
+            {
+                p_event_queue_head = ev;
+            } else
+            {
+                p_event_queue_tail->next = ev;
+            }
+            ev->prev = p_event_queue_tail;
+            ev->next = NULL;
+            p_event_queue_tail = ev;
+        }
+    }
+    interrupts();
 }
 
 bool rpc_server_event_queue_pop(event_t *event)

@@ -23,11 +23,11 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include "stdlib_noniso.h"
 #include "ets_sys.h"
 
 #define sprintf ets_sprintf
-#define strcpy ets_strcpy
 
 int atoi(const char* s) {
     return (int) atol(s);
@@ -148,51 +148,77 @@ char* ultoa(unsigned long value, char* result, int base) {
 }
 
 char * dtostrf(double number, signed char width, unsigned char prec, char *s) {
-
-    if(isnan(number)) {
+    bool negative = false;
+    
+    if (isnan(number)) {
         strcpy(s, "nan");
         return s;
     }
-    if(isinf(number)) {
+    if (isinf(number)) {
         strcpy(s, "inf");
         return s;
     }
 
-    if(number > 4294967040.0 || number < -4294967040.0) {
-        strcpy(s, "ovf");
-        return s;
-    }
     char* out = s;
+   
+    int fillme = width; // how many cells to fill for the integer part
+    if (prec > 0) {
+        fillme -= (prec+1);
+    } 
+   
     // Handle negative numbers
-    if(number < 0.0) {
-        *out = '-';
-        ++out;
+    if (number < 0.0) {
+        negative = true;
+        fillme--;
         number = -number;
     }
 
     // Round correctly so that print(1.999, 2) prints as "2.00"
-    double rounding = 0.5;
-    for(uint8_t i = 0; i < prec; ++i)
-        rounding /= 10.0;
+    // I optimized out most of the divisions
+    double rounding = 2.0;
+    for (uint8_t i = 0; i < prec; ++i)
+        rounding *= 10.0;     
+    rounding = 1.0 / rounding; 
 
     number += rounding;
-
-    // Extract the integer part of the number and print it
-    unsigned long int_part = (unsigned long) number;
-    double remainder = number - (double) int_part;
-    out += sprintf(out, "%ld", int_part);
-
-    // Print the decimal point, but only if there are digits beyond
-    if(prec > 0) {
-        *out = '.';
-        ++out;
+   
+    // Figure out how big our number really is
+    double tenpow = 1.0;
+    int digitcount = 1;
+    while (number >= 10.0 * tenpow) {
+        tenpow *= 10.0;   
+        digitcount++;
+    }
+   
+    number /= tenpow;
+    fillme -= digitcount;
+   
+    // Pad unused cells with spaces
+    while (fillme-- > 0) {
+        *out++ = ' ';
+    }
+    
+    // Handle negative sign
+    if (negative) *out++ = '-';
+   
+    // Print the digits, and if necessary, the decimal point
+    digitcount += prec;
+    int8_t digit = 0;
+    while (digitcount-- > 0) {       
+        digit = (int8_t)number;
+        if (digit > 9) digit = 9; // insurance
+        *out++ = (char)('0' | digit);
+        if ((digitcount == prec) && (prec > 0)) {
+            *out++ = '.';
+        }   
+        number -= digit;
+        number *= 10.0;
     }
 
-    for (unsigned char decShift = prec; decShift > 0; decShift--) {
-        remainder *= 10.0;
-    }
-    sprintf(out, "%0*d", prec, (int)remainder);
-
+    // make sure the string is terminated
+    *out = 0;
     return s;
 }
+
+
 

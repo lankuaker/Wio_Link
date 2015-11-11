@@ -36,10 +36,17 @@ typedef struct _ETSTIMER_ {
 } ETSTimer;
 
 /* interrupt related */
-#define ETS_SPI_INUM       2
+
+typedef void (*int_handler_t)(void*);
+
+#define ETS_SLC_INUM        1
+#define ETS_SPI_INUM        2
 #define ETS_GPIO_INUM       4
 #define ETS_UART_INUM       5
 #define ETS_UART1_INUM      5
+#define ETS_CCOMPARE0_INUM  6
+#define ETS_SOFT_INUM       7
+#define ETS_WDT_INUM        8
 #define ETS_FRC_TIMER1_INUM 9  /* use edge*/
 
 #define ETS_INTR_LOCK() \
@@ -48,29 +55,62 @@ typedef struct _ETSTIMER_ {
 #define ETS_INTR_UNLOCK() \
     ets_intr_unlock()
 
-#define ETS_FRC_TIMER1_INTR_ATTACH(func, arg) \
-    ets_isr_attach(ETS_FRC_TIMER1_INUM, (func), (void *)(arg))
-
-#define ETS_FRC_TIMER1_NMI_INTR_ATTACH(func) \
-	NmiTimSetFunc(func)
-
-#define ETS_GPIO_INTR_ATTACH(func, arg) \
-    ets_isr_attach(ETS_GPIO_INUM, (func), (void *)(arg))
-
-#define ETS_UART_INTR_ATTACH(func, arg) \
-    ets_isr_attach(ETS_UART_INUM, (func), (void *)(arg))
-
-#define ETS_SPI_INTR_ATTACH(func, arg) \
-    ets_isr_attach(ETS_SPI_INUM, (func), (void *)(arg))
-
 #define ETS_INTR_ENABLE(inum) \
     ets_isr_unmask((1<<inum))
 
 #define ETS_INTR_DISABLE(inum) \
     ets_isr_mask((1<<inum))
 
-#define ETS_SPI_INTR_ENABLE() \
-    ETS_INTR_ENABLE(ETS_SPI_INUM)
+inline bool ETS_INTR_WITHINISR()
+{
+    uint32_t ps;
+    __asm__ __volatile__("rsr %0,ps":"=a" (ps));
+    // PS.INTLEVEL check
+    return ((ps & 0x0f) != 0);
+}
+
+inline uint32_t ETS_INTR_ENABLED(void)
+{
+    uint32_t enabled;
+    __asm__ __volatile__("esync; rsr %0,intenable":"=a" (enabled));
+    return enabled;
+}
+
+inline uint32_t ETS_INTR_PENDING(void)
+{
+    uint32_t pending;
+    __asm__ __volatile__("esync; rsr %0,interrupt":"=a" (pending));
+    return pending;
+}
+
+#define ETS_CCOMPARE0_INTR_ATTACH(func, arg) \
+    ets_isr_attach(ETS_CCOMPARE0_INUM, (int_handler_t)(func), (void *)(arg))
+
+#define ETS_CCOMPARE0_ENABLE() \
+    ETS_INTR_ENABLE(ETS_CCOMPARE0_INUM)
+
+#define ETS_CCOMPARE0_DISABLE() \
+    ETS_INTR_DISABLE(ETS_CCOMPARE0_INUM)
+
+
+#define ETS_FRC_TIMER1_INTR_ATTACH(func, arg) \
+    ets_isr_attach(ETS_FRC_TIMER1_INUM, (int_handler_t)(func), (void *)(arg))
+
+#define ETS_FRC_TIMER1_NMI_INTR_ATTACH(func) \
+    NmiTimSetFunc(func)
+
+#define ETS_GPIO_INTR_ATTACH(func, arg) \
+    ets_isr_attach(ETS_GPIO_INUM, (int_handler_t)(func), (void *)(arg))
+
+#define ETS_GPIO_INTR_ENABLE() \
+    ETS_INTR_ENABLE(ETS_GPIO_INUM)
+
+#define ETS_GPIO_INTR_DISABLE() \
+    ETS_INTR_DISABLE(ETS_GPIO_INUM)
+
+
+#define ETS_UART_INTR_ATTACH(func, arg) \
+    ets_isr_attach(ETS_UART_INUM, (int_handler_t)(func), (void *)(arg))
 
 #define ETS_UART_INTR_ENABLE() \
     ETS_INTR_ENABLE(ETS_UART_INUM)
@@ -84,14 +124,32 @@ typedef struct _ETSTIMER_ {
 #define ETS_FRC1_INTR_DISABLE() \
     ETS_INTR_DISABLE(ETS_FRC_TIMER1_INUM)
 
-#define ETS_GPIO_INTR_ENABLE() \
-    ETS_INTR_ENABLE(ETS_GPIO_INUM)
 
-#define ETS_GPIO_INTR_DISABLE() \
-    ETS_INTR_DISABLE(ETS_GPIO_INUM)
+#define ETS_SPI_INTR_ATTACH(func, arg) \
+    ets_isr_attach(ETS_SPI_INUM, (int_handler_t)(func), (void *)(arg))
 
-typedef void (*int_handler_t)(void*);
+#define ETS_SPI_INTR_ENABLE() \
+    ETS_INTR_ENABLE(ETS_SPI_INUM)
 
+#define ETS_SPI_INTR_DISABLE() \
+    ETS_INTR_DISABLE(ETS_SPI_INUM)
+
+
+#define ETS_SLC_INTR_ATTACH(func, arg) \
+    ets_isr_attach(ETS_SLC_INUM, (int_handler_t)(func), (void *)(arg))
+
+#define ETS_SLC_INTR_ENABLE() \
+    ETS_INTR_ENABLE(ETS_SLC_INUM)
+
+#define ETS_SLC_INTR_DISABLE() \
+    ETS_INTR_DISABLE(ETS_SLC_INUM)
+
+
+//void *pvPortMalloc(size_t xWantedSize) __attribute__((malloc, alloc_size(1)));
+//void *pvPortRealloc(void* ptr, size_t xWantedSize) __attribute__((alloc_size(2)));
+//void pvPortFree(void *ptr);
+//void *vPortMalloc(size_t xWantedSize) __attribute__((malloc, alloc_size(1)));
+//void vPortFree(void *ptr);
 void *pvPortMalloc(size_t xWantedSize, const char *file, int line);
 void *pvPortZalloc(size_t, const char *file, int line);
 void* pvPortRealloc(void *ptr, size_t xWantedSize, const char *file, int line);
@@ -120,7 +178,8 @@ void ets_isr_unmask(int intr);
 void ets_isr_attach(int intr, int_handler_t handler, void *arg);
 void ets_intr_lock();
 void ets_intr_unlock();
-int ets_vsnprintf(char * s, size_t n, const char * format, va_list arg);
-int ets_vprintf(const char * format, va_list arg);
+int ets_vsnprintf(char * s, size_t n, const char * format, va_list arg)  __attribute__ ((format (printf, 3, 0)));
+int ets_vprintf(const char * format, va_list arg) __attribute__ ((format (printf, 1, 0)));
 
 #endif /* _ETS_SYS_H */
+

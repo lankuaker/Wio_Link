@@ -40,6 +40,7 @@ extern "C" {
 #include "twi.h"
 
 void yield(void);
+void optimistic_yield(uint32_t interval_us);
 
 #define HIGH 0x1
 #define LOW  0x0
@@ -86,26 +87,42 @@ void yield(void);
 #define EXTERNAL 0
 
 //timer dividers
-#define TIM_DIV1    0 //80MHz (80 ticks/us - 104857.588 us max)
-#define TIM_DIV16   1 //5MHz (5 ticks/us - 1677721.4 us max)
-#define TIM_DIV265  3 //312.5Khz (1 tick = 3.2us - 26843542.4 us max)
+#define TIM_DIV1 	0 //80MHz (80 ticks/us - 104857.588 us max)
+#define TIM_DIV16	1 //5MHz (5 ticks/us - 1677721.4 us max)
+#define TIM_DIV265	3 //312.5Khz (1 tick = 3.2us - 26843542.4 us max)
 //timer int_types
-#define TIM_EDGE    0
-#define TIM_LEVEL   1
+#define TIM_EDGE	0
+#define TIM_LEVEL	1
 //timer reload values
-#define TIM_SINGLE  0 //on interrupt routine you need to write a new value to start the timer again
-#define TIM_LOOP    1 //on interrupt the counter will start with the same value again
+#define TIM_SINGLE	0 //on interrupt routine you need to write a new value to start the timer again
+#define TIM_LOOP	1 //on interrupt the counter will start with the same value again
 
 #define timer1_read()           (T1V)
 #define timer1_enabled()        ((T1C & (1 << TCTE)) != 0)
 #define timer1_interrupted()    ((T1C & (1 << TCIS)) != 0)
 
+typedef void(*timercallback)(void);
+
 void timer1_isr_init(void);
 void timer1_enable(uint8_t divider, uint8_t int_type, uint8_t reload);
 void timer1_disable(void);
-void timer1_attachInterrupt(void (*userFunc)(void));
+void timer1_attachInterrupt(timercallback userFunc);
 void timer1_detachInterrupt(void);
 void timer1_write(uint32_t ticks); //maximum ticks 8388607
+
+// timer0 is a special CPU timer that has very high resolution but with
+// limited control.
+// it uses CCOUNT (ESP.GetCycleCount()) as the non-resetable timer counter
+// it does not support divide, type, or reload flags
+// it is auto-disabled when the compare value matches CCOUNT
+// it is auto-enabled when the compare value changes
+#define timer0_interrupted()    (ETS_INTR_PENDING() & (_BV(ETS_COMPARE0_INUM)))
+#define timer0_read() ((__extension__({uint32_t count;__asm__ __volatile__("esync; rsr %0,ccompare0":"=a" (count));count;})))
+#define timer0_write(count) __asm__ __volatile__("wsr %0,ccompare0; esync"::"a" (count) : "memory")
+
+void timer0_isr_init(void);
+void timer0_attachInterrupt(timercallback userFunc);
+void timer0_detachInterrupt(void);
 
 // undefine stdlib's abs if encountered
 #ifdef abs
@@ -122,17 +139,28 @@ void timer1_write(uint32_t ticks); //maximum ticks 8388607
 void ets_intr_lock();
 void ets_intr_unlock();
 
-// level (0-15),
-// level 15 will disable ALL interrupts,
-// level 0 will disable most software interrupts
+#ifndef __STRINGIFY
+#define __STRINGIFY(a) #a
+#endif
+
+// these low level routines provide a replacement for SREG interrupt save that AVR uses
+// but are esp8266 specific. A normal use pattern is like
 //
-#define xt_disable_interrupts(state, level) __asm__ __volatile__("rsil %0," __STRINGIFY(level) "; esync; isync; dsync" : "=a" (state))
-#define xt_enable_interrupts(state)  __asm__ __volatile__("wsr %0,ps; esync" :: "a" (state) : "memory")
+//{
+//    uint32_t savedPS = xt_rsil(1); // this routine will allow level 2 and above
+//    // do work here
+//    xt_wsr_ps(savedPS); // restore the state
+//}
+//
+// level (0-15), interrupts of the given level and above will be active
+// level 15 will disable ALL interrupts,
+// level 0 will enable ALL interrupts,
+//
+#define xt_rsil(level) (__extension__({uint32_t state; __asm__ __volatile__("rsil %0," __STRINGIFY(level) : "=a" (state)); state;}))
+#define xt_wsr_ps(state)  __asm__ __volatile__("wsr %0,ps; isync" :: "a" (state) : "memory")
 
-extern uint32_t interruptsState;
-
-#define interrupts() xt_enable_interrupts(interruptsState)
-#define noInterrupts() __asm__ __volatile__("rsil %0,15; esync; isync; dsync" : "=a" (interruptsState))
+#define interrupts() xt_rsil(0)
+#define noInterrupts() xt_rsil(15)
 
 #define clockCyclesPerMicrosecond() ( F_CPU / 1000000L )
 #define clockCyclesToMicroseconds(a) ( (a) / clockCyclesPerMicrosecond() )
