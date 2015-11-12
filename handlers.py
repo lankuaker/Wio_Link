@@ -868,7 +868,16 @@ class NodeGetResourcesHandler(NodeBaseHandler):
 
         if config:
             for grove_instance_name in config.keys():
-                grove = find_grove_in_database(config[grove_instance_name]['name'], drv_db)
+                if 'sku' in config[grove_instance_name]:
+                    _sku = config[grove_instance_name]['sku']
+                else:
+                    _sku = None
+
+                if 'name' in config[grove_instance_name]:
+                    _name = config[grove_instance_name]['name']
+                else:
+                    _name = None
+                grove = find_grove_in_database(_name, _sku, drv_db)
                 if grove:
                     grove_doc = find_grove_in_docs_db(grove['ID'], drv_docs)
                     if grove_doc:
