@@ -33,6 +33,7 @@
 #include "suli2.h"
 
 //GROVE_NAME        "Grove-IR Distance Interrupter"
+//SKU               101020040
 //IF_TYPE           GPIO
 //IMAGE_URL         http://www.seeedstudio.com/wiki/images/thumb/e/e1/IR_Distance_Interrupter.jpg/300px-IR_Distance_Interrupter.jpg
 

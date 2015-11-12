@@ -33,6 +33,7 @@
 #include "suli2.h"
 
 //GROVE_NAME        "Grove-Button"
+//SKU               101020003
 //IF_TYPE           GPIO
 //IMAGE_URL         http://www.seeedstudio.com/wiki/images/thumb/c/ca/Button.jpg/300px-Button.jpg
 

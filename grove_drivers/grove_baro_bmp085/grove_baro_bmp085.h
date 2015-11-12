@@ -33,6 +33,7 @@
 #include "suli2.h"
 
 //GROVE_NAME        "Grove-Barometer(BMP085)"
+//SKU               101020032
 //IF_TYPE           I2C
 //IMAGE_URL         http://www.seeedstudio.com/wiki/images/thumb/e/e7/Grove-Barometer.jpg/621px-Grove-Barometer.jpg
 

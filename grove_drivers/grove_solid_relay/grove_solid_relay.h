@@ -33,6 +33,7 @@
 #include "suli2.h"
 
 //GROVE_NAME        "Grove-Solid State Relay"
+//SKU               103020004
 //IF_TYPE           GPIO
 //IMAGE_URL         http://www.seeedstudio.com/depot/bmz_cache/1/13c15e71c4bd4c0a0fce5faa0283f4c5.image.530x397.jpg
 

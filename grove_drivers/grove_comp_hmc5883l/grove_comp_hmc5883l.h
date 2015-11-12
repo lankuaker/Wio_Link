@@ -34,6 +34,7 @@
 #include "suli2.h"
 
 //GROVE_NAME        "Grove-3Axis Compass"
+//SKU               101020034
 //IF_TYPE           I2C
 //IMAGE_URL         http://www.seeedstudio.com/wiki/images/thumb/b/be/Axis_compass.jpg/400px-Axis_compass.jpg
 

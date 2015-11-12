@@ -34,6 +34,7 @@
 #include "suli2.h"
 
 //GROVE_NAME        "Grove-Temperature&Humidity"
+//SKU               101020019-ffff
 //IF_TYPE           GPIO
 //IMAGE_URL         http://www.seeedstudio.com/wiki/images/3/36/Temp%26Humi.jpg
 

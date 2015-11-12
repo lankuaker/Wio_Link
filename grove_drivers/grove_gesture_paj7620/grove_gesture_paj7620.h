@@ -34,6 +34,7 @@
 #include "suli2.h"
 
 //GROVE_NAME        "Grove - Gesture v1.0"
+//SKU               101020083
 //IF_TYPE           I2C
 //IMAGE_URL         http://www.seeedstudio.com/depot/images/product/101020083%201_01.jpg
 

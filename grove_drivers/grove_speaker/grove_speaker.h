@@ -33,6 +33,7 @@
 #include "suli2.h"
 
 //GROVE_NAME        "Grove-Speaker"
+//SKU               107020001
 //IF_TYPE           GPIO
 //IMAGE_URL         http://www.seeedstudio.com/depot/images/product/Grove%20Speaker_01.jpg
 

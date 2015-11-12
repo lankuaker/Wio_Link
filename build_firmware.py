@@ -51,10 +51,15 @@ TYPE_MAP = {
 
 error_msg = ""
 
-def find_grove_in_database (grove_name, json_obj):
+def find_grove_in_database (grove_name, sku, json_obj):
     for grove in json_obj:
         #print grove['GroveName']," -- ", grove_name
-        if grove['GroveName'] == grove_name.decode( 'unicode-escape' ):
+        #print grove['SKU']," -- ", sku
+
+        if 'SKU' in grove and sku:
+            if grove['SKU'] == str(sku):
+                return grove
+        elif grove['GroveName'] == grove_name.decode( 'unicode-escape' ):
             return grove
     return {}
 
@@ -387,7 +392,17 @@ def gen_and_build (app_num, user_id, node_sn, node_name, server_ip):
 
     if config:
         for grove_instance_name in config.keys():
-            grove = find_grove_in_database(config[grove_instance_name]['name'], js)
+            if 'sku' in config[grove_instance_name]:
+                _sku = config[grove_instance_name]['sku']
+            else:
+                _sku = None
+
+            if 'name' in config[grove_instance_name]:
+                _name = config[grove_instance_name]['name']
+            else:
+                _name = None
+
+            grove = find_grove_in_database(_name, _sku, js)
             if grove:
                 ret, inc, method, wellknown = gen_wrapper_registration(grove_instance_name, grove, config[grove_instance_name]['construct_arg_list'])
                 if(ret == False):

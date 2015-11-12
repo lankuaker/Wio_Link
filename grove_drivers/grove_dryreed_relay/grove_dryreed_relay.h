@@ -33,6 +33,7 @@
 #include "suli2.h"
 
 //GROVE_NAME        "Grove-Dry-Reed Relay"
+//SKU               103020014
 //IF_TYPE           GPIO
 //IMAGE_URL         http://www.seeedstudio.com/depot/bmz_cache/1/16a562af66ac52d6e0e19a7b6ec5588d.image.530x397.jpg
 

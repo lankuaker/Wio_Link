@@ -83,6 +83,16 @@ def parse_class_header_file (file):
         patterns["GroveName"] = grove_name[0].rstrip('\r')
     else:
         return ("can not find GROVE_NAME in %s"%file, {},{})
+
+    ##SKU
+    sku = re.findall(r'^//SKU\s+([a-zA-z0-9\-_]+)', content, re.M)
+    print sku
+    if sku:
+        patterns["SKU"] = sku[0].rstrip('\r')
+    else:
+        return ("can not find SKU in %s"%file, {},{})
+
+
     ##interface type
     if_type = re.findall(r'^//IF_TYPE\s+([a-zA-z0-9]+)', content, re.M)
     print if_type

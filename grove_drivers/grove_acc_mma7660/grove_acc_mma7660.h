@@ -33,6 +33,7 @@
 #include "suli2.h"
 
 //GROVE_NAME        "Grove-3Axis Digital Acc(±1.5g)"
+//SKU               101020039
 //IF_TYPE           I2C
 //IMAGE_URL         http://www.seeedstudio.com/wiki/images/b/bb/3_aix_acc.jpg
 

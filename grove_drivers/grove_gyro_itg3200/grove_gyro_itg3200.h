@@ -32,6 +32,7 @@
 #define __GROVE_GYROSCOPE_LIGHT_H__
 
 //GROVE_NAME        "Grove-3-Axis Digital Gyro"
+//SKU               101020050
 //IF_TYPE           I2C
 //IMAGE_URL         http://www.seeedstudio.com/wiki/images/thumb/f/f6/Gbgr.jpg/500px-Gbgr.jpg
 

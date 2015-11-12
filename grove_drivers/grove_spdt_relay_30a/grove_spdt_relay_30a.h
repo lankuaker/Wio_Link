@@ -33,6 +33,7 @@
 #include "suli2.h"
 
 //GROVE_NAME        "Grove - SPDT Relay(30A)"
+//SKU               103020012
 //IF_TYPE           GPIO
 //IMAGE_URL         http://www.seeedstudio.com/depot/images/product/SPDT%20Relay.jpg
 

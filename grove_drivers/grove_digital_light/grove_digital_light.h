@@ -32,6 +32,7 @@
 #define __GROVE_DIGITAL_LIGHT_H__
 
 //GROVE_NAME        "Grove-Digital Light"
+//SKU               101020030
 //IF_TYPE           I2C
 //IMAGE_URL         http://www.seeedstudio.com/wiki/images/6/69/Digital_Light_Sensor.jpg
 
