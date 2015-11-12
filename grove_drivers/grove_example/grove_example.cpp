@@ -37,7 +37,7 @@ GroveExample::GroveExample(int pinsda, int pinscl)
     this->pin = (IO_T *)malloc(sizeof(IO_T));
 
     suli_i2c_init(i2c, pinsda, pinscl);
-    suli_pin_init(pin, 13, INPUT_PULLUP);
+    suli_pin_init(pin, 13, INPUT);
 }
 
 bool GroveExample::read_temp(int *temp)

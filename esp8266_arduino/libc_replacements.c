@@ -92,14 +92,14 @@ int ICACHE_RAM_ATTR vsnprintf(char * buffer, size_t size, const char * format, v
     return ets_vsnprintf(buffer, size, format, arg);
 }
 
-size_t strnlen(const char *s, size_t len) {
+size_t ICACHE_FLASH_ATTR strnlen(const char *s, size_t len) {
     // there is no ets_strnlen
     const char *cp;
     for (cp = s; len != 0 && *cp != '\0'; cp++, len--);
     return (size_t)(cp - s);
 }
 
-char* strchr(const char * str, int character) {
+char* ICACHE_FLASH_ATTR strchr(const char * str, int character) {
     while(1) {
         if(*str == 0x00) {
             return NULL;
@@ -111,7 +111,7 @@ char* strchr(const char * str, int character) {
     }
 }
 
-char* strrchr(const char * str, int character) {
+char* ICACHE_FLASH_ATTR strrchr(const char * str, int character) {
     char * ret = NULL;
     while(1) {
         if(*str == 0x00) {
@@ -124,11 +124,11 @@ char* strrchr(const char * str, int character) {
     }
 }
 
-char* strcat(char * dest, const char * src) {
+char* ICACHE_FLASH_ATTR strcat(char * dest, const char * src) {
     return strncat(dest, src, strlen(src));
 }
 
-char* strncat(char * dest, const char * src, size_t n) {
+char* ICACHE_FLASH_ATTR strncat(char * dest, const char * src, size_t n) {
     size_t i;
     size_t offset = strlen(dest);
     for(i = 0; i < n && src[i]; i++) {
@@ -138,7 +138,7 @@ char* strncat(char * dest, const char * src, size_t n) {
     return dest;
 }
 
-char* strtok_r(char* s, const char* delim, char** last) {
+char* ICACHE_FLASH_ATTR strtok_r(char* s, const char* delim, char** last) {
     const char* spanp;
     char* tok;
     char c;
@@ -193,13 +193,13 @@ cont:
     // NOTREACHED EVER
 }
 
-char* strtok(char* s, const char* delim) {
+char* ICACHE_FLASH_ATTR strtok(char* s, const char* delim) {
     static char* last;
 
     return (strtok_r(s, delim, &last));
 }
 
-int strcasecmp(const char * str1, const char * str2) {
+int ICACHE_FLASH_ATTR strcasecmp(const char * str1, const char * str2) {
     int d = 0;
     while(1) {
         int c1 = tolower(*str1++);
@@ -211,7 +211,7 @@ int strcasecmp(const char * str1, const char * str2) {
     return d;
 }
 
-char* strdup(const char *str) {
+char* ICACHE_FLASH_ATTR strdup(const char *str) {
     size_t len = strlen(str) + 1;
     char *cstr = malloc(len);
     if(cstr) {
@@ -222,7 +222,7 @@ char* strdup(const char *str) {
 
 // based on Source:
 // https://github.com/anakod/Sming/blob/master/Sming/system/stringconversion.cpp#L93
-double strtod(const char* str, char** endptr) {
+double ICACHE_FLASH_ATTR strtod(const char* str, char** endptr) {
     double result = 0.0;
     double factor = 1.0;
     bool decimals = false;
@@ -272,63 +272,63 @@ double strtod(const char* str, char** endptr) {
 //                             ctype functions
 // ##########################################################################
 
-int isalnum(int c) {
+int ICACHE_FLASH_ATTR isalnum(int c) {
     if(isalpha(c) || isdigit(c)) {
         return 1;
     }
     return 0;
 }
 
-int isalpha(int c) {
+int ICACHE_FLASH_ATTR isalpha(int c) {
     if(islower(c) || isupper(c)) {
         return 1;
     }
     return 0;
 }
 
-int iscntrl(int c) {
+int ICACHE_FLASH_ATTR iscntrl(int c) {
     if(c <= 0x1F || c == 0x7F) {
         return 1;
     }
     return 0;
 }
 
-int isdigit(int c) {
+int ICACHE_FLASH_ATTR isdigit(int c) {
     if(c >= '0' && c <= '9') {
         return 1;
     }
     return 0;
 }
 
-int isgraph(int c) {
+int ICACHE_FLASH_ATTR isgraph(int c) {
     if(isprint(c) && c != ' ') {
         return 1;
     }
     return 0;
 }
 
-int islower(int c) {
+int ICACHE_FLASH_ATTR islower(int c) {
     if(c >= 'a' && c <= 'z') {
         return 1;
     }
     return 0;
 }
 
-int isprint(int c) {
+int ICACHE_FLASH_ATTR isprint(int c) {
     if(!iscntrl(c)) {
         return 1;
     }
     return 0;
 }
 
-int ispunct(int c) {
+int ICACHE_FLASH_ATTR ispunct(int c) {
     if(isgraph(c) && !isalnum(c)) {
         return 1;
     }
     return 0;
 }
 
-int isspace(int c) {
+int ICACHE_FLASH_ATTR isspace(int c) {
     switch(c) {
         case 0x20: // ' '
         case 0x09: // '\t'
@@ -341,14 +341,14 @@ int isspace(int c) {
     return 0;
 }
 
-int isupper(int c) {
+int ICACHE_FLASH_ATTR isupper(int c) {
     if(c >= 'A' && c <= 'Z') {
         return 1;
     }
     return 0;
 }
 
-int isxdigit(int c) {
+int ICACHE_FLASH_ATTR isxdigit(int c) {
     if(c >= 'A' && c <= 'F') {
         return 1;
     }
@@ -361,21 +361,21 @@ int isxdigit(int c) {
     return 0;
 }
 
-int tolower(int c) {
+int ICACHE_FLASH_ATTR tolower(int c) {
     if(isupper(c)) {
         c += 0x20;
     }
     return c;
 }
 
-int toupper(int c) {
+int ICACHE_FLASH_ATTR toupper(int c) {
     if(islower(c)) {
         c -= 0x20;
     }
     return c;
 }
 
-int isblank(int c) {
+int ICACHE_FLASH_ATTR isblank(int c) {
     switch(c) {
         case 0x20: // ' '
         case 0x09: // '\t'
@@ -422,7 +422,7 @@ int* __errno(void) {
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-size_t strlcpy(char* dst, const char* src, size_t size) {
+size_t ICACHE_FLASH_ATTR strlcpy(char* dst, const char* src, size_t size) {
     const char *s = src;
     size_t n = size;
 
@@ -487,7 +487,7 @@ size_t strlcpy(char* dst, const char* src, size_t size) {
  * SUCH DAMAGE.
  */
 
-long strtol(const char *nptr, char **endptr, int base) {
+long ICACHE_FLASH_ATTR strtol(const char *nptr, char **endptr, int base) {
     const unsigned char *s = (const unsigned char *)nptr;
     unsigned long acc;
     int c;
@@ -563,7 +563,7 @@ long strtol(const char *nptr, char **endptr, int base) {
     return (acc);
 }
 
-unsigned long strtoul(const char *nptr, char **endptr, int base)
+unsigned long ICACHE_FLASH_ATTR strtoul(const char *nptr, char **endptr, int base)
 {
     const unsigned char *s = (const unsigned char *)nptr;
     unsigned long acc;

@@ -44,6 +44,7 @@ static int parse_stage_data;
 static int parse_stage_cmd;
 
 extern void print_well_known();
+void drain_event_queue();
 
 void rpc_server_init()
 {
@@ -189,23 +190,6 @@ int __convert_arg(uint8_t *arg_buff, void *buff, int type)
 }
 
 
-static event_t event;
-
-void drain_event_queue()
-{
-    /* report event if event queue is not empty */
-    while (rpc_server_event_queue_pop(&event))
-    {
-        response_msg_open(STREAM_DATA,"event");
-        writer_print(TYPE_STRING, "{\"");
-        writer_print(TYPE_STRING, event.event_name);
-        writer_print(TYPE_STRING, "\":\"");
-        writer_print(TYPE_UINT32, &event.event_data);
-        writer_print(TYPE_STRING, "\"}");
-        response_msg_close(STREAM_DATA);
-        optimistic_yield(100);
-    }
-}
 
 static int req_type;
 
@@ -529,6 +513,24 @@ void rpc_server_loop()
     process_cmd_stream();
 }
 
+
+static event_t event;
+
+void drain_event_queue()
+{
+    /* report event if event queue is not empty */
+    while (rpc_server_event_queue_pop(&event))
+    {
+        response_msg_open(STREAM_DATA,"event");
+        writer_print(TYPE_STRING, "{\"");
+        writer_print(TYPE_STRING, event.event_name);
+        writer_print(TYPE_STRING, "\":\"");
+        writer_print(TYPE_UINT32, &event.event_data);
+        writer_print(TYPE_STRING, "\"}");
+        response_msg_close(STREAM_DATA);
+        optimistic_yield(100);
+    }
+}
 
 void rpc_server_event_report(char *event_name, uint32_t event_data)
 {

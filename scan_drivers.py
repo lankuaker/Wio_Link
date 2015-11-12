@@ -164,7 +164,7 @@ def parse_class_header_file (file):
 
     ## event
     #    EVENT_T * attach_event_reporter_for_ir_approached(CALLBACK_T reporter);
-    event_attachments = re.findall(r'EVENT_T\s*\*\s*attach_event_reporter_for_(.*)\((.*)\).*$', content, re.M)
+    event_attachments = re.findall(r'^\s+EVENT_T\s*\*\s*attach_event_reporter_for_(.*)\((.*)\).*$', content, re.M)
     print event_attachments
     events = []
     for ev in event_attachments:

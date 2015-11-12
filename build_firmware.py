@@ -468,14 +468,14 @@ def gen_and_build (app_num, user_id, node_sn, node_name, server_ip):
         os.putenv("APP","1")
 
         if developing:
-            cmd = 'cd %s;make clean;make 2>error.log|tee build.log' % (user_build_dir)
+            cmd = 'cd %s;make clean;make 2>&1|tee build.log' % (user_build_dir)
         else:
-            cmd = 'cd %s;make clean;make > build.log 2>error.log' % (user_build_dir)
+            cmd = 'cd %s;make clean;make > build.log 2>&1' % (user_build_dir)
         print '---- start to build app 1 ---'
         print cmd
         os.system(cmd)
 
-        content = open(user_build_dir+"/error.log", 'r').readlines()
+        content = open(user_build_dir+"/build.log", 'r').readlines()
         for line in content:
             if line.find("error:") > -1 or line.find("make:") > -1:
                 if developing:
@@ -489,12 +489,12 @@ def gen_and_build (app_num, user_id, node_sn, node_name, server_ip):
     if app_num in [2, '2', 'ALL']:
         os.putenv("APP","2")
 
-        cmd = 'cd %s;make clean;make >> build.log 2>>error.log' % (user_build_dir)
+        cmd = 'cd %s;make clean;make > build.log 2>&1' % (user_build_dir)
         print '---- start to build app 2 ---'
         print cmd
         os.system(cmd)
 
-        content = open(user_build_dir+"/error.log", 'r').readlines()
+        content = open(user_build_dir+"/build.log", 'r').readlines()
         for line in content:
             if line.find("error:") > -1 or line.find("make:") > -1:
                 error_msg = line

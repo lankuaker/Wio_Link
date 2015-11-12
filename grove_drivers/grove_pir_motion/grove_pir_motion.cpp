@@ -35,7 +35,7 @@ GrovePIRMotion::GrovePIRMotion(int pin)
 {
     this->io = (IO_T *)malloc(sizeof(IO_T));
 
-    suli_pin_init(io, pin, INPUT_PULLUP);
+    suli_pin_init(io, pin, INPUT);
     time = millis();
 }
 
