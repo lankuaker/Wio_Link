@@ -683,6 +683,7 @@ class NodeGetResourcesHandler(NodeBaseHandler):
             item['type'] = 'GET'
             #build read arg
             arguments = []
+            arguments_name = []
             method_name = fun[0].replace('read_','')
             url = self.vhost_url_base + '/v1/node/' + grove_instance_name + '/' + method_name
             arg_list = [arg for arg in fun[1] if arg.find("*") < 0]  #find out the ones dont have "*"
@@ -698,10 +699,12 @@ class NodeGetResourcesHandler(NodeBaseHandler):
                     comment = ""
 
                 arguments.append('[%s]: %s value%s' % (name, t, comment))
+                arguments_name.append('[%s]' % name)
                 url += ('/[%s]' % name)
 
             item['url'] = url + '?access_token=' + node['private_key']
             item['arguments'] = arguments
+            item['arguments_name'] = arguments_name
 
             item['brief'] = ""
             if fun[0] in methods_doc and '@brief@' in methods_doc[fun[0]]: 
@@ -727,6 +730,7 @@ class NodeGetResourcesHandler(NodeBaseHandler):
             returns = returns.rstrip(',')
             item['returns'] = returns
             item['return_docs'] = return_docs
+            item['uuid'] = self.get_uuid();
 
             data.append(item)
 
@@ -735,6 +739,7 @@ class NodeGetResourcesHandler(NodeBaseHandler):
             item['type'] = 'POST'
             #build write arg
             arguments = []
+            arguments_name = []
             method_name = fun[0].replace('write_','')
             url = self.vhost_url_base + '/v1/node/' + grove_instance_name + '/' + method_name
             #arg_list = [arg for arg in fun[1] if arg.find("*")<0]  #find out the ones havent "*"
@@ -755,13 +760,16 @@ class NodeGetResourcesHandler(NodeBaseHandler):
                     comment = ""
 
                 arguments.append('[%s]: %s value%s' % (name, t, comment))
+                arguments_name.append('[%s]' % name)
                 url += ('/[%s]' % name)
             item['url'] = url + '?access_token=' + node['private_key']
             item['arguments'] = arguments
+            item['arguments_name'] = arguments_name
 
             item['brief'] = ""
             if fun[0] in methods_doc and '@brief@' in methods_doc[fun[0]]: 
                 item['brief'] = methods_doc[fun[0]]['@brief@']
+            item['uuid'] = self.get_uuid();
 
             data.append(item)
 
@@ -898,10 +906,13 @@ class NodeGetResourcesHandler(NodeBaseHandler):
                     return
 
         #render the template
-        domain = self.vhost_url_base.replace('https:', 'wss:')
-        domain = domain.replace('http:', 'ws:')
+        ws_domain = self.vhost_url_base.replace('https:', 'wss:')
+        ws_domain = ws_domain.replace('http:', 'ws:')
+        #print data
+        #print events
+        #print node_key
         page = self.render_string('resources.html', node_name = node_name, events = events, data = data, 
-                                  node_key = node_key , url_base = self.vhost_url_base, domain=domain)
+                                  node_key = node_key , url_base = self.vhost_url_base, ws_domain=ws_domain)
 
         #store the page html into database
         try:
