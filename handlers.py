@@ -621,6 +621,9 @@ class NodeEventHandler(websocket.WebSocketHandler):
             self.close()
             return
 
+        #clear the events buffered before any websocket client connected
+        self.cur_conn.event_happened = []
+
         while self.connected:
             self.future = self.wait_event_post()
             event = yield self.future

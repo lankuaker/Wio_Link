@@ -16,8 +16,7 @@
 {% if not data %}
 <div class="panel panel-default">
     <div class="panel-body">
-        No Resources.<br>This is usually due to the incorrect configuration for
-        the node.
+        No Resources.<br>This is usually due to the incorrect configuration for the node.
     </div>
 </div>
 {% else %} 
@@ -75,10 +74,6 @@
     <div class="panel-body">
         <h5>Test Request:</h5>
         <div class="form-inline" id="form_{{item['uuid']}}">
-            <div class="form-group">
-                <label for="domain_{{item['uuid']}}">Base URL:</label>
-                <input type="text" class="form-control" id="domain_{{item['uuid']}}" placeholder="{{url_base}}" value="{{url_base}}">
-            </div>
             {% if item['arguments_name'] %}
             {% for arg in item['arguments_name'] %}
             <div class="form-group">
@@ -133,10 +128,6 @@ ws.onmessage = function (evt) {
     <div class="panel-body">
         <h5>Test Request:</h5>
         <div class="form-inline">
-            <div class="input-group">
-                <input type="text" class="form-control" id="wsdomain" placeholder="{{ws_domain}}" value="{{ws_domain}}" aria-describedby="basic-addon2">
-                <span class="input-group-addon" id="basic-addon2">/v1/node/event</span>
-            </div>
             <input type="button" id="button_ws" class="btn btn-default btn-sm" value="CONNECT">
         </div>
         <div class="well well-sm" style="display: none; margin-top: 10px;font-size:85%;" id="result_ws"></div>
@@ -236,7 +227,7 @@ $(function(){
     $("#button_ws").on("click", function() {
         if ($(this).val() == "CONNECT")
         {
-            var wsUri = $("#wsdomain").val().trim() + "/v1/node/event";
+            var wsUri = "{{ws_domain}}/v1/node/event";
             //$(this).val("Loading...");
             websocket = new WebSocket(wsUri);
             websocket.onopen = function(evt) { onOpen(evt) }; 
