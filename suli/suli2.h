@@ -58,8 +58,8 @@ typedef gpio_t IO_T;
 #define SULI_HIGH     0x01
 #define SULI_LOW      0x00
 #define SULI_RISE     IRQ_RISE
-#define SULI_FALL     IRQ_FALL  //Note that: we drop changing interrupt as the same thing can be done by using Rise and Fall
-
+#define SULI_FALL     IRQ_FALL  
+#define SULI_CHANGE   IRQ_RISE   //mbed doesn't support change interrupt.
 /**
  * void suli_pin_init(IO_T *, PIN_T, PIN_DIR )
  */
@@ -98,7 +98,8 @@ typedef int IO_T;
 #define SULI_HIGH     0x01
 #define SULI_LOW      0x00
 #define SULI_RISE     RISING
-#define SULI_FALL     FALLING  //Note that: we drop changing interrupt as the same thing can be done by using Rise and Fall
+#define SULI_FALL     FALLING  
+#define SULI_CHANGE   CHANGE
 
 /**
  * void suli_pin_init(IO_T *, PIN_T, PIN_DIR )

@@ -33,6 +33,7 @@
 #include "suli2.h"
 
 //GROVE_NAME        "Grove-PIR Motion Sensor"
+//SKU               101020020
 //IF_TYPE           GPIO
 //IMAGE_URL         http://www.seeedstudio.com/depot/bmz_cache/b/bc0115270f17babe6373bce8ec1bfe8a.image.164x123.jpg
 

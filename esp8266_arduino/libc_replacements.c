@@ -1,10 +1,10 @@
-/* 
+/*
  libc_replacements.c - replaces libc functions with functions
  from Espressif SDK
 
  Copyright (c) 2015 Ivan Grokhotkov. All rights reserved.
  This file is part of the esp8266 core for Arduino environment.
- 
+
  This library is free software; you can redistribute it and/or
  modify it under the terms of the GNU Lesser General Public
  License as published by the Free Software Foundation; either
@@ -30,6 +30,7 @@
 #include <limits.h>
 #include <errno.h>
 #include <string.h>
+#include <time.h>
 
 #include "ets_sys.h"
 #include "os_type.h"
@@ -38,25 +39,25 @@
 #include "user_interface.h"
 #include "debug.h"
 
-void* malloc(size_t size) {
+void* ICACHE_RAM_ATTR malloc(size_t size) {
     size = ((size + 3) & ~((size_t)0x3));
     return os_malloc(size);
 }
 
-void free(void* ptr) {
+void ICACHE_RAM_ATTR free(void* ptr) {
     os_free(ptr);
 }
 
-void* realloc(void* ptr, size_t size) {
+void* ICACHE_RAM_ATTR realloc(void* ptr, size_t size) {
     size = ((size + 3) & ~((size_t)0x3));
     return os_realloc(ptr, size);
 }
 
-int puts(const char * str) {
+int ICACHE_RAM_ATTR puts(const char * str) {
     return os_printf("%s", str);
 }
 
-int printf(const char* format, ...) {
+int ICACHE_RAM_ATTR printf(const char* format, ...) {
     int ret;
     va_list arglist;
     va_start(arglist, format);
@@ -65,7 +66,7 @@ int printf(const char* format, ...) {
     return ret;
 }
 
-int sprintf(char* buffer, const char* format, ...) {
+int ICACHE_RAM_ATTR sprintf(char* buffer, const char* format, ...) {
     int ret;
     va_list arglist;
     va_start(arglist, format);
@@ -74,7 +75,7 @@ int sprintf(char* buffer, const char* format, ...) {
     return ret;
 }
 
-int snprintf(char* buffer, size_t size, const char* format, ...) {
+int ICACHE_RAM_ATTR snprintf(char* buffer, size_t size, const char* format, ...) {
     int ret;
     va_list arglist;
     va_start(arglist, format);
@@ -83,7 +84,11 @@ int snprintf(char* buffer, size_t size, const char* format, ...) {
     return ret;
 }
 
-int vsnprintf(char * buffer, size_t size, const char * format, va_list arg) {
+int ICACHE_RAM_ATTR vprintf(const char * format, va_list arg) {
+    return ets_vprintf(format, arg);
+}
+
+int ICACHE_RAM_ATTR vsnprintf(char * buffer, size_t size, const char * format, va_list arg) {
     return ets_vsnprintf(buffer, size, format, arg);
 }
 
@@ -106,7 +111,7 @@ char* ICACHE_FLASH_ATTR strchr(const char * str, int character) {
     }
 }
 
-char * ICACHE_FLASH_ATTR strrchr(const char * str, int character) {
+char* ICACHE_FLASH_ATTR strrchr(const char * str, int character) {
     char * ret = NULL;
     while(1) {
         if(*str == 0x00) {
@@ -144,7 +149,7 @@ char* ICACHE_FLASH_ATTR strtok_r(char* s, const char* delim, char** last) {
     }
 
 
-    // Skip (span) leading delimiters 
+    // Skip (span) leading delimiters
     //
 cont:
     c = *s++;
@@ -164,7 +169,7 @@ cont:
     tok = s - 1;
 
 
-    // Scan token 
+    // Scan token
     // Note that delim must have one NUL; we stop if we see that, too.
     //
     for (;;) {
@@ -267,63 +272,63 @@ double ICACHE_FLASH_ATTR strtod(const char* str, char** endptr) {
 //                             ctype functions
 // ##########################################################################
 
-int isalnum(int c) {
+int ICACHE_FLASH_ATTR isalnum(int c) {
     if(isalpha(c) || isdigit(c)) {
         return 1;
     }
     return 0;
 }
 
-int isalpha(int c) {
+int ICACHE_FLASH_ATTR isalpha(int c) {
     if(islower(c) || isupper(c)) {
         return 1;
     }
     return 0;
 }
 
-int iscntrl(int c) {
+int ICACHE_FLASH_ATTR iscntrl(int c) {
     if(c <= 0x1F || c == 0x7F) {
         return 1;
     }
     return 0;
 }
 
-int isdigit(int c) {
+int ICACHE_FLASH_ATTR isdigit(int c) {
     if(c >= '0' && c <= '9') {
         return 1;
     }
     return 0;
 }
 
-int isgraph(int c) {
+int ICACHE_FLASH_ATTR isgraph(int c) {
     if(isprint(c) && c != ' ') {
         return 1;
     }
     return 0;
 }
 
-int islower(int c) {
+int ICACHE_FLASH_ATTR islower(int c) {
     if(c >= 'a' && c <= 'z') {
         return 1;
     }
     return 0;
 }
 
-int isprint(int c) {
+int ICACHE_FLASH_ATTR isprint(int c) {
     if(!iscntrl(c)) {
         return 1;
     }
     return 0;
 }
 
-int ispunct(int c) {
+int ICACHE_FLASH_ATTR ispunct(int c) {
     if(isgraph(c) && !isalnum(c)) {
         return 1;
     }
     return 0;
 }
 
-int isspace(int c) {
+int ICACHE_FLASH_ATTR isspace(int c) {
     switch(c) {
         case 0x20: // ' '
         case 0x09: // '\t'
@@ -336,14 +341,14 @@ int isspace(int c) {
     return 0;
 }
 
-int isupper(int c) {
+int ICACHE_FLASH_ATTR isupper(int c) {
     if(c >= 'A' && c <= 'Z') {
         return 1;
     }
     return 0;
 }
 
-int isxdigit(int c) {
+int ICACHE_FLASH_ATTR isxdigit(int c) {
     if(c >= 'A' && c <= 'F') {
         return 1;
     }
@@ -356,21 +361,21 @@ int isxdigit(int c) {
     return 0;
 }
 
-int tolower(int c) {
+int ICACHE_FLASH_ATTR tolower(int c) {
     if(isupper(c)) {
         c += 0x20;
     }
     return c;
 }
 
-int toupper(int c) {
+int ICACHE_FLASH_ATTR toupper(int c) {
     if(islower(c)) {
         c -= 0x20;
     }
     return c;
 }
 
-int isblank(int c) {
+int ICACHE_FLASH_ATTR isblank(int c) {
     switch(c) {
         case 0x20: // ' '
         case 0x09: // '\t'
@@ -383,15 +388,14 @@ int isblank(int c) {
 
 static int errno_var = 0;
 
-int* ICACHE_FLASH_ATTR __errno(void) {
-    DEBUGV("__errno is called last error: %d (not current)\n", errno_var);
+int* __errno(void) {
+    // DEBUGV("__errno is called last error: %d (not current)\n", errno_var);
     return &errno_var;
 }
 
-
 /*
  * begin newlib/string/strlcpy.c
- * 
+ *
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
@@ -464,8 +468,8 @@ size_t ICACHE_FLASH_ATTR strlcpy(char* dst, const char* src, size_t size) {
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ *    This product includes software developed by the University of
+ *    California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -484,133 +488,134 @@ size_t ICACHE_FLASH_ATTR strlcpy(char* dst, const char* src, size_t size) {
  */
 
 long ICACHE_FLASH_ATTR strtol(const char *nptr, char **endptr, int base) {
-	const unsigned char *s = (const unsigned char *)nptr;
-	unsigned long acc;
-	int c;
-	unsigned long cutoff;
-	int neg = 0, any, cutlim;
+    const unsigned char *s = (const unsigned char *)nptr;
+    unsigned long acc;
+    int c;
+    unsigned long cutoff;
+    int neg = 0, any, cutlim;
 
-	/*
-	 * Skip white space and pick up leading +/- sign if any.
-	 * If base is 0, allow 0x for hex and 0 for octal, else
-	 * assume decimal; if base is already 16, allow 0x.
-	 */
-	do {
-		c = *s++;
-	} while (isspace(c));
-	if (c == '-') {
-		neg = 1;
-		c = *s++;
-	} else if (c == '+')
-		c = *s++;
-	if ((base == 0 || base == 16) &&
-	    c == '0' && (*s == 'x' || *s == 'X')) {
-		c = s[1];
-		s += 2;
-		base = 16;
-	}
-	if (base == 0)
-		base = c == '0' ? 8 : 10;
+    /*
+     * Skip white space and pick up leading +/- sign if any.
+     * If base is 0, allow 0x for hex and 0 for octal, else
+     * assume decimal; if base is already 16, allow 0x.
+     */
+    do {
+        c = *s++;
+    } while (isspace(c));
+    if (c == '-') {
+        neg = 1;
+        c = *s++;
+    } else if (c == '+')
+        c = *s++;
+    if ((base == 0 || base == 16) &&
+        c == '0' && (*s == 'x' || *s == 'X')) {
+        c = s[1];
+        s += 2;
+        base = 16;
+    }
+    if (base == 0)
+        base = c == '0' ? 8 : 10;
 
-	/*
-	 * Compute the cutoff value between legal numbers and illegal
-	 * numbers.  That is the largest legal value, divided by the
-	 * base.  An input number that is greater than this value, if
-	 * followed by a legal input character, is too big.  One that
-	 * is equal to this value may be valid or not; the limit
-	 * between valid and invalid numbers is then based on the last
-	 * digit.  For instance, if the range for longs is
-	 * [-2147483648..2147483647] and the input base is 10,
-	 * cutoff will be set to 214748364 and cutlim to either
-	 * 7 (neg==0) or 8 (neg==1), meaning that if we have accumulated
-	 * a value > 214748364, or equal but the next digit is > 7 (or 8),
-	 * the number is too big, and we will return a range error.
-	 *
-	 * Set any if any `digits' consumed; make it negative to indicate
-	 * overflow.
-	 */
-	cutoff = neg ? -(unsigned long)LONG_MIN : LONG_MAX;
-	cutlim = cutoff % (unsigned long)base;
-	cutoff /= (unsigned long)base;
-	for (acc = 0, any = 0;; c = *s++) {
-		if (isdigit(c))
-			c -= '0';
-		else if (isalpha(c))
-			c -= isupper(c) ? 'A' - 10 : 'a' - 10;
-		else
-			break;
-		if (c >= base)
-			break;
+    /*
+     * Compute the cutoff value between legal numbers and illegal
+     * numbers.  That is the largest legal value, divided by the
+     * base.  An input number that is greater than this value, if
+     * followed by a legal input character, is too big.  One that
+     * is equal to this value may be valid or not; the limit
+     * between valid and invalid numbers is then based on the last
+     * digit.  For instance, if the range for longs is
+     * [-2147483648..2147483647] and the input base is 10,
+     * cutoff will be set to 214748364 and cutlim to either
+     * 7 (neg==0) or 8 (neg==1), meaning that if we have accumulated
+     * a value > 214748364, or equal but the next digit is > 7 (or 8),
+     * the number is too big, and we will return a range error.
+     *
+     * Set any if any `digits' consumed; make it negative to indicate
+     * overflow.
+     */
+    cutoff = neg ? -(unsigned long)LONG_MIN : LONG_MAX;
+    cutlim = cutoff % (unsigned long)base;
+    cutoff /= (unsigned long)base;
+    for (acc = 0, any = 0;; c = *s++) {
+        if (isdigit(c))
+            c -= '0';
+        else if (isalpha(c))
+            c -= isupper(c) ? 'A' - 10 : 'a' - 10;
+        else
+            break;
+        if (c >= base)
+            break;
                if (any < 0 || acc > cutoff || (acc == cutoff && c > cutlim))
-			any = -1;
-		else {
-			any = 1;
-			acc *= base;
-			acc += c;
-		}
-	}
-	if (any < 0) {
-		acc = neg ? LONG_MIN : LONG_MAX;
-		errno = ERANGE;
-	} else if (neg)
-		acc = -acc;
-	if (endptr != 0)
-		*endptr = (char *) (any ? (char *)s - 1 : nptr);
-	return (acc);
+            any = -1;
+        else {
+            any = 1;
+            acc *= base;
+            acc += c;
+        }
+    }
+    if (any < 0) {
+        acc = neg ? LONG_MIN : LONG_MAX;
+        errno = ERANGE;
+    } else if (neg)
+        acc = -acc;
+    if (endptr != 0)
+        *endptr = (char *) (any ? (char *)s - 1 : nptr);
+    return (acc);
 }
 
 unsigned long ICACHE_FLASH_ATTR strtoul(const char *nptr, char **endptr, int base)
 {
-	const unsigned char *s = (const unsigned char *)nptr;
-	unsigned long acc;
-	int c;
-	unsigned long cutoff;
-	int neg = 0, any, cutlim;
+    const unsigned char *s = (const unsigned char *)nptr;
+    unsigned long acc;
+    int c;
+    unsigned long cutoff;
+    int neg = 0, any, cutlim;
 
-	/*
-	 * See strtol for comments as to the logic used.
-	 */
-	do {
-		c = *s++;
-	} while (isspace(c));
-	if (c == '-') {
-		neg = 1;
-		c = *s++;
-	} else if (c == '+')
-		c = *s++;
-	if ((base == 0 || base == 16) &&
-	    c == '0' && (*s == 'x' || *s == 'X')) {
-		c = s[1];
-		s += 2;
-		base = 16;
-	}
-	if (base == 0)
-		base = c == '0' ? 8 : 10;
-	cutoff = (unsigned long)ULONG_MAX / (unsigned long)base;
-	cutlim = (unsigned long)ULONG_MAX % (unsigned long)base;
-	for (acc = 0, any = 0;; c = *s++) {
-		if (isdigit(c))
-			c -= '0';
-		else if (isalpha(c))
-			c -= isupper(c) ? 'A' - 10 : 'a' - 10;
-		else
-			break;
-		if (c >= base)
-			break;
+    /*
+     * See strtol for comments as to the logic used.
+     */
+    do {
+        c = *s++;
+    } while (isspace(c));
+    if (c == '-') {
+        neg = 1;
+        c = *s++;
+    } else if (c == '+')
+        c = *s++;
+    if ((base == 0 || base == 16) &&
+        c == '0' && (*s == 'x' || *s == 'X')) {
+        c = s[1];
+        s += 2;
+        base = 16;
+    }
+    if (base == 0)
+        base = c == '0' ? 8 : 10;
+    cutoff = (unsigned long)ULONG_MAX / (unsigned long)base;
+    cutlim = (unsigned long)ULONG_MAX % (unsigned long)base;
+    for (acc = 0, any = 0;; c = *s++) {
+        if (isdigit(c))
+            c -= '0';
+        else if (isalpha(c))
+            c -= isupper(c) ? 'A' - 10 : 'a' - 10;
+        else
+            break;
+        if (c >= base)
+            break;
                if (any < 0 || acc > cutoff || (acc == cutoff && c > cutlim))
-			any = -1;
-		else {
-			any = 1;
-			acc *= base;
-			acc += c;
-		}
-	}
-	if (any < 0) {
-		acc = ULONG_MAX;
-		errno = ERANGE;
-	} else if (neg)
-		acc = -acc;
-	if (endptr != 0)
-		*endptr = (char *) (any ? (char *)s - 1 : nptr);
-	return (acc);
+            any = -1;
+        else {
+            any = 1;
+            acc *= base;
+            acc += c;
+        }
+    }
+    if (any < 0) {
+        acc = ULONG_MAX;
+        errno = ERANGE;
+    } else if (neg)
+        acc = -acc;
+    if (endptr != 0)
+        *endptr = (char *) (any ? (char *)s - 1 : nptr);
+    return (acc);
 }
+

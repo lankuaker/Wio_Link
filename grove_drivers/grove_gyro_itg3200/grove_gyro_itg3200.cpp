@@ -45,6 +45,9 @@ GroveGyroITG3200::GroveGyroITG3200(int pinsda, int pinscl)
     cmdbuf[0] = ITG3200_DLPF;
     cmdbuf[1] = 0x18;
     suli_i2c_write(i2c, GYRO_ADDRESS, cmdbuf, 2); //+/-2000 degrees/s (default value)
+    
+    //do very rough and quick calibration
+    _zerocalibrate(10);
 
 }
 
@@ -73,9 +76,9 @@ bool GroveGyroITG3200::read_temperature(float *temp111)
 /*          so as to calculate the angular velocity.        */
 void GroveGyroITG3200::_getxyz(I2C_T *i2c, int16_t *x, int16_t *y, int16_t *z)
 {
-    *x = (_read_char(i2c, ITG3200_GX_H) << 8) + _read_char(i2c, ITG3200_GX_L) + x_offset;
-    *y = (_read_char(i2c, ITG3200_GY_H) << 8) + _read_char(i2c, ITG3200_GY_L) + y_offset;
-    *z = (_read_char(i2c, ITG3200_GZ_H) << 8) + _read_char(i2c, ITG3200_GZ_L) + z_offset;
+    *x = (_read_char(i2c, ITG3200_GX_H) << 8) + _read_char(i2c, ITG3200_GX_L) - x_offset;
+    *y = (_read_char(i2c, ITG3200_GY_H) << 8) + _read_char(i2c, ITG3200_GY_L) - y_offset;
+    *z = (_read_char(i2c, ITG3200_GZ_H) << 8) + _read_char(i2c, ITG3200_GZ_L) - z_offset;
 }
 
 /*Function: Get the angular velocity and its unit is degree per second.*/
@@ -90,7 +93,7 @@ bool GroveGyroITG3200::read_gyro(float *ax, float *ay, float *az)
     return true;
 }
 
-bool GroveGyroITG3200::write_zerocalibrate()
+void GroveGyroITG3200::_zerocalibrate(int sample_cnt)
 {
     int16_t x_offset_temp;
     int16_t y_offset_temp;
@@ -100,21 +103,26 @@ bool GroveGyroITG3200::write_zerocalibrate()
     y_offset = 0;
     z_offset = 0;
 
-    for (int i = 0; i < 200; i++)
+    for (int i = 0; i < sample_cnt; i++)
     {
-        suli_delay_ms(10);
+        suli_delay_ms(1);
         _getxyz(i2c, &x, &y, &z);
         x_offset_temp += x;
         y_offset_temp += y;
         z_offset_temp += z;
     }
 
-    x_offset = abs(x_offset_temp) / 200;
-    y_offset = abs(y_offset_temp) / 200;
-    z_offset = abs(z_offset_temp) / 200;
-    if (x_offset_temp > 0) x_offset = -x_offset;
-    if (y_offset_temp > 0) y_offset = -y_offset;
-    if (z_offset_temp > 0) z_offset = -z_offset;
+    x_offset = x_offset_temp / sample_cnt;
+    y_offset = y_offset_temp / sample_cnt;
+    z_offset = z_offset_temp / sample_cnt;
+    //if (x_offset_temp > 0) x_offset = -x_offset;
+    //if (y_offset_temp > 0) y_offset = -y_offset;
+    //if (z_offset_temp > 0) z_offset = -z_offset;
+}
+
+bool GroveGyroITG3200::write_zerocalibrate()
+{
+    _zerocalibrate(100);
 
     return true;
 }

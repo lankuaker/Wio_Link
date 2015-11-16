@@ -32,6 +32,7 @@
 #define __GROVE_MULTICHANNEL_GAS_MICS6814_H__
 
 //GROVE_NAME        "Grove-Multichannel Gas Sensor"
+//SKU               101020088
 //IF_TYPE           I2C
 //IMAGE_URL         http://www.seeedstudio.com/wiki/images/2/28/Multi_sensor1.png
 

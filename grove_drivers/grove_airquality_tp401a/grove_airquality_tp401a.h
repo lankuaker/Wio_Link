@@ -34,6 +34,7 @@
 #include "suli2.h"
 
 //GROVE_NAME        "Grove - Air Quality Sensor"
+//SKU               101020078
 //IF_TYPE           ANALOG
 //IMAGE_URL         http://www.seeedstudio.com/depot/images/product/101020078%201_02.jpg
 

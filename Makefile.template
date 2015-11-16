@@ -266,7 +266,7 @@ VPATH = $(BASE_DIR):$(SULI_DIR):$(ARDUINO_DIR):$(ARDUINO_DIR)/spiffs:$(MAIN_DIR)
 all: $(OUTPUT).bin $(OUTPUT).hex 
 
 clean:
-	rm -f *.elf *.hex $(OBJECTS) $(DEPS) *.a
+	rm -f *.elf *.hex *.d *.o *.a *.dump *.S
 
 %.o: %.s
 	$(CC) $(CC_FLAGS) -o $@ $<

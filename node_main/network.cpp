@@ -893,7 +893,7 @@ void network_config_mode()
         station = wifi_softap_get_station_info();
         while(station)
         {
-            Serial1.printf("bssid : " MACSTR ", ip : " IPSTR "",   MAC2STR(station->bssid), IP2STR(&station->ip)); 
+            Serial1.printf("bssid : " MACSTR ", ip : " IPSTR "\r\n",   MAC2STR(station->bssid), IP2STR(&station->ip)); 
             station = STAILQ_NEXT(station, next);  
         }
         wifi_softap_free_station_info();    // Free it by calling functions

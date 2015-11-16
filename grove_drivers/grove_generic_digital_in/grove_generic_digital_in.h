@@ -1,5 +1,5 @@
 /*
- * grove_button.h
+ * grove_generic_digital_in.h
  *
  * Copyright (c) 2012 seeed technology inc.
  * Website    : www.seeed.cc
@@ -27,35 +27,35 @@
  */
 
 
-#ifndef __GROVE_BUTTON_H__
-#define __GROVE_BUTTON_H__
+#ifndef __GROVE_GENERIC_DIGITAL_IN_H__
+#define __GROVE_GENERIC_DIGITAL_IN_H__
 
 #include "suli2.h"
 
-//GROVE_NAME        "Grove-Button"
-//SKU               101020003
+//GROVE_NAME        "Generic Digital Input"
+//SKU               7e3306bc-8911-11e5-af63-feff819cdc9f
 //IF_TYPE           GPIO
-//IMAGE_URL         http://www.seeedstudio.com/wiki/images/thumb/c/ca/Button.jpg/300px-Button.jpg
+//IMAGE_URL         http://www.seeedstudio.com/wiki/images/e/ea/Pion_one_generic_din.png
 
-class GroveButton
+class GenericDIn
 {
 public:
-    GroveButton(int pin);
+    GenericDIn(int pin);
     
     /**
+     * Read the input state of a generic digital input device
      * 
-     * 
-     * @param pressed - 1: pressed, 0: not
+     * @param input - 1: on, 0: off
      * 
      * @return bool 
      */
-    bool read_pressed(uint8_t *pressed);
-    EVENT_T * attach_event_reporter_for_button_pressed(CALLBACK_T reporter);
+    bool read_input(uint8_t *input);
+    EVENT_T * attach_event_reporter_for_input_changed(CALLBACK_T reporter);
     EVENT_T *event;
     IO_T *io;
     uint32_t time;
 };
 
-static void button_interrupt_handler(void *para);
+static void input_changed_interrupt_handler(void *para);
 
 #endif

@@ -33,6 +33,7 @@
 #include "suli2.h"
 
 //GROVE_NAME        "Grove_Example"
+//SKU               71714fec-8911-11e5-af63-feff819cdc9f
 //IF_TYPE           EPYT_FI
 //IMAGE_URL         http://www.seeedstudio.com/depot/includes/templates/bootstrap/images/ico/grove.png
 

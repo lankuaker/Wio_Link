@@ -1,5 +1,5 @@
 /*
- * grove_button.h
+ * grove_generic_analog_in.h
  *
  * Copyright (c) 2012 seeed technology inc.
  * Website    : www.seeed.cc
@@ -27,35 +27,33 @@
  */
 
 
-#ifndef __GROVE_BUTTON_H__
-#define __GROVE_BUTTON_H__
+#ifndef __GROVE_GENERIC_ANALOG_IN_H__
+#define __GROVE_GENERIC_ANALOG_IN_H__
 
 #include "suli2.h"
 
-//GROVE_NAME        "Grove-Button"
-//SKU               101020003
-//IF_TYPE           GPIO
-//IMAGE_URL         http://www.seeedstudio.com/wiki/images/thumb/c/ca/Button.jpg/300px-Button.jpg
+//GROVE_NAME        "Generic Analog Input"
+//SKU               eedec01c-8c5a-11e5-8994-feff819cdc9f
+//IF_TYPE           ANALOG
+//IMAGE_URL         http://www.seeedstudio.com/wiki/images/8/87/Pion_one_generic_analog.png
 
-class GroveButton
+
+class GenericAIn
 {
 public:
-    GroveButton(int pin);
+    GenericAIn(int pin);
     
     /**
+     * Read the ADC measurement of a generic analog device. The full range is 0~1023.
      * 
-     * 
-     * @param pressed - 1: pressed, 0: not
+     * @param analog - The measurement of ADC, 0~1023
      * 
      * @return bool 
      */
-    bool read_pressed(uint8_t *pressed);
-    EVENT_T * attach_event_reporter_for_button_pressed(CALLBACK_T reporter);
-    EVENT_T *event;
-    IO_T *io;
-    uint32_t time;
+    bool read_analog(int *analog);
+private:
+    ANALOG_T *io;
 };
 
-static void button_interrupt_handler(void *para);
 
 #endif

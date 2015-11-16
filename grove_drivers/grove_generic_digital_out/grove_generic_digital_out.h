@@ -1,5 +1,5 @@
 /*
- * grove_button.h
+ * grove_generic_digital_out.h
  *
  * Copyright (c) 2012 seeed technology inc.
  * Website    : www.seeed.cc
@@ -27,35 +27,33 @@
  */
 
 
-#ifndef __GROVE_BUTTON_H__
-#define __GROVE_BUTTON_H__
+#ifndef __GROVE_GENERIC_DIGITAL_OUT_H__
+#define __GROVE_GENERIC_DIGITAL_OUT_H__
 
 #include "suli2.h"
 
-//GROVE_NAME        "Grove-Button"
-//SKU               101020003
+//GROVE_NAME        "Generic Digital Output"
+//SKU               3a9d9a84-8c59-11e5-8994-feff819cdc9f
 //IF_TYPE           GPIO
-//IMAGE_URL         http://www.seeedstudio.com/wiki/images/thumb/c/ca/Button.jpg/300px-Button.jpg
+//IMAGE_URL         http://www.seeedstudio.com/wiki/images/0/00/Pion_one_generic_dout.png
 
-class GroveButton
+
+class GenericDOut
 {
 public:
-    GroveButton(int pin);
+    GenericDOut(int pin);
     
     /**
+     * Control a generic digital output by writing 1 to pull it high and 0 to pull it low.
      * 
-     * 
-     * @param pressed - 1: pressed, 0: not
+     * @param onoff - 1: on/pull high, 0: off/pull low
      * 
      * @return bool 
      */
-    bool read_pressed(uint8_t *pressed);
-    EVENT_T * attach_event_reporter_for_button_pressed(CALLBACK_T reporter);
-    EVENT_T *event;
+    bool write_onoff(int onoff);
+private:
     IO_T *io;
-    uint32_t time;
 };
 
-static void button_interrupt_handler(void *para);
 
 #endif

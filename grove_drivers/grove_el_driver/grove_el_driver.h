@@ -33,6 +33,7 @@
 #include "suli2.h"
 
 //GROVE_NAME        "Grove-EL Driver"
+//SKU               105020005
 //IF_TYPE           GPIO
 //IMAGE_URL         http://www.seeedstudio.com/depot/bmz_cache/4/45c3a0b2df09759a952ae01bf5207b42.image.530x397.jpg
 

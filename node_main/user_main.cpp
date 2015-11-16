@@ -14,7 +14,6 @@ extern "C"
 
 void system_phy_set_rfoption(uint8 option);
 bool system_os_post(uint8 prio, os_signal_t sig, os_param_t par);
-void esp_schedule();
 }
 
 #include "Arduino.h"
@@ -23,20 +22,7 @@ void esp_schedule();
 #include "eeprom.h"
 
 extern void arduino_init(void);
-extern void do_global_ctors(void);
 
-/**
- * SDK routine - callback when user_init done.
- *
- * @param
- */
-void init_done()
-{
-    do_global_ctors();
-
-    /* let arduino loop loop*/
-    esp_schedule();
-}
 
 /**
  * This function is needed by new SDK 1.1.0 when linking stage
@@ -47,23 +33,6 @@ extern "C"
 void user_rf_pre_init()
 {
     system_phy_set_rfoption(1);  //recalibrate the rf when power up
-}
-
-
-/**
- * Global function needed by libmain.a when linking
- *
- * @author Jack (5/23/2015)
- * @param
- */
-extern "C"
-void user_init(void)
-{
-    uart_div_modify(0, UART_CLK_FREQ / (115200));
-
-    arduino_init();
-    
-    system_init_done_cb(&init_done);
 }
 
 
@@ -125,4 +94,15 @@ void pre_user_loop()
     }
 }
 
+/**
+ * Global function needed by libmain.a when linking
+ *
+ * @author Jack (5/23/2015)
+ * @param
+ */
+extern "C"
+void user_init(void)
+{
+    arduino_init();
+}
 

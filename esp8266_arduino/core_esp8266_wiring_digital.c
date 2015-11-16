@@ -25,6 +25,8 @@
 #include "eagle_soc.h"
 #include "ets_sys.h"
 
+uint8_t esp8266_gpioToFn[16] = {0x34, 0x18, 0x38, 0x14, 0x3C, 0x40, 0x1C, 0x20, 0x24, 0x28, 0x2C, 0x30, 0x04, 0x08, 0x0C, 0x10};
+
 extern void __pinMode(uint8_t pin, uint8_t mode) {
   if(pin < 16){
     if(mode == SPECIAL){
@@ -116,8 +118,20 @@ void interrupt_handler(void *arg) {
     while(!(changedbits & (1 << i))) i++;
     changedbits &= ~(1 << i);
     interrupt_handler_t *handler = &interrupt_handlers[i];
-    if(((handler->mode & 1) == digitalRead(i)) && handler->fn) handler->fn();
-    if(((handler->mode & 1) == digitalRead(i)) && handler->fn_ex) handler->fn_ex(handler->para);
+    if (handler->fn && (handler->mode == CHANGE || (handler->mode & 1) == digitalRead(i)))
+    {
+        // to make ISR compatible to Arduino AVR model where interrupts are disabled
+        // we disable them before we call the client ISR
+        uint32_t savedPS = xt_rsil(15); // stop other interrupts 
+        handler->fn();
+        xt_wsr_ps(savedPS);
+    }
+    if (handler->fn_ex && (handler->mode == CHANGE || (handler->mode & 1) == digitalRead(i)))
+    {
+        uint32_t savedPS = xt_rsil(15); // stop other interrupts 
+        handler->fn_ex(handler->para);
+        xt_wsr_ps(savedPS);
+    }
   }
   ETS_GPIO_INTR_ENABLE();
 }

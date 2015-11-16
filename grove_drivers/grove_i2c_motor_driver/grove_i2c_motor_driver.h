@@ -33,6 +33,7 @@
 #include "suli2.h"
 
 //GROVE_NAME        "Grove-I2C Motor Driver"
+//SKU               105020001
 //IF_TYPE           I2C
 //IMAGE_URL         http://www.seeedstudio.com/depot/bmz_cache/a/af1f380a7d22dd28ef29d1af21475b38.image.164x123.jpg
 

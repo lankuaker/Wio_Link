@@ -33,6 +33,7 @@
 #include "grove_moisture.h"
 
 //GROVE_NAME        "Grove-Moisture"
+//SKU               101020008
 //IF_TYPE           ANALOG
 //IMAGE_URL         http://www.seeedstudio.com/wiki/images/c/ce/Moisture_sensor_.jpg
 

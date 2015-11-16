@@ -42,6 +42,7 @@
 #include "suli2.h"
 
 //GROVE_NAME        "Grove-WS2812 LED Strip 60"
+//SKU               104990089
 //IF_TYPE           GPIO
 //IMAGE_URL         http://www.seeedstudio.com/depot/bmz_cache/4/4f346dc15724a7b5a5c1383253aeefc9.image.530x397.jpg
 

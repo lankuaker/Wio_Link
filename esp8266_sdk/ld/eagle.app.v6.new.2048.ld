@@ -158,8 +158,8 @@ SECTIONS
     _irom0_text_start = ABSOLUTE(.);
     *core_esp8266_*.o(.literal*, .text*)
     *spiffs*.o(.literal*, .text*)
-    *sha256.o(.literal*, .text*)
     *aes.o(.literal*, .text*)
+    *sha256.o(.literal*, .text*)
     *.cpp.o(.literal*, .text*)
     /**arduino_pack.a:(.literal .text .literal.* .text.*)*/
     *libm.a:(.literal .text .literal.* .text.*)
@@ -200,7 +200,7 @@ SECTIONS
     *(.entry.text)
     *(.init.literal)
     *(.init)
-    *(.literal .text .literal.* .text.* .stub .gnu.warning .gnu.linkonce.literal.* .gnu.linkonce.t.*.literal .gnu.linkonce.t.*)
+    *(.literal .text .literal.* .text.* .iram.text .stub .gnu.warning .gnu.linkonce.literal.* .gnu.linkonce.t.*.literal .gnu.linkonce.t.*)
     *(.fini.literal)
     *(.fini)
     *(.gnu.version)

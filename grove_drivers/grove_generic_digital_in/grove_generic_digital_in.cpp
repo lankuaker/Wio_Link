@@ -1,5 +1,5 @@
 /*
- * grove_button.h
+ * grove_generic_digital_in.cpp
  *
  * Copyright (c) 2012 seeed technology inc.
  * Website    : www.seeed.cc
@@ -26,36 +26,45 @@
  * THE SOFTWARE.
  */
 
-
-#ifndef __GROVE_BUTTON_H__
-#define __GROVE_BUTTON_H__
-
 #include "suli2.h"
+#include "grove_generic_digital_in.h"
 
-//GROVE_NAME        "Grove-Button"
-//SKU               101020003
-//IF_TYPE           GPIO
-//IMAGE_URL         http://www.seeedstudio.com/wiki/images/thumb/c/ca/Button.jpg/300px-Button.jpg
 
-class GroveButton
+
+GenericDIn::GenericDIn(int pin)
 {
-public:
-    GroveButton(int pin);
-    
-    /**
-     * 
-     * 
-     * @param pressed - 1: pressed, 0: not
-     * 
-     * @return bool 
-     */
-    bool read_pressed(uint8_t *pressed);
-    EVENT_T * attach_event_reporter_for_button_pressed(CALLBACK_T reporter);
-    EVENT_T *event;
-    IO_T *io;
-    uint32_t time;
-};
+    this->io = (IO_T *)malloc(sizeof(IO_T));
 
-static void button_interrupt_handler(void *para);
+    suli_pin_init(io, pin, INPUT);
+    time = millis();
+}
 
-#endif
+bool GenericDIn::read_input(uint8_t *input)
+{
+    *input = suli_pin_read(io);
+    return true;
+}
+
+EVENT_T * GenericDIn::attach_event_reporter_for_input_changed(CALLBACK_T reporter)
+{
+    this->event = (EVENT_T *)malloc(sizeof(EVENT_T));
+
+    suli_event_init(event, reporter, NULL);
+
+    suli_pin_attach_interrupt_handler(io, &input_changed_interrupt_handler, SULI_CHANGE, this);
+
+    return this->event;
+}
+
+
+static void input_changed_interrupt_handler(void *para)
+{
+    GenericDIn *g = (GenericDIn *)para;
+    if (millis() - g->time < 100)
+    {
+        return;
+    }
+    g->time = millis();
+    suli_event_trigger(g->event, *(g->io));
+}
+

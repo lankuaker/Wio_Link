@@ -621,6 +621,9 @@ class NodeEventHandler(websocket.WebSocketHandler):
             self.close()
             return
 
+        #clear the events buffered before any websocket client connected
+        self.cur_conn.event_happened = []
+
         while self.connected:
             self.future = self.wait_event_post()
             event = yield self.future
@@ -683,6 +686,7 @@ class NodeGetResourcesHandler(NodeBaseHandler):
             item['type'] = 'GET'
             #build read arg
             arguments = []
+            arguments_name = []
             method_name = fun[0].replace('read_','')
             url = self.vhost_url_base + '/v1/node/' + grove_instance_name + '/' + method_name
             arg_list = [arg for arg in fun[1] if arg.find("*") < 0]  #find out the ones dont have "*"
@@ -698,10 +702,12 @@ class NodeGetResourcesHandler(NodeBaseHandler):
                     comment = ""
 
                 arguments.append('[%s]: %s value%s' % (name, t, comment))
+                arguments_name.append('[%s]' % name)
                 url += ('/[%s]' % name)
 
             item['url'] = url + '?access_token=' + node['private_key']
             item['arguments'] = arguments
+            item['arguments_name'] = arguments_name
 
             item['brief'] = ""
             if fun[0] in methods_doc and '@brief@' in methods_doc[fun[0]]: 
@@ -727,6 +733,7 @@ class NodeGetResourcesHandler(NodeBaseHandler):
             returns = returns.rstrip(',')
             item['returns'] = returns
             item['return_docs'] = return_docs
+            item['uuid'] = self.get_uuid();
 
             data.append(item)
 
@@ -735,6 +742,7 @@ class NodeGetResourcesHandler(NodeBaseHandler):
             item['type'] = 'POST'
             #build write arg
             arguments = []
+            arguments_name = []
             method_name = fun[0].replace('write_','')
             url = self.vhost_url_base + '/v1/node/' + grove_instance_name + '/' + method_name
             #arg_list = [arg for arg in fun[1] if arg.find("*")<0]  #find out the ones havent "*"
@@ -755,13 +763,16 @@ class NodeGetResourcesHandler(NodeBaseHandler):
                     comment = ""
 
                 arguments.append('[%s]: %s value%s' % (name, t, comment))
+                arguments_name.append('[%s]' % name)
                 url += ('/[%s]' % name)
             item['url'] = url + '?access_token=' + node['private_key']
             item['arguments'] = arguments
+            item['arguments_name'] = arguments_name
 
             item['brief'] = ""
             if fun[0] in methods_doc and '@brief@' in methods_doc[fun[0]]: 
                 item['brief'] = methods_doc[fun[0]]['@brief@']
+            item['uuid'] = self.get_uuid();
 
             data.append(item)
 
@@ -868,7 +879,16 @@ class NodeGetResourcesHandler(NodeBaseHandler):
 
         if config:
             for grove_instance_name in config.keys():
-                grove = find_grove_in_database(config[grove_instance_name]['name'], drv_db)
+                if 'sku' in config[grove_instance_name]:
+                    _sku = config[grove_instance_name]['sku']
+                else:
+                    _sku = None
+
+                if 'name' in config[grove_instance_name]:
+                    _name = config[grove_instance_name]['name']
+                else:
+                    _name = None
+                grove = find_grove_in_database(_name, _sku, drv_db)
                 if grove:
                     grove_doc = find_grove_in_docs_db(grove['ID'], drv_docs)
                     if grove_doc:
@@ -889,10 +909,13 @@ class NodeGetResourcesHandler(NodeBaseHandler):
                     return
 
         #render the template
-        domain = self.vhost_url_base.replace('https:', 'wss:')
-        domain = domain.replace('http:', 'ws:')
+        ws_domain = self.vhost_url_base.replace('https:', 'wss:')
+        ws_domain = ws_domain.replace('http:', 'ws:')
+        #print data
+        #print events
+        #print node_key
         page = self.render_string('resources.html', node_name = node_name, events = events, data = data, 
-                                  node_key = node_key , url_base = self.vhost_url_base, domain=domain)
+                                  node_key = node_key , url_base = self.vhost_url_base, ws_domain=ws_domain)
 
         #store the page html into database
         try:

@@ -33,6 +33,7 @@
 #include "suli2.h"
 
 //GROVE_NAME        "Grove-Magnetic Switch"
+//SKU               101020038
 //IF_TYPE           GPIO
 //IMAGE_URL         http://www.seeedstudio.com/wiki/images/thumb/c/c0/Magnetic_Switch.jpg/400px-Magnetic_Switch.jpg
 

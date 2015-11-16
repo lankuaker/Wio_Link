@@ -33,6 +33,7 @@
 #include "suli2.h"
 
 //GROVE_NAME        "Grove-Electromagnet"
+//SKU               101020073
 //IF_TYPE           GPIO
 //IMAGE_URL         http://www.seeedstudio.com/depot/bmz_cache/9/9509f6e5cb898db66420ae739bb51eb3.image.164x123.jpg
 

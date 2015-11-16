@@ -33,6 +33,7 @@
 #include "suli2.h"
 
 //GROVE_NAME        "Grove-Servo"
+//SKU               316010005
 //IF_TYPE           GPIO
 //IMAGE_URL         http://www.seeedstudio.com/wiki/images/thumb/0/0f/Grove%E2%80%94Servo.jpg/600px-Grove%E2%80%94Servo.jpg
 

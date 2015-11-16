@@ -38,11 +38,6 @@ GroveI2CMotorDriver::GroveI2CMotorDriver(int pinsda, int pinscl)
     i2c_addr = I2CMotorDriverAdd;
     motor1_dir = 0x2;
     motor2_dir = 0x2;
-    
-    cmd[0] = DirectionSet;
-    cmd[1] = dir;
-    cmd[2] = Nothing;
-    suli_i2c_write(i2c, i2c_addr, cmd, 3);
 }
 
 bool GroveI2CMotorDriver::write_i2c_address(uint8_t addr_7bits)
@@ -84,6 +79,12 @@ bool GroveI2CMotorDriver::write_dcmotor_speed(uint8_t speed_m1, uint8_t speed_m2
     cmd[1] = speed_m1;
     cmd[2] = speed_m2;
     suli_i2c_write(i2c, i2c_addr, cmd, 3);
+    
+    cmd[0] = DirectionSet;
+    cmd[1] = dir;
+    cmd[2] = Nothing;
+    suli_i2c_write(i2c, i2c_addr, cmd, 3);
+    
     return true;
 }
 

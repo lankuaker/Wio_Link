@@ -87,7 +87,7 @@ void prep_pwm_steps(){
 	ETS_FRC1_INTR_ENABLE();
 }
 
-void pwm_timer_isr(){
+void ICACHE_RAM_ATTR pwm_timer_isr(){
 	static uint8_t current_step = 0;
 	static uint8_t stepcount = 0;
 	static uint16_t steps[17];

@@ -1,5 +1,5 @@
 /*
- * grove_button.h
+ * grove_generic_digital_out.cpp
  *
  * Copyright (c) 2012 seeed technology inc.
  * Website    : www.seeed.cc
@@ -26,36 +26,19 @@
  * THE SOFTWARE.
  */
 
-
-#ifndef __GROVE_BUTTON_H__
-#define __GROVE_BUTTON_H__
-
 #include "suli2.h"
+#include "grove_generic_digital_out.h"
 
-//GROVE_NAME        "Grove-Button"
-//SKU               101020003
-//IF_TYPE           GPIO
-//IMAGE_URL         http://www.seeedstudio.com/wiki/images/thumb/c/ca/Button.jpg/300px-Button.jpg
-
-class GroveButton
+GenericDOut::GenericDOut(int pin)
 {
-public:
-    GroveButton(int pin);
-    
-    /**
-     * 
-     * 
-     * @param pressed - 1: pressed, 0: not
-     * 
-     * @return bool 
-     */
-    bool read_pressed(uint8_t *pressed);
-    EVENT_T * attach_event_reporter_for_button_pressed(CALLBACK_T reporter);
-    EVENT_T *event;
-    IO_T *io;
-    uint32_t time;
-};
+    this->io = (IO_T *)malloc(sizeof(IO_T));
 
-static void button_interrupt_handler(void *para);
+    suli_pin_init(io, pin, SULI_OUTPUT);
+}
 
-#endif
+bool GenericDOut::write_onoff(int onoff)
+{
+    suli_pin_write(io, onoff);
+    return true;
+}
+
