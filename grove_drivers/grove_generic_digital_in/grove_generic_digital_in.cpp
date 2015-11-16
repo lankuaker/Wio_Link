@@ -31,7 +31,7 @@
 
 
 
-GroveGenDIn::GroveGenDIn(int pin)
+GenericDIn::GenericDIn(int pin)
 {
     this->io = (IO_T *)malloc(sizeof(IO_T));
 
@@ -39,13 +39,13 @@ GroveGenDIn::GroveGenDIn(int pin)
     time = millis();
 }
 
-bool GroveGenDIn::read_input(uint8_t *input)
+bool GenericDIn::read_input(uint8_t *input)
 {
     *input = suli_pin_read(io);
     return true;
 }
 
-EVENT_T * GroveGenDIn::attach_event_reporter_for_input_changed(CALLBACK_T reporter)
+EVENT_T * GenericDIn::attach_event_reporter_for_input_changed(CALLBACK_T reporter)
 {
     this->event = (EVENT_T *)malloc(sizeof(EVENT_T));
 
@@ -59,7 +59,7 @@ EVENT_T * GroveGenDIn::attach_event_reporter_for_input_changed(CALLBACK_T report
 
 static void input_changed_interrupt_handler(void *para)
 {
-    GroveGenDIn *g = (GroveGenDIn *)para;
+    GenericDIn *g = (GenericDIn *)para;
     if (millis() - g->time < 100)
     {
         return;

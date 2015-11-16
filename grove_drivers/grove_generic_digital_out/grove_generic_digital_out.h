@@ -1,5 +1,5 @@
 /*
- * grove_generic_digital_in.h
+ * grove_generic_digital_out.h
  *
  * Copyright (c) 2012 seeed technology inc.
  * Website    : www.seeed.cc
@@ -27,35 +27,33 @@
  */
 
 
-#ifndef __GROVE_GENERIC_DIGITAL_IN_H__
-#define __GROVE_GENERIC_DIGITAL_IN_H__
+#ifndef __GROVE_GENERIC_DIGITAL_OUT_H__
+#define __GROVE_GENERIC_DIGITAL_OUT_H__
 
 #include "suli2.h"
 
-//GROVE_NAME        "Generic Digital Input"
-//SKU               7e3306bc-8911-11e5-af63-feff819cdc9f
+//GROVE_NAME        "Generic Digital Output"
+//SKU               3a9d9a84-8c59-11e5-8994-feff819cdc9f
 //IF_TYPE           GPIO
-//IMAGE_URL         http://www.seeedstudio.com/wiki/images/e/ea/Pion_one_generic_din.png
+//IMAGE_URL         http://www.seeedstudio.com/wiki/images/0/00/Pion_one_generic_dout.png
 
-class GenericDIn
+
+class GenericDOut
 {
 public:
-    GenericDIn(int pin);
+    GenericDOut(int pin);
     
     /**
-     * Read the input state of a generic digital input device
+     * Control a generic digital output by writing 1 to pull it high and 0 to pull it low.
      * 
-     * @param input - 1: on, 0: off
+     * @param onoff - 1: on/pull high, 0: off/pull low
      * 
      * @return bool 
      */
-    bool read_input(uint8_t *input);
-    EVENT_T * attach_event_reporter_for_input_changed(CALLBACK_T reporter);
-    EVENT_T *event;
+    bool write_onoff(int onoff);
+private:
     IO_T *io;
-    uint32_t time;
 };
 
-static void input_changed_interrupt_handler(void *para);
 
 #endif

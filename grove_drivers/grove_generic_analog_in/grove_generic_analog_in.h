@@ -1,5 +1,5 @@
 /*
- * grove_generic_digital_in.h
+ * grove_generic_analog_in.h
  *
  * Copyright (c) 2012 seeed technology inc.
  * Website    : www.seeed.cc
@@ -27,35 +27,33 @@
  */
 
 
-#ifndef __GROVE_GENERIC_DIGITAL_IN_H__
-#define __GROVE_GENERIC_DIGITAL_IN_H__
+#ifndef __GROVE_GENERIC_ANALOG_IN_H__
+#define __GROVE_GENERIC_ANALOG_IN_H__
 
 #include "suli2.h"
 
-//GROVE_NAME        "Generic Digital Input"
-//SKU               7e3306bc-8911-11e5-af63-feff819cdc9f
-//IF_TYPE           GPIO
-//IMAGE_URL         http://www.seeedstudio.com/wiki/images/e/ea/Pion_one_generic_din.png
+//GROVE_NAME        "Generic Analog Input"
+//SKU               eedec01c-8c5a-11e5-8994-feff819cdc9f
+//IF_TYPE           ANALOG
+//IMAGE_URL         http://www.seeedstudio.com/wiki/images/8/87/Pion_one_generic_analog.png
 
-class GenericDIn
+
+class GenericAIn
 {
 public:
-    GenericDIn(int pin);
+    GenericAIn(int pin);
     
     /**
-     * Read the input state of a generic digital input device
+     * Read the ADC measurement of a generic analog device. The full range is 0~1023.
      * 
-     * @param input - 1: on, 0: off
+     * @param analog - The measurement of ADC, 0~1023
      * 
      * @return bool 
      */
-    bool read_input(uint8_t *input);
-    EVENT_T * attach_event_reporter_for_input_changed(CALLBACK_T reporter);
-    EVENT_T *event;
-    IO_T *io;
-    uint32_t time;
+    bool read_analog(int *analog);
+private:
+    ANALOG_T *io;
 };
 
-static void input_changed_interrupt_handler(void *para);
 
 #endif

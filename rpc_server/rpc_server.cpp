@@ -58,7 +58,7 @@ void rpc_server_init()
     parse_stage_cmd = PARSE_REQ_TYPE;
 
     rpc_server_register_resources();
-    printf("rpc server init done!\n");
+    //printf("rpc server init done!\n");
 
 }
 
