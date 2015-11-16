@@ -95,6 +95,7 @@ private:
 
     char _read_char(I2C_T *i2c, unsigned char addr);
     void _getxyz(I2C_T *i2c, int16_t *x, int16_t *y, int16_t *z);
+    void _zerocalibrate(int sample_cnt);
 
     unsigned char cmdbuf[2];
     unsigned char databuf[2];
