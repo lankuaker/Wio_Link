@@ -64,7 +64,9 @@ public:
     bool write_i2c_address(uint8_t addr_7bits);
     
     /**
-     * To drive a stepper motor, we need to change the working mode of this driver into stepper mode.
+     * To drive a stepper motor, we need to change the working mode of this driver into stepper mode. 
+     * IMPORTANT: Need I2C Motor Driver hardware version >= v1.3 and manually update the firmware according to the 
+     * guide inside this zip file: http://www.seeedstudio.com/wiki/images/5/52/On-Chipfirmware_for_Motor_driver.zip 
      * 
      * @param direction - stepper direction, 0 or 1
      * @param speed - defines the time interval the i2C motor driver change its output to drive the stepper, the actul interval time is : motorspeed * 4ms. that is , when motor speed is 10, the interval time would be 40 ms
@@ -81,7 +83,9 @@ public:
     bool write_disable_stepper_mode();
     
     /**
-     * Drive the stepper to move a few steps
+     * Drive the stepper to move a few steps. To let the stepper rotate forever, steps = 255. 
+     * IMPORTANT: Need I2C Motor Driver hardware version >= v1.3 and manually update the firmware according to the 
+     * guide inside this zip file: http://www.seeedstudio.com/wiki/images/5/52/On-Chipfirmware_for_Motor_driver.zip  
      * 
      * @param steps - number of steps to move
      * 
@@ -98,6 +102,7 @@ public:
      * @return bool 
      */
     bool write_dcmotor_speed(uint8_t speed_m1, uint8_t speed_m2);
+    
     bool write_dcmotor1_change_direction();
     bool write_dcmotor2_change_direction();
     bool write_dcmotor1_break();
