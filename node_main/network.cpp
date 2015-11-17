@@ -876,7 +876,7 @@ void network_config_mode()
 
     wifi_get_macaddr(SOFTAP_IF, hwaddr);
     wifi_softap_get_config_default(config);
-    os_sprintf(ssid, "PionOne_%02X%02X%02X", hwaddr[3], hwaddr[4], hwaddr[5]);
+    os_sprintf(ssid, "WioLink_%02X%02X%02X", hwaddr[3], hwaddr[4], hwaddr[5]);
     memcpy(config->ssid, ssid, 15);
     config->ssid_len = strlen(config->ssid);
     wifi_softap_set_config(config);
